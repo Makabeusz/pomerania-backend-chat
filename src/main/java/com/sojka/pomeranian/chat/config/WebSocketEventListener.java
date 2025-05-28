@@ -1,6 +1,7 @@
 package com.sojka.pomeranian.chat.config;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
+import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class WebSocketEventListener {
             log.info("User disconnected: {}", username);
             var message = ChatMessage.builder()
                     .type(MessageType.LEAVE)
-                    .sender(username)
+                    .sender(new ChatUser("", username))
                     .build();
             messageTemplate.convertAndSend("/topic/public", message);
         }

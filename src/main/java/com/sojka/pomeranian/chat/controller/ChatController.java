@@ -7,7 +7,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -26,10 +25,8 @@ public class ChatController {
         System.out.println(chatMessage);
         System.out.println("------------------");
 
-
-        headerAccessor.getSessionAttributes().put("username", chatMessage.getSenderUsername());
-
-        messagingTemplate.convertAndSendToUser(chatMessage.getSenderUsername(), "/queue/private", chatMessage);
+        messagingTemplate.convertAndSendToUser(chatMessage.getSender().username(), "/queue/private", chatMessage);
+        messagingTemplate.convertAndSendToUser(chatMessage.getRecipient().username(), "/queue/private", chatMessage);
 
 
         return chatMessage;
@@ -43,7 +40,7 @@ public class ChatController {
         System.out.println("==================");
         System.out.println(chatMessage);
         System.out.println("==================");
-        headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
+        headerAccessor.getSessionAttributes().put("username", chatMessage.getSender().username());
         return chatMessage;
     }
 }

@@ -8,8 +8,7 @@ import lombok.Data;
 public class ChatMessage {
 
     private String content;
-    private String sender; // Sender's profileId
-    private String senderUsername; // Sender's display name
-    private String recipientId; // Recipient's profileId
+    private ChatUser sender;
+    private ChatUser recipient;
     private MessageType type;
 }
