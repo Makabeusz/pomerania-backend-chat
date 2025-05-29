@@ -7,6 +7,13 @@ plugins {
 group = 'com.sojka'
 version = '0.0.1-SNAPSHOT'
 
+ext {
+	repsyUsername = project.hasProperty('repsyUser') ? project.repsyUser : System.getenv('REPSY_USERNAME');
+	repsyPassword = project.hasProperty('repsyPass') ? project.repsyPass : System.getenv('REPSY_PASSWORD');
+	repsyUrl = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-security'
+}
+
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
@@ -21,23 +28,35 @@ configurations {
 
 repositories {
 	mavenCentral()
+
+	maven {
+		url repsyUrl
+		credentials {
+			username repsyUsername
+			password repsyPassword
+		}
+	}
 }
 
 dependencies {
 //	implementation 'org.springframework.boot:spring-boot-starter-data-cassandra-reactive'
-//	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// Security
+	implementation("com.sojka:Pomeranian-Security:0.0.4-SNAPSHOT")
+
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'io.projectreactor:reactor-test'
-	testImplementation 'org.testcontainers:cassandra'
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:r2dbc'
+//	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+//	testImplementation 'io.projectreactor:reactor-test'
+//	testImplementation 'org.testcontainers:cassandra'
+//	testImplementation 'org.testcontainers:junit-jupiter'
+//	testImplementation 'org.testcontainers:r2dbc'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

@@ -23,6 +23,7 @@ public class ChatController {
                                    SimpMessageHeaderAccessor headerAccessor) {
         System.out.println("------------------");
         System.out.println(chatMessage);
+        System.out.println(user);
         System.out.println("------------------");
 
         messagingTemplate.convertAndSendToUser(chatMessage.getSender().username(), "/queue/private", chatMessage);
