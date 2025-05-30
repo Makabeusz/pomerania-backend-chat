@@ -27,7 +27,7 @@ public class AstraConnector {
         );
     }
 
-    public Mono<CqlSession> connect() {
+    Mono<CqlSession> connect() {
         if (session != null && !session.isClosed()) {
             return Mono.just(session);
         }
@@ -50,6 +50,9 @@ public class AstraConnector {
                 .cache();
     }
 
+    /**
+     * todo: handle null or closed session
+     */
     public CqlSession getSession() {
         if (session == null || session.isClosed()) {
             throw new IllegalStateException("CqlSession is not initialized or closed");

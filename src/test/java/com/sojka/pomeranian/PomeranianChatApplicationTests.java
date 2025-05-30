@@ -22,7 +22,8 @@ class PomeranianChatApplicationTests {
 	void contextLoads() {
 		System.out.println(config);
 
-		CqlSession session = connector.connect().block();
+		connector.initialize();
+		CqlSession session = connector.getSession();
 		session.execute("SELECT * FROM messages").all().forEach(r -> System.out.println(r.getFormattedContents()));
 	}
 

@@ -1,21 +1,20 @@
-package com.sojka.pomeranian.chat.model;
+package com.sojka.pomeranian.chat.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.util.Map;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Message {
+public class ChatMessageResponse {
 
     private String roomId;
-    private Instant createdAt;
+    private String createdAt;
     private String messageId;
     private String profileId;
     private String username;
@@ -25,6 +24,6 @@ public class Message {
     private String threadId;
     private String editedAt;
     private String deletedAt;
-    private Boolean pinned;
+    private boolean pinned;
     private Map<String, String> metadata;
 }
