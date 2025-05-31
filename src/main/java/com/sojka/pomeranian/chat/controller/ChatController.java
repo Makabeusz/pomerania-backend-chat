@@ -12,8 +12,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
-
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
@@ -23,11 +21,9 @@ public class ChatController {
 
     @MessageMapping("/chat.sendMessage")
     public ChatMessage sendMessage(@Payload ChatMessage chatMessage,
-                                   Principal principal,
                                    @AuthenticationPrincipal User user) {
         System.out.println("------------------");
         System.out.println(chatMessage);
-        System.out.println(principal);
         System.out.println(user);
         System.out.println("------------------");
 

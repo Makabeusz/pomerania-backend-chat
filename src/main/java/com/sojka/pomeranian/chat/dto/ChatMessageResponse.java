@@ -19,7 +19,7 @@ public class ChatMessageResponse {
     private String profileId;
     private String username;
     private String content;
-    private String messageType;
+    private String type;
     private String resourceId;
     private String threadId;
     private String editedAt;

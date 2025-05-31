@@ -20,16 +20,16 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String username = headerAccessor.getSessionAttributes().get("username").toString();
-
-        if (username != null) {
-            log.info("User disconnected: {}", username);
-            var message = ChatMessage.builder()
-                    .type(MessageType.LEAVE)
-                    .sender(new ChatUser("", username))
-                    .build();
-            messageTemplate.convertAndSend("/topic/public", message);
-        }
+//        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+//        String username = headerAccessor.getSessionAttributes().get("username").toString();
+//
+//        if (username != null) {
+//            log.info("User disconnected: {}", username);
+//            var message = ChatMessage.builder()
+//                    .type(MessageType.LEAVE)
+//                    .sender(new ChatUser("", username))
+//                    .build();
+//            messageTemplate.convertAndSend("/topic/public", message);
+//        }
     }
 }

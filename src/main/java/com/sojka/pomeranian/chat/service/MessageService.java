@@ -1,12 +1,12 @@
 package com.sojka.pomeranian.chat.service;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
+import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
+import com.sojka.pomeranian.chat.util.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -17,7 +17,7 @@ public class MessageService {
 
     private final MessageRepository messageRepository;
 
-    public Mono<Message> saveMessage(ChatMessage chatMessage) {
+    public Message saveMessage(ChatMessage chatMessage) {
         Message message = new Message();
         message.setRoomId(generateRoomId(chatMessage));
         message.setCreatedAt(Instant.now());
@@ -29,9 +29,12 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
-    public Flux<Message> getConversation(String userId1, String userId2, String pageState) {
+    public MessagePageResponse getConversation(String userId1, String userId2, String pageState) {
         String roomId = generateRoomId(userId1, userId2);
-        return messageRepository.findByRoomId(roomId, pageState);
+        var page = messageRepository.findByRoomId(roomId, pageState);
+        return new MessagePageResponse(
+                page.getMessages().stream().map(MessageMapper::toDto).toList(), page.getNextPageState()
+        );
     }
 
     /**

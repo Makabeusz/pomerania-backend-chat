@@ -21,7 +21,7 @@ public final class MessageMapper {
                 .profileId(message.getProfileId())
                 .username(message.getUsername())
                 .content(message.getContent())
-                .messageType(message.getMessageType())
+                .type(message.getMessageType())
                 .resourceId(message.getResourceId())
                 .threadId(message.getThreadId())
                 .editedAt(message.getEditedAt())

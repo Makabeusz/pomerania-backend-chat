@@ -47,7 +47,6 @@ dependencies {
 	implementation 'org.apache.cassandra:java-driver-query-builder:4.19.0'
 //	implementation 'io.stargate.grpc:grpc-proto:1.0.41'
 	implementation 'io.grpc:grpc-netty-shaded:1.41.0'
-	implementation 'io.projectreactor:reactor-core:3.7.6'
 
 	// Security
 	implementation 'com.sojka:Pomeranian-Security:0.0.4-SNAPSHOT'
