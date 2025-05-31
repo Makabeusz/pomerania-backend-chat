@@ -29,7 +29,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     private static final String MESSAGES_TABLE = "messages";
     private static final String KEYSPACE = "messages";
 
-    private final int pageSize = 20;
+    private final int pageSize = 2;
 
     private final AstraConnector connector;
 
@@ -39,17 +39,32 @@ public class MessageRepositoryImpl implements MessageRepository {
                 .all()
                 .whereColumn("room_id").isEqualTo(literal(roomId));
 
+        log.info(String.format("Querying room_id=%s, pageState=%s", roomId, pageState));
+
+        ByteBuffer pagingStateBuffer = null;
+        if (pageState != null) {
+            try {
+                pagingStateBuffer = ByteBuffer.wrap(Base64.getUrlDecoder().decode(pageState));
+            } catch (IllegalArgumentException e) {
+                log.error(String.format("Invalid pageState for room_id %s: %s", roomId, e.getMessage()), e);
+                return new MessagePage(List.of(), null); // Reset to first page
+            }
+        }
+
         SimpleStatement statement = select.build()
                 .setPageSize(pageSize)
-                .setPagingState(pageState != null ? ByteBuffer.wrap(Base64.getDecoder().decode(pageState)) : null);
+                .setPagingState(pagingStateBuffer);
 
         try {
             CqlSession session = connector.getSession();
             ResultSet resultSet = session.execute(statement);
             List<Message> messages = new ArrayList<>();
-            String nextPageState = null;
+            int rowCount = 0;
 
             for (Row row : resultSet) {
+                if (rowCount >= pageSize) {
+                    break;
+                }
                 Message message = new Message();
                 message.setRoomId(row.getString("room_id"));
                 message.setCreatedAt(row.getInstant("created_at"));
@@ -65,12 +80,13 @@ public class MessageRepositoryImpl implements MessageRepository {
                 message.setPinned(row.getBoolean("pinned"));
                 message.setMetadata(row.getMap("metadata", String.class, String.class));
                 messages.add(message);
+                rowCount++;
             }
 
+            log.info(String.format("Fetched %d messages for room_id=%s", messages.size(), roomId));
+
             ByteBuffer pagingState = resultSet.getExecutionInfo().getPagingState();
-            if (pagingState != null) {
-                nextPageState = Base64.getEncoder().encodeToString(pagingState.array());
-            }
+            String nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
 
             return new MessagePage(messages, nextPageState);
         } catch (IllegalStateException e) {

@@ -24,10 +24,10 @@ public class MessageController {
     public ResponseEntity<MessagePageResponse> getConversation(
             @RequestParam String currentUserId,
             @RequestParam String recipientId,
-            @RequestParam(required = false) String pageState,
+            @RequestParam(required = false) String nextPageState,
             @AuthenticationPrincipal User user
     ) {
-        return ResponseEntity.ok(messageService.getConversation(currentUserId, recipientId, pageState));
+        return ResponseEntity.ok(messageService.getConversation(currentUserId, recipientId, nextPageState));
     }
 
 

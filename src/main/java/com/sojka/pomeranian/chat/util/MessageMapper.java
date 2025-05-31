@@ -16,7 +16,7 @@ public final class MessageMapper {
         return ChatMessageResponse.builder()
                 .roomId(message.getRoomId())
                 .createdAt(LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.systemDefault())
-                        .format(DateTimeFormatter.ISO_DATE))
+                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .messageId(message.getMessageId())
                 .profileId(message.getProfileId())
                 .username(message.getUsername())
