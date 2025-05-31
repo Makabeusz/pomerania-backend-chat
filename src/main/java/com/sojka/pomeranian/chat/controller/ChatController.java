@@ -2,6 +2,7 @@ package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.service.MessageService;
+import com.sojka.pomeranian.chat.util.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -20,19 +21,13 @@ public class ChatController {
     private final MessageService messageService;
 
     @MessageMapping("/chat.sendMessage")
-    public ChatMessage sendMessage(@Payload ChatMessage chatMessage,
-                                   Principal principal) {
-        System.out.println("------------------");
-        System.out.println(chatMessage);
-        System.out.println(principal);
-        System.out.println("------------------");
+    public void sendMessage(@Payload ChatMessage chatMessage,
+                            Principal principal) {
+        var message = messageService.saveMessage(chatMessage);
+        var messageResponse = MessageMapper.toDto(message);
 
-        messageService.saveMessage(chatMessage);
-
-        messagingTemplate.convertAndSendToUser(chatMessage.getSender().username(), "/queue/private", chatMessage);
-        messagingTemplate.convertAndSendToUser(chatMessage.getRecipient().username(), "/queue/private", chatMessage);
-
-        return chatMessage;
+        messagingTemplate.convertAndSendToUser(chatMessage.getSender().id(), "/queue/private", messageResponse);
+        messagingTemplate.convertAndSendToUser(chatMessage.getRecipient().id(), "/queue/private", messageResponse);
     }
 
     @MessageMapping("/chat.addUser")
@@ -40,9 +35,6 @@ public class ChatController {
     public ChatMessage addUser(@Payload ChatMessage chatMessage,
                                SimpMessageHeaderAccessor headerAccessor) {
         // Add username in web socket session
-        System.out.println("==================");
-        System.out.println(chatMessage);
-        System.out.println("==================");
         headerAccessor.getSessionAttributes().put("username", chatMessage.getSender().username());
         return chatMessage;
     }

@@ -1,14 +1,14 @@
 CREATE KEYSPACE IF NOT EXISTS messages WITH replication = {'class': 'SimpleStrategy', 'limit': 1};
 
--- Messages by room (used in this example)
-CREATE TABLE messages.messages_by_room (
+-- Messages by room
+CREATE TABLE messages.messages (
     room_id TEXT,
     created_at TIMESTAMP,
     message_id TEXT,
     profile_id VARCHAR,
-    username TEXT,
+    username VARCHAR,
     recipient_profile_id VARCHAR,
-    recipient_username TEXT,
+    recipient_username VARCHAR,
     content TEXT,
     message_type TEXT,
     resource_id TEXT,
@@ -20,54 +20,36 @@ CREATE TABLE messages.messages_by_room (
     PRIMARY KEY (room_id, created_at, message_id))
 WITH CLUSTERING ORDER BY (created_at DESC, message_id ASC);
 
--- Messages by user (future use)
-CREATE TABLE messages.messages_by_room_id (
-    profile_id TEXT,
-    created_at TIMESTAMP,
-    message_id TEXT,
-    room_id VARCHAR,
-    username TEXT,
-    content TEXT,
-    message_type TEXT,
-    resource_id TEXT,
-    thread_id TEXT,
-    edited_at VARCHAR,
-    deleted_at TEXT,
-    pinned BOOLEAN,
-    metadata MAP<TEXT, TEXT>,
-    PRIMARY KEY (profile_id, created_at, message_id)
-) WITH CLUSTERING ORDER BY (created_at DESC, message_id ASC);
-
--- Reactions (future use)
+-- Reactions
 CREATE TABLE messages.reactions (
     message_id TEXT,
     content TEXT,
-    profile_id INTEGER,
+    profile_id VARCHAR,
     created_at TIMESTAMP,
     PRIMARY KEY (message_id),
 );
 
--- Read receipts (future use)
+-- Read receipts
 CREATE TABLE messages.read_reactions (
     id TEXT,
-    profile_id INTEGER,
+    profile_id VARCHAR,
     username TEXT,
     read_at TIMESTAMP,
     content TEXT,
     PRIMARY KEY (id, profile_id)
 );
 
--- Group memberships (future use)
+-- Group memberships
 CREATE TABLE messages.group_members (
     group_id TEXT,
-    profile_id TEXT,
+    profile_id VARCHAR,
     joined_at TIMESTAMP,
     role TEXT,
     content TEXT,
     PRIMARY KEY (group_id, profile_id)
 );
 
--- Typing indicators (future use)
+-- Typing indicators
 CREATE TABLE messages.typing_indicators (
     room_id TEXT,
     profile_id TEXT,
@@ -77,9 +59,9 @@ CREATE TABLE messages.typing_indicators (
     PRIMARY KEY (room_id, profile_id)
 );
 
--- Moderation actions (future use)
+-- Moderation actions
 CREATE TABLE messages.actions (
-    action_id INTEGER,
+    action_id VARCHAR,
     message_id TEXT,
     profile_id TEXT,
     room_id TEXT,

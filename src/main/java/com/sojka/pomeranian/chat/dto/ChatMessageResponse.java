@@ -24,6 +24,6 @@ public class ChatMessageResponse {
     private String threadId;
     private String editedAt;
     private String deletedAt;
-    private boolean pinned;
+    private Boolean pinned;
     private Map<String, String> metadata;
 }

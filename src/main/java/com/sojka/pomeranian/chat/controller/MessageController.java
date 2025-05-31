@@ -22,13 +22,19 @@ public class MessageController {
 
     @GetMapping
     public ResponseEntity<MessagePageResponse> getConversation(
-            @RequestParam String currentUserId,
             @RequestParam String recipientId,
             @RequestParam(required = false) String nextPageState,
             @AuthenticationPrincipal User user
     ) {
-        return ResponseEntity.ok(messageService.getConversation(currentUserId, recipientId, nextPageState));
+        return ResponseEntity.ok(messageService.getConversation(user.getId(), recipientId, nextPageState));
     }
 
+    @GetMapping("/headers")
+    public ResponseEntity<MessagePageResponse> getConversationHeaders(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String nextPageState
+    ) {
+        return ResponseEntity.ok(messageService.getConversationsHeaders(user.getId(), nextPageState));
+    }
 
 }

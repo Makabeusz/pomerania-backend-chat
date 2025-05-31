@@ -1,6 +1,7 @@
 package com.sojka.pomeranian.chat.service;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
+import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.UUID;
 
 @Service
@@ -35,7 +37,23 @@ public class MessageService {
         String roomId = generateRoomId(userId1, userId2);
         var page = messageRepository.findByRoomId(roomId, pageState);
         return new MessagePageResponse(
-                page.getMessages().stream().map(MessageMapper::toDto).toList(), page.getNextPageState()
+                page.getMessages().stream()
+                        .sorted(Comparator.comparing(Message::getCreatedAt))
+                        .map(MessageMapper::toDto)
+                        .toList(),
+                page.getNextPageState()
+        );
+    }
+
+    public MessagePageResponse getConversationsHeaders(String userId, String pageState) {
+        MessagePage headers = messageRepository.findConversationsHeaders(userId, pageState);
+
+        return new MessagePageResponse(
+                headers.getMessages().stream()
+                        .sorted(Comparator.comparing(Message::getCreatedAt))
+                        .map(MessageMapper::toDto)
+                        .toList(),
+                headers.getNextPageState()
         );
     }
 

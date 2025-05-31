@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
@@ -18,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -29,7 +31,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     private static final String MESSAGES_TABLE = "messages";
     private static final String KEYSPACE = "messages";
 
-    private final int pageSize = 2;
+    private final int pageSize = 10;
 
     private final AstraConnector connector;
 
@@ -62,9 +64,6 @@ public class MessageRepositoryImpl implements MessageRepository {
             int rowCount = 0;
 
             for (Row row : resultSet) {
-                if (rowCount >= pageSize) {
-                    break;
-                }
                 Message message = new Message();
                 message.setRoomId(row.getString("room_id"));
                 message.setCreatedAt(row.getInstant("created_at"));
@@ -82,7 +81,10 @@ public class MessageRepositoryImpl implements MessageRepository {
                 message.setPinned(row.getBoolean("pinned"));
                 message.setMetadata(row.getMap("metadata", String.class, String.class));
                 messages.add(message);
-                rowCount++;
+
+                if (++rowCount >= pageSize) {
+                    break;
+                }
             }
 
             log.info(String.format("Fetched %d messages for room_id=%s", messages.size(), roomId));
@@ -132,6 +134,81 @@ public class MessageRepositoryImpl implements MessageRepository {
         } catch (Exception e) {
             log.error(String.format("Failed to save message: %s", e.getMessage()), e);
             throw new RuntimeException(String.format("Failed to save message for room_id %s", message.getRoomId()), e);
+        }
+    }
+
+    public MessagePage findConversationsHeaders(String userId, String pageState) {
+        try {
+            CqlSession session = connector.getSession();
+            // Select latest message per room_id
+            Select select = QueryBuilder.selectFrom(MESSAGES_TABLE)
+                    .all()
+                    .whereColumn("room_id").in(
+                            QueryBuilder.bindMarker("room_id_left"),
+                            QueryBuilder.bindMarker("room_id_right")
+                    )
+                    .orderBy("created_at", ClusteringOrder.DESC)
+                    .perPartitionLimit(1);
+
+            ByteBuffer pagingStateBuffer = null;
+            if (pageState != null) {
+                try {
+                    pagingStateBuffer = ByteBuffer.wrap(Base64.getUrlDecoder().decode(pageState));
+                } catch (IllegalArgumentException e) {
+                    log.error(String.format("Invalid pageState for user_id %s: %s", userId, e.getMessage()), e);
+                    return new MessagePage(List.of(), null);
+                }
+            }
+
+            SimpleStatement statement = select.build()
+                    .setPageSize(pageSize)
+                    .setPagingState(pagingStateBuffer)
+                    .setNamedValues(Map.of(
+                            "room_id_left", userId + ":%",
+                            "room_id_right", "%:" + userId)
+                    );
+
+            ResultSet resultSet = session.execute(statement);
+            List<Message> messages = new ArrayList<>();
+            int rowCount = 0;
+
+            for (Row row : resultSet) {
+                Message message = Message.builder()
+                        .roomId(row.getString("room_id"))
+                        .createdAt(row.getInstant("created_at"))
+                        .messageId(row.getString("message_id"))
+                        .content(row.getString("content"))
+                        .messageType(row.getString("message_type"))
+                        .profileId(row.getString("profile_id"))
+                        .username(row.getString("username"))
+                        .recipientProfileId(row.getString("recipient_profile_id"))
+                        .recipientUsername(row.getString("recipient_username"))
+                        .resourceId(row.getString("resource_id"))
+                        .threadId(row.getString("thread_id"))
+                        .editedAt(row.getString("edited_at"))
+                        .deletedAt(row.getString("deleted_at"))
+                        .pinned(row.getBoolean("pinned"))
+                        .metadata(row.getMap("metadata", String.class, String.class))
+                        .build();
+                messages.add(message);
+
+                if (++rowCount >= pageSize) {
+                    break;
+                }
+            }
+
+            log.info(String.format("Fetched %d conversation messages for user_id=%s", messages.size(), userId));
+
+            ByteBuffer pagingState = resultSet.getExecutionInfo().getPagingState();
+            String nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
+
+            return new MessagePage(messages, nextPageState);
+        } catch (IllegalStateException e) {
+            log.error(String.format("CqlSession not initialized for user_id %s: %s", userId, e.getMessage()), e);
+            throw new RuntimeException("Cassandra session not initialized", e);
+        } catch (Exception e) {
+            log.error(String.format("Failed to find conversations for user_id %s: %s", userId, e.getMessage()), e);
+            return new MessagePage(List.of(), null);
         }
     }
 }
