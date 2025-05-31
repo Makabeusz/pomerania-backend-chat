@@ -24,6 +24,8 @@ public class MessageService {
         message.setMessageId(UUID.randomUUID().toString());
         message.setProfileId(chatMessage.getSender().id());
         message.setUsername(chatMessage.getSender().username());
+        message.setRecipientProfileId(chatMessage.getRecipient().id());
+        message.setRecipientUsername(chatMessage.getRecipient().username());
         message.setContent(chatMessage.getContent());
         message.setMessageType(chatMessage.getType().toString());
         return messageRepository.save(message);

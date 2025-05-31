@@ -71,6 +71,8 @@ public class MessageRepositoryImpl implements MessageRepository {
                 message.setMessageId(row.getString("message_id"));
                 message.setProfileId(row.getString("profile_id"));
                 message.setUsername(row.getString("username"));
+                message.setRecipientUsername(row.getString("recipient_username"));
+                message.setRecipientProfileId(row.getString("recipient_profile_id"));
                 message.setContent(row.getString("content"));
                 message.setMessageType(row.getString("message_type"));
                 message.setResourceId(row.getString("resource_id"));
@@ -106,6 +108,8 @@ public class MessageRepositoryImpl implements MessageRepository {
                 .value("message_id", literal(message.getMessageId()))
                 .value("profile_id", literal(message.getProfileId()))
                 .value("username", literal(message.getUsername()))
+                .value("recipient_profile_id", literal(message.getRecipientProfileId()))
+                .value("recipient_username", literal(message.getRecipientUsername()))
                 .value("content", literal(message.getContent()))
                 .value("message_type", literal(message.getMessageType()))
                 .value("resource_id", literal(message.getResourceId()))

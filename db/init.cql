@@ -7,6 +7,8 @@ CREATE TABLE messages.messages_by_room (
     message_id TEXT,
     profile_id VARCHAR,
     username TEXT,
+    recipient_profile_id VARCHAR,
+    recipient_username TEXT,
     content TEXT,
     message_type TEXT,
     resource_id TEXT,

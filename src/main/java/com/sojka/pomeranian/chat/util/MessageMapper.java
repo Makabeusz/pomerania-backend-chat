@@ -1,6 +1,7 @@
 package com.sojka.pomeranian.chat.util;
 
 import com.sojka.pomeranian.chat.dto.ChatMessageResponse;
+import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.model.Message;
 
 import java.time.LocalDateTime;
@@ -18,8 +19,8 @@ public final class MessageMapper {
                 .createdAt(LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.systemDefault())
                         .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .messageId(message.getMessageId())
-                .profileId(message.getProfileId())
-                .username(message.getUsername())
+                .sender(new ChatUser(message.getProfileId(), message.getUsername()))
+                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername()))
                 .content(message.getContent())
                 .type(message.getMessageType())
                 .resourceId(message.getResourceId())

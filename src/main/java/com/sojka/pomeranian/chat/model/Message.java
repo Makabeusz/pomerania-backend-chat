@@ -19,6 +19,8 @@ public class Message {
     private String messageId;
     private String profileId;
     private String username;
+    private String recipientProfileId;
+    private String recipientUsername;
     private String content;
     private String messageType;
     private String resourceId;

@@ -7,6 +7,8 @@ CREATE TABLE messages.messages (
     message_id TEXT,
     profile_id VARCHAR,
     username TEXT,
+    recipient_username TEXT,
+    recipient_profile_id TEXT,
     content TEXT,
     message_type TEXT,
     resource_id TEXT,

@@ -16,10 +16,10 @@ public class ChatMessageResponse {
     private String roomId;
     private String createdAt;
     private String messageId;
-    private String profileId;
-    private String username;
     private String content;
     private String type;
+    private ChatUser sender;
+    private ChatUser recipient;
     private String resourceId;
     private String threadId;
     private String editedAt;
