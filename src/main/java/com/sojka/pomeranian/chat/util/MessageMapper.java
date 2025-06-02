@@ -2,6 +2,7 @@ package com.sojka.pomeranian.chat.util;
 
 import com.sojka.pomeranian.chat.dto.ChatMessageResponse;
 import com.sojka.pomeranian.chat.dto.ChatUser;
+import com.sojka.pomeranian.chat.dto.MessageType;
 import com.sojka.pomeranian.chat.model.Message;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public final class MessageMapper {
                 .sender(new ChatUser(message.getProfileId(), message.getUsername()))
                 .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername()))
                 .content(message.getContent())
-                .type(message.getMessageType())
+                .type(message.getMessageType() != null ? MessageType.valueOf(message.getMessageType()): null)
                 .resourceId(message.getResourceId())
                 .threadId(message.getThreadId())
                 .editedAt(message.getEditedAt())

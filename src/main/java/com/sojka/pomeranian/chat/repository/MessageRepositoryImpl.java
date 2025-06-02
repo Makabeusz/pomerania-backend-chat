@@ -27,7 +27,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 public class MessageRepositoryImpl implements MessageRepository {
 
     private static final String MESSAGES_TABLE = "messages";
-    private static final String USER_CONVERSATIONS_TABLE = "user_conversations";
+    private static final String USER_CONVERSATIONS_TABLE = "conversations";
     private static final String KEYSPACE = "messages";
 
     private final int pageSize = 10;

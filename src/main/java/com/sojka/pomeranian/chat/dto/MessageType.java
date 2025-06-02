@@ -2,7 +2,7 @@ package com.sojka.pomeranian.chat.dto;
 
 public enum MessageType {
     CHAT,
-    INITIAL_MESSAGE,
+    CHAT_INIT,
     JOIN,
     LEAVE
 }

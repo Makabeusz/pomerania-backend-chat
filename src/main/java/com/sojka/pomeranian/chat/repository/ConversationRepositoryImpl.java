@@ -31,13 +31,10 @@ public class ConversationRepositoryImpl implements ConversationRepository {
 
         try {
             CqlSession session = connector.getSession();
-            var saved = session.execute(statement).map(r -> new Conversation(
-                    r.getString("room_id"),
-                    r.getString("user_id"))
-            ).one();
+            session.execute(statement);
 
             log.info(String.format("Saved conversation: room_id=%s, user_id=%s", conversation.getRoomId(), conversation.getUserId()));
-            return saved;
+            return conversation;
         } catch (IllegalStateException e) {
             log.error(String.format("CqlSession not initialized for save: %s", e.getMessage()), e);
             throw new RuntimeException("Cassandra session not initialized", e);
