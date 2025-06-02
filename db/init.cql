@@ -20,6 +20,13 @@ CREATE TABLE messages.messages (
     PRIMARY KEY (room_id, created_at, message_id))
 WITH CLUSTERING ORDER BY (created_at DESC, message_id ASC);
 
+-- Conversations list
+CREATE TABLE messages.conversations (
+    user_id VARCHAR,
+    room_id VARCHAR,
+    PRIMARY KEY (user_id, room_id)
+);
+
 -- Reactions
 CREATE TABLE messages.reactions (
     message_id TEXT,

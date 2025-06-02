@@ -4,7 +4,6 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
@@ -19,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -29,6 +27,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 public class MessageRepositoryImpl implements MessageRepository {
 
     private static final String MESSAGES_TABLE = "messages";
+    private static final String USER_CONVERSATIONS_TABLE = "user_conversations";
     private static final String KEYSPACE = "messages";
 
     private final int pageSize = 10;
@@ -49,7 +48,7 @@ public class MessageRepositoryImpl implements MessageRepository {
                 pagingStateBuffer = ByteBuffer.wrap(Base64.getUrlDecoder().decode(pageState));
             } catch (IllegalArgumentException e) {
                 log.error(String.format("Invalid pageState for room_id %s: %s", roomId, e.getMessage()), e);
-                return new MessagePage(List.of(), null); // Reset to first page
+                return new MessagePage(List.of(), null);
             }
         }
 
@@ -137,18 +136,14 @@ public class MessageRepositoryImpl implements MessageRepository {
         }
     }
 
+    @Override
     public MessagePage findConversationsHeaders(String userId, String pageState) {
         try {
             CqlSession session = connector.getSession();
-            // Select latest message per room_id
-            Select select = QueryBuilder.selectFrom(MESSAGES_TABLE)
-                    .all()
-                    .whereColumn("room_id").in(
-                            QueryBuilder.bindMarker("room_id_left"),
-                            QueryBuilder.bindMarker("room_id_right")
-                    )
-                    .orderBy("created_at", ClusteringOrder.DESC)
-                    .perPartitionLimit(1);
+            // Step 1: Fetch room_ids for the user from user_conversations
+            Select roomIdSelect = QueryBuilder.selectFrom(USER_CONVERSATIONS_TABLE)
+                    .column("room_id")
+                    .whereColumn("user_id").isEqualTo(literal(userId));
 
             ByteBuffer pagingStateBuffer = null;
             if (pageState != null) {
@@ -160,46 +155,65 @@ public class MessageRepositoryImpl implements MessageRepository {
                 }
             }
 
-            SimpleStatement statement = select.build()
+            SimpleStatement roomIdStatement = roomIdSelect.build()
                     .setPageSize(pageSize)
-                    .setPagingState(pagingStateBuffer)
-                    .setNamedValues(Map.of(
-                            "room_id_left", userId + ":%",
-                            "room_id_right", "%:" + userId)
-                    );
+                    .setPagingState(pagingStateBuffer);
 
-            ResultSet resultSet = session.execute(statement);
+            ResultSet roomIdResultSet = session.execute(roomIdStatement);
+            List<String> roomIds = new ArrayList<>();
+            for (Row row : roomIdResultSet) {
+                roomIds.add(row.getString("room_id"));
+            }
+
+            if (roomIds.isEmpty()) {
+                log.info(String.format("No conversations found for user_id=%s", userId));
+                return new MessagePage(List.of(), null);
+            }
+
+            // Step 2: Fetch latest message for each room_id
+            // todo: duplication - extract common part with findByRoomId
             List<Message> messages = new ArrayList<>();
-            int rowCount = 0;
+            for (String roomId : roomIds) {
+                Select select2 = QueryBuilder.selectFrom(MESSAGES_TABLE)
+                        .all()
+                        .whereColumn("room_id").isEqualTo(literal(roomId));
 
-            for (Row row : resultSet) {
-                Message message = Message.builder()
-                        .roomId(row.getString("room_id"))
-                        .createdAt(row.getInstant("created_at"))
-                        .messageId(row.getString("message_id"))
-                        .content(row.getString("content"))
-                        .messageType(row.getString("message_type"))
-                        .profileId(row.getString("profile_id"))
-                        .username(row.getString("username"))
-                        .recipientProfileId(row.getString("recipient_profile_id"))
-                        .recipientUsername(row.getString("recipient_username"))
-                        .resourceId(row.getString("resource_id"))
-                        .threadId(row.getString("thread_id"))
-                        .editedAt(row.getString("edited_at"))
-                        .deletedAt(row.getString("deleted_at"))
-                        .pinned(row.getBoolean("pinned"))
-                        .metadata(row.getMap("metadata", String.class, String.class))
-                        .build();
-                messages.add(message);
+                SimpleStatement statement = select2.build()
+                        .setPageSize(pageSize)
+                        .setPagingState(pagingStateBuffer);
 
-                if (++rowCount >= pageSize) {
+
+//                CqlSession session = connector.getSession();
+                ResultSet resultSet = session.execute(statement);
+
+                for (Row row : resultSet) {
+                    Message message = new Message();
+                    message.setRoomId(row.getString("room_id"));
+                    message.setCreatedAt(row.getInstant("created_at"));
+                    message.setMessageId(row.getString("message_id"));
+                    message.setProfileId(row.getString("profile_id"));
+                    message.setUsername(row.getString("username"));
+                    message.setRecipientUsername(row.getString("recipient_username"));
+                    message.setRecipientProfileId(row.getString("recipient_profile_id"));
+                    message.setContent(row.getString("content"));
+                    message.setMessageType(row.getString("message_type"));
+                    message.setResourceId(row.getString("resource_id"));
+                    message.setThreadId(row.getString("thread_id"));
+                    message.setEditedAt(row.getString("edited_at"));
+                    message.setDeletedAt(row.getString("deleted_at"));
+                    message.setPinned(row.getBoolean("pinned"));
+                    message.setMetadata(row.getMap("metadata", String.class, String.class));
+                    messages.add(message);
+
                     break;
                 }
+
+
             }
 
             log.info(String.format("Fetched %d conversation messages for user_id=%s", messages.size(), userId));
 
-            ByteBuffer pagingState = resultSet.getExecutionInfo().getPagingState();
+            ByteBuffer pagingState = roomIdResultSet.getExecutionInfo().getPagingState();
             String nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
 
             return new MessagePage(messages, nextPageState);

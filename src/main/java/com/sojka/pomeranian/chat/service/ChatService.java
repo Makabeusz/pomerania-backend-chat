@@ -3,7 +3,9 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
+import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.chat.repository.ConversationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.MessageMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +17,10 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class MessageService {
+public class ChatService {
 
     private final MessageRepository messageRepository;
+    private final ConversationRepository conversationRepository;
 
     public Message saveMessage(ChatMessage chatMessage) {
         Message message = new Message();
@@ -58,7 +61,15 @@ public class MessageService {
     }
 
     /**
-     * @see MessageService#generateRoomId(String, String)
+     * @return Room ID
+     */
+    public String initConversation(String userId, String roomId) {
+        Conversation saved = conversationRepository.save(new Conversation(userId, roomId));
+        return saved.getRoomId();
+    }
+
+    /**
+     * @see ChatService#generateRoomId(String, String)
      */
     private String generateRoomId(ChatMessage chatMessage) {
         return generateRoomId(chatMessage.getSender().id(), chatMessage.getRecipient().id());

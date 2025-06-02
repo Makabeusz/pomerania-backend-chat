@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
-import com.sojka.pomeranian.chat.service.MessageService;
+import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MessageController {
 
-    private final MessageService messageService;
+    private final ChatService chatService;
 
     @GetMapping
     public ResponseEntity<MessagePageResponse> getConversation(
@@ -26,7 +26,7 @@ public class MessageController {
             @RequestParam(required = false) String nextPageState,
             @AuthenticationPrincipal User user
     ) {
-        return ResponseEntity.ok(messageService.getConversation(user.getId(), recipientId, nextPageState));
+        return ResponseEntity.ok(chatService.getConversation(user.getId(), recipientId, nextPageState));
     }
 
     @GetMapping("/headers")
@@ -34,7 +34,7 @@ public class MessageController {
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState
     ) {
-        return ResponseEntity.ok(messageService.getConversationsHeaders(user.getId(), nextPageState));
+        return ResponseEntity.ok(chatService.getConversationsHeaders(user.getId(), nextPageState));
     }
 
 }
