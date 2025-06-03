@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
+@Deprecated
 public class ConversationRepositoryImpl implements ConversationRepository {
 
     private static final String CONVERSATIONS_TABLE = "conversations";
