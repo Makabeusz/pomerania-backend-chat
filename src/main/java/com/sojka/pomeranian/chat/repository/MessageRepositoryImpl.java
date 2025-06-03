@@ -1,6 +1,8 @@
 package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -27,7 +29,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 public class MessageRepositoryImpl implements MessageRepository {
 
     private static final String MESSAGES_TABLE = "messages";
-    private static final String USER_CONVERSATIONS_TABLE = "conversations";
+    private static final String CONVERSATIONS_TABLE = "conversations";
     private static final String KEYSPACE = "messages";
 
     private final int pageSize = 10;
@@ -101,9 +103,13 @@ public class MessageRepositoryImpl implements MessageRepository {
         }
     }
 
+    /**
+     * Saves the message and update conversations for recipient and sender.
+     */
     @Override
     public Message save(Message message) {
-        RegularInsert insert = QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
+        // Build insert for messages table
+        RegularInsert messageInsert = QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
                 .value("room_id", literal(message.getRoomId()))
                 .value("created_at", literal(message.getCreatedAt()))
                 .value("message_id", literal(message.getMessageId()))
@@ -120,18 +126,36 @@ public class MessageRepositoryImpl implements MessageRepository {
                 .value("pinned", literal(message.getPinned()))
                 .value("metadata", literal(message.getMetadata()));
 
-        SimpleStatement statement = insert.build();
+        // Build upserts for conversations table
+        RegularInsert senderConversationInsert = QueryBuilder.insertInto(KEYSPACE, CONVERSATIONS_TABLE)
+                .value("room_id", literal(message.getRoomId()))
+                .value("last_message_created_at", literal(message.getCreatedAt()))
+                .value("user_id", literal(message.getProfileId()));
+
+        RegularInsert recipientConversationInsert = QueryBuilder.insertInto(KEYSPACE, CONVERSATIONS_TABLE)
+                .value("room_id", literal(message.getRoomId()))
+                .value("last_message_created_at", literal(message.getCreatedAt()))
+                .value("user_id", literal(message.getRecipientProfileId()));
+
+        // Combine into an unlogged batch
+        BatchStatement batch = BatchStatement.builder(BatchType.UNLOGGED)
+                .addStatement(messageInsert.build())
+                .addStatement(senderConversationInsert.build())
+                .addStatement(recipientConversationInsert.build())
+                .build();
 
         try {
             CqlSession session = connector.getSession();
-            session.execute(statement);
-            log.info(String.format("Saved message: room_id=%s, message_id=%s", message.getRoomId(), message.getMessageId()));
+            session.execute(batch);
+
+            log.info(String.format("Saved message and updated conversations: room_id=%s, message_id=%s",
+                    message.getRoomId(), message.getMessageId()));
             return message;
         } catch (IllegalStateException e) {
             log.error(String.format("CqlSession not initialized for save: %s", e.getMessage()), e);
             throw new RuntimeException("Cassandra session not initialized", e);
         } catch (Exception e) {
-            log.error(String.format("Failed to save message: %s", e.getMessage()), e);
+            log.error(String.format("Failed to save message and conversations: %s", e.getMessage()), e);
             throw new RuntimeException(String.format("Failed to save message for room_id %s", message.getRoomId()), e);
         }
     }
@@ -141,7 +165,7 @@ public class MessageRepositoryImpl implements MessageRepository {
         try {
             CqlSession session = connector.getSession();
             // Step 1: Fetch room_ids for the user from user_conversations
-            Select roomIdSelect = QueryBuilder.selectFrom(USER_CONVERSATIONS_TABLE)
+            Select roomIdSelect = QueryBuilder.selectFrom(CONVERSATIONS_TABLE)
                     .column("room_id")
                     .whereColumn("user_id").isEqualTo(literal(userId));
 
@@ -182,8 +206,6 @@ public class MessageRepositoryImpl implements MessageRepository {
                         .setPageSize(pageSize)
                         .setPagingState(pagingStateBuffer);
 
-
-//                CqlSession session = connector.getSession();
                 ResultSet resultSet = session.execute(statement);
 
                 for (Row row : resultSet) {

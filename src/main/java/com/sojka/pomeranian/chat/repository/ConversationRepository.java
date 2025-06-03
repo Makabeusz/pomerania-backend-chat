@@ -1,8 +1,8 @@
 package com.sojka.pomeranian.chat.repository;
 
-import com.sojka.pomeranian.chat.model.Conversation;
+import java.util.List;
 
 public interface ConversationRepository {
 
-    Conversation save(Conversation conversation);
+    List<String> findConversations(String userId);
 }

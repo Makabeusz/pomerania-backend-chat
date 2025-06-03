@@ -3,9 +3,7 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
-import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.chat.repository.ConversationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.MessageMapper;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import java.util.UUID;
 public class ChatService {
 
     private final MessageRepository messageRepository;
-    private final ConversationRepository conversationRepository;
 
     public Message saveMessage(ChatMessage chatMessage) {
         Message message = new Message();
@@ -58,14 +55,6 @@ public class ChatService {
                         .toList(),
                 headers.getNextPageState()
         );
-    }
-
-    /**
-     * @return Room ID
-     */
-    public String initConversation(String userId, String roomId) {
-        Conversation saved = conversationRepository.save(new Conversation(userId, roomId));
-        return saved.getRoomId();
     }
 
     /**

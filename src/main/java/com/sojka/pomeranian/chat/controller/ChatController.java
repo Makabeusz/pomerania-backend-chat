@@ -15,8 +15,6 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 
-import static com.sojka.pomeranian.chat.dto.MessageType.CHAT_INIT;
-
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
@@ -37,12 +35,7 @@ public class ChatController {
             throw new SecurityException("User authentication failed: Not found principal");
         }
 
-        if (messageResponse.getType() == CHAT_INIT) {
-            chatService.initConversation(user.getId(), messageResponse.getRoomId());
-        }
-
-        messagingTemplate.convertAndSendToUser(chatMessage.getSender().id(), "/queue/private", messageResponse);
-        messagingTemplate.convertAndSendToUser(chatMessage.getRecipient().id(), "/queue/private", messageResponse);
+        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), "/queue/private", messageResponse);
     }
 
     @MessageMapping("/chat.addUser")

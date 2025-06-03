@@ -22,10 +22,13 @@ WITH CLUSTERING ORDER BY (created_at DESC, message_id ASC);
 
 -- Conversations list
 CREATE TABLE messages.conversations (
-    user_id VARCHAR,
     room_id VARCHAR,
-    PRIMARY KEY (user_id, room_id)
+    user_id VARCHAR,
+    last_message_created_at TIMESTAMP,
+    PRIMARY KEY (room_id, user_id)
 );
+
+CREATE INDEX conversations_user_id_idx ON messages.conversations (user_id);
 
 -- Reactions
 CREATE TABLE messages.reactions (

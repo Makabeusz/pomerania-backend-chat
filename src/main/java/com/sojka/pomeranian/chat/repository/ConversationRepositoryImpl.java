@@ -1,12 +1,18 @@
 package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.sojka.pomeranian.chat.db.AstraConnector;
-import com.sojka.pomeranian.chat.model.Conversation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -23,24 +29,35 @@ public class ConversationRepositoryImpl implements ConversationRepository {
     private final AstraConnector connector;
 
     @Override
-    public Conversation save(Conversation conversation) {
-        var statement = QueryBuilder.insertInto(KEYSPACE, CONVERSATIONS_TABLE)
-                .value("room_id", literal(conversation.getRoomId()))
-                .value("user_id", literal(conversation.getUserId()))
-                .build();
-
+    public List<String> findConversations(String userId) {
         try {
             CqlSession session = connector.getSession();
-            session.execute(statement);
+            // Step 1: Fetch room_ids for the user from user_conversations
+            Select roomIdSelect = QueryBuilder.selectFrom(CONVERSATIONS_TABLE)
+                    .column("room_id")
+                    .whereColumn("user_id").isEqualTo(literal(userId));
 
-            log.info(String.format("Saved conversation: room_id=%s, user_id=%s", conversation.getRoomId(), conversation.getUserId()));
-            return conversation;
+            SimpleStatement roomIdStatement = roomIdSelect.build()
+                    .setPageSize(10000);
+
+            ResultSet roomIdResultSet = session.execute(roomIdStatement);
+            List<String> roomIds = new ArrayList<>();
+            for (Row row : roomIdResultSet) {
+                roomIds.add(row.getString("room_id"));
+            }
+
+            if (roomIds.isEmpty()) {
+                log.info(String.format("No conversations found for user_id=%s", userId));
+                return List.of();
+            }
+
+            return roomIds;
         } catch (IllegalStateException e) {
-            log.error(String.format("CqlSession not initialized for save: %s", e.getMessage()), e);
+            log.error(String.format("CqlSession not initialized for user_id %s: %s", userId, e.getMessage()), e);
             throw new RuntimeException("Cassandra session not initialized", e);
         } catch (Exception e) {
-            log.error(String.format("Failed to save conversation: %s", e.getMessage()), e);
-            throw new RuntimeException(String.format("Failed to save conversation for room_id %s", conversation.getRoomId()), e);
+            log.error(String.format("Failed to find conversations for user_id %s: %s", userId, e.getMessage()), e);
+            return List.of();
         }
     }
 }
