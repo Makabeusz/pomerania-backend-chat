@@ -38,6 +38,10 @@ public class MessageRepositoryImpl implements MessageRepository {
 
     @Override
     public MessagePage findByRoomId(String roomId, String pageState) {
+        return findByRoomId(roomId, pageState, pageSize);
+    }
+
+    public MessagePage findByRoomId(String roomId, String pageState, int pageSize) {
         Select select = QueryBuilder.selectFrom(MESSAGES_TABLE)
                 .all()
                 .whereColumn("room_id").isEqualTo(literal(roomId));
@@ -185,8 +189,13 @@ public class MessageRepositoryImpl implements MessageRepository {
 
             ResultSet roomIdResultSet = session.execute(roomIdStatement);
             List<String> roomIds = new ArrayList<>();
+            int rowCount = 0;
             for (Row row : roomIdResultSet) {
                 roomIds.add(row.getString("room_id"));
+
+                if (++rowCount >= pageSize) {
+                    break;
+                }
             }
 
             if (roomIds.isEmpty()) {
@@ -194,49 +203,16 @@ public class MessageRepositoryImpl implements MessageRepository {
                 return new MessagePage(List.of(), null);
             }
 
+            ByteBuffer pagingState = roomIdResultSet.getExecutionInfo().getPagingState();
+            String nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
+
             // Step 2: Fetch latest message for each room_id
-            // todo: duplication - extract common part with findByRoomId
             List<Message> messages = new ArrayList<>();
             for (String roomId : roomIds) {
-                Select select2 = QueryBuilder.selectFrom(MESSAGES_TABLE)
-                        .all()
-                        .whereColumn("room_id").isEqualTo(literal(roomId));
-
-                SimpleStatement statement = select2.build()
-                        .setPageSize(pageSize)
-                        .setPagingState(pagingStateBuffer);
-
-                ResultSet resultSet = session.execute(statement);
-
-                for (Row row : resultSet) {
-                    Message message = new Message();
-                    message.setRoomId(row.getString("room_id"));
-                    message.setCreatedAt(row.getInstant("created_at"));
-                    message.setMessageId(row.getString("message_id"));
-                    message.setProfileId(row.getString("profile_id"));
-                    message.setUsername(row.getString("username"));
-                    message.setRecipientUsername(row.getString("recipient_username"));
-                    message.setRecipientProfileId(row.getString("recipient_profile_id"));
-                    message.setContent(row.getString("content"));
-                    message.setMessageType(row.getString("message_type"));
-                    message.setResourceId(row.getString("resource_id"));
-                    message.setThreadId(row.getString("thread_id"));
-                    message.setEditedAt(row.getString("edited_at"));
-                    message.setDeletedAt(row.getString("deleted_at"));
-                    message.setPinned(row.getBoolean("pinned"));
-                    message.setMetadata(row.getMap("metadata", String.class, String.class));
-                    messages.add(message);
-
-                    break;
-                }
-
-
+                messages.add(findByRoomId(roomId, null, 1).getMessages().getFirst());
             }
 
             log.info(String.format("Fetched %d conversation messages for user_id=%s", messages.size(), userId));
-
-            ByteBuffer pagingState = roomIdResultSet.getExecutionInfo().getPagingState();
-            String nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
 
             return new MessagePage(messages, nextPageState);
         } catch (IllegalStateException e) {
