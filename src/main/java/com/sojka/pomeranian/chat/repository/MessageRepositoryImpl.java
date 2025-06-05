@@ -41,10 +41,6 @@ public class MessageRepositoryImpl implements MessageRepository {
     private final AstraConnector connector;
 
     @Override
-    public MessagePage findByRoomId(String roomId, String pageState) {
-        return findByRoomId(roomId, pageState, pageSize);
-    }
-
     public MessagePage findByRoomId(String roomId, String pageState, int pageSize) {
         Select select = QueryBuilder.selectFrom(MESSAGES_TABLE)
                 .all()
