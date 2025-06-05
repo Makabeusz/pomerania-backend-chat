@@ -25,8 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.UUID;
 
+import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
 import static com.sojka.pomeranian.chat.util.TestUtils.timestampComparator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -111,9 +111,9 @@ class ChatServiceIntegrationTest {
         String userId1 = "user1";
         String userId2 = "user2";
         String roomId = userId1 + ":" + userId2;
-        Message message1 = createTestMessage(roomId, "Message 1", userId1, userId2, Instant.now().minusSeconds(10));
-        Message message2 = createTestMessage(roomId, "Message 2", userId1, userId2, Instant.now().minusSeconds(5));
-        Message message3 = createTestMessage(roomId, "Message 3", userId2, userId1, Instant.now());
+        Message message1 = createChatMessage(roomId, "Message 1", userId1, userId2, Instant.now().minusSeconds(10));
+        Message message2 = createChatMessage(roomId, "Message 2", userId1, userId2, Instant.now().minusSeconds(5));
+        Message message3 = createChatMessage(roomId, "Message 3", userId2, userId1, Instant.now());
         messageRepository.save(message1);
         messageRepository.save(message2);
         messageRepository.save(message3);
@@ -133,11 +133,11 @@ class ChatServiceIntegrationTest {
         String userId = "userX";
         String roomIdXY = "userX:userY";
         String roomIdXZ = "userX:userZ";
-        Message message3 = createTestMessage(roomIdXY, "Message 3", "userY", "userX", Instant.now());
-        Message message2 = createTestMessage(roomIdXY, "Message 2", "userX", "userY", Instant.now().minusSeconds(5));
-        Message message1 = createTestMessage(roomIdXY, "Message 1", "userX", "userY", Instant.now().minusSeconds(10));
-        Message message0 = createTestMessage(roomIdXZ, "Message 0", "userZ", "userX", Instant.now().minusSeconds(15));
-        Message messageNotInTheScope = createTestMessage("userY:userZ", "Other users message", "userZ", "userY", Instant.now().minusSeconds(15));
+        Message message3 = createChatMessage(roomIdXY, "Message 3", "userY", "userX", Instant.now());
+        Message message2 = createChatMessage(roomIdXY, "Message 2", "userX", "userY", Instant.now().minusSeconds(5));
+        Message message1 = createChatMessage(roomIdXY, "Message 1", "userX", "userY", Instant.now().minusSeconds(10));
+        Message message0 = createChatMessage(roomIdXZ, "Message 0", "userZ", "userX", Instant.now().minusSeconds(15));
+        Message messageNotInTheScope = createChatMessage("userY:userZ", "Other users message", "userZ", "userY", Instant.now().minusSeconds(15));
         messageRepository.save(messageNotInTheScope);
         messageRepository.save(message0);
         messageRepository.save(message1);
@@ -176,7 +176,7 @@ class ChatServiceIntegrationTest {
                 sender = otherUser;
                 recipient = "user1";
             }
-            messageRepository.save(createTestMessage(roomId, "Message " + (i + 1), sender, recipient, Instant.now()));
+            messageRepository.save(createChatMessage(roomId, "Message " + (i + 1), sender, recipient, Instant.now()));
         }
 
         MessagePageResponse response = chatService.getConversationsHeaders("user1", null);
@@ -204,8 +204,8 @@ class ChatServiceIntegrationTest {
                 sender = otherUser;
                 recipient = "userA";
             }
-            messageRepository.save(createTestMessage(roomId, "Message 1", sender, recipient, Instant.now().plusSeconds(0L)));
-            messageRepository.save(createTestMessage(roomId, "Message 2", recipient, sender, Instant.now().plusSeconds(1L)));
+            messageRepository.save(createChatMessage(roomId, "Message 1", sender, recipient, Instant.now().plusSeconds(0L)));
+            messageRepository.save(createChatMessage(roomId, "Message 2", recipient, sender, Instant.now().plusSeconds(1L)));
         }
         List<ChatMessageResponse> messages = new ArrayList<>();
         MessagePageResponse response = new MessagePageResponse(Collections.emptyList(), null);
@@ -225,17 +225,4 @@ class ChatServiceIntegrationTest {
         assertNull(response.getNextPageState());
     }
 
-    private Message createTestMessage(String roomId, String content, String senderId, String recipientId, Instant createdAt) {
-        Message message = new Message();
-        message.setRoomId(roomId);
-        message.setMessageId(UUID.randomUUID().toString());
-        message.setCreatedAt(createdAt);
-        message.setProfileId(senderId);
-        message.setUsername("User" + senderId);
-        message.setRecipientProfileId(recipientId);
-        message.setRecipientUsername("User" + recipientId);
-        message.setContent(content);
-        message.setMessageType("CHAT");
-        return message;
-    }
 }
