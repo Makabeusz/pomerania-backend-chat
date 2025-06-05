@@ -18,12 +18,7 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     CassandraContainer<?> cassandraContainer() {
         return new CassandraContainer<>(DockerImageName.parse("cassandra:4.1.3"))
-                .withInitScript("init.cql")
-                .withLogConsumer(f -> log.info(f.getUtf8String()))
-                .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
-                        .withMemory(8_000_000_000L)
-                        .withCpuCount(4L)
-                );
+                .withInitScript("init.cql");
     }
 
     @Bean
