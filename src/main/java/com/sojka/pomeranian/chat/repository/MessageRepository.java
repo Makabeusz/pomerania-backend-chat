@@ -9,5 +9,5 @@ public interface MessageRepository {
 
     Message save(Message message);
 
-    MessagePage findConversationsHeaders(String userId, String pageState);
+    MessagePage findConversationsHeaders(String userId, String pageState, int pageSize);
 }

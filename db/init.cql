@@ -1,7 +1,7 @@
-CREATE KEYSPACE IF NOT EXISTS messages WITH replication = {'class': 'SimpleStrategy', 'limit': 1};
+CREATE KEYSPACE IF NOT EXISTS messages WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 
 -- Messages by room
-CREATE TABLE messages.messages (
+CREATE TABLE IF NOT EXISTS messages.messages (
     room_id VARCHAR,
     created_at TIMESTAMP,
     message_id VARCHAR,
@@ -21,17 +21,25 @@ CREATE TABLE messages.messages (
 WITH CLUSTERING ORDER BY (created_at DESC, message_id ASC);
 
 -- Conversations list
-CREATE TABLE messages.conversations (
-    room_id VARCHAR,
+CREATE TABLE IF NOT EXISTS messages.conversations (
     user_id VARCHAR,
-    last_message_created_at TIMESTAMP,
-    PRIMARY KEY (room_id, user_id)
-);
+    last_message_at TIMESTAMP,
+    room_id VARCHAR,
+    other_user_id VARCHAR,
+    other_username VARCHAR,
+    last_message_content TEXT,
+    PRIMARY KEY (user_id, last_message_at, room_id)
+) WITH CLUSTERING ORDER BY (last_message_at DESC, room_id ASC);
 
-CREATE INDEX conversations_user_id_idx ON messages.conversations (user_id);
+CREATE TABLE IF NOT EXISTS messages.conversations_index (
+    user_id VARCHAR,
+    room_id VARCHAR,
+    last_message_at TIMESTAMP,
+    PRIMARY KEY (user_id, room_id)
+) WITH CLUSTERING ORDER BY (room_id ASC);
 
 -- Reactions
-CREATE TABLE messages.reactions (
+CREATE TABLE IF NOT EXISTS messages.reactions (
     message_id VARCHAR,
     content VARCHAR,
     profile_id VARCHAR,
@@ -40,7 +48,7 @@ CREATE TABLE messages.reactions (
 );
 
 -- Read receipts
-CREATE TABLE messages.read_reactions (
+CREATE TABLE IF NOT EXISTS messages.read_reactions (
     id VARCHAR,
     profile_id VARCHAR,
     username VARCHAR,
@@ -50,7 +58,7 @@ CREATE TABLE messages.read_reactions (
 );
 
 -- Group memberships
-CREATE TABLE messages.group_members (
+CREATE TABLE IF NOT EXISTS messages.group_members (
     group_id VARCHAR,
     profile_id VARCHAR,
     joined_at TIMESTAMP,
@@ -60,7 +68,7 @@ CREATE TABLE messages.group_members (
 );
 
 -- Typing indicators
-CREATE TABLE messages.typing_indicators (
+CREATE TABLE IF NOT EXISTS messages.typing_indicators (
     room_id VARCHAR,
     profile_id VARCHAR,
     username VARCHAR,
@@ -70,7 +78,7 @@ CREATE TABLE messages.typing_indicators (
 );
 
 -- Moderation actions
-CREATE TABLE messages.actions (
+CREATE TABLE IF NOT EXISTS messages.actions (
     action_id VARCHAR,
     message_id VARCHAR,
     profile_id VARCHAR,
@@ -84,7 +92,7 @@ CREATE TABLE messages.actions (
 ) WITH CLUSTERING ORDER BY (action_type DESC, created_at DESC);
 
 -- Message search index (future use)
-CREATE TABLE messages.search (
+CREATE TABLE IF NOT EXISTS messages.search (
     room_id VARCHAR,
     content_token VARCHAR,
     message_id VARCHAR,

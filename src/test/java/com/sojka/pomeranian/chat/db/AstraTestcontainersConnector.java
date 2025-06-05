@@ -2,14 +2,20 @@ package com.sojka.pomeranian.chat.db;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.sojka.pomeranian.chat.exception.AstraConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.testcontainers.containers.CassandraContainer;
 
+import java.time.Duration;
+
+@Primary
 @Component
-public class AstraTestcontainersConnector {
+public class AstraTestcontainersConnector extends AstraConnector {
 
     Logger log = LoggerFactory.getLogger(AstraTestcontainersConnector.class);
 
@@ -18,6 +24,7 @@ public class AstraTestcontainersConnector {
     private final Object lock = new Object();
 
     public AstraTestcontainersConnector(CassandraContainer<?> cassandraContainer) {
+        super(null);
         this.cassandraContainer = cassandraContainer;
     }
 
@@ -26,12 +33,16 @@ public class AstraTestcontainersConnector {
             return session;
         }
         try {
+            DriverConfigLoader configLoader = DriverConfigLoader.programmaticBuilder()
+                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
+                    .build();
             log.info("Attempting to connect to Testcontainers Cassandra");
             CqlSession newSession = CqlSession.builder()
                     .addContactPoint(cassandraContainer.getContactPoint())
                     .withLocalDatacenter(cassandraContainer.getLocalDatacenter())
                     .withAuthCredentials("cassandra", "cassandra") // Default credentials
                     .withKeyspace("messages")
+                    .withConfigLoader(configLoader)
                     .build();
 
             synchronized (lock) {

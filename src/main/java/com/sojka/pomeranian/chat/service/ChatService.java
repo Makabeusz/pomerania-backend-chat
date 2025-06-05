@@ -46,11 +46,10 @@ public class ChatService {
     }
 
     public MessagePageResponse getConversationsHeaders(String userId, String pageState) {
-        MessagePage headers = messageRepository.findConversationsHeaders(userId, pageState);
+        MessagePage headers = messageRepository.findConversationsHeaders(userId, pageState, 10);
 
         return new MessagePageResponse(
                 headers.getMessages().stream()
-                        .sorted(Comparator.comparing(Message::getCreatedAt))
                         .map(MessageMapper::toDto)
                         .toList(),
                 headers.getNextPageState()
