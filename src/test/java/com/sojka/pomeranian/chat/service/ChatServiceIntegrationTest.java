@@ -9,8 +9,12 @@ import com.sojka.pomeranian.chat.dto.ChatMessageResponse;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.dto.MessageType;
+import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
+import com.sojka.pomeranian.chat.util.CommonUtils;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,21 +22,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 
 import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
-import static com.sojka.pomeranian.chat.util.TestUtils.timestampComparator;
+import static com.sojka.pomeranian.chat.util.TestUtils.paginationString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class})
 @SpringBootTest
 class ChatServiceIntegrationTest {
 
@@ -42,6 +43,8 @@ class ChatServiceIntegrationTest {
     MessageRepository messageRepository;
     @Autowired
     AstraTestcontainersConnector connector;
+    @Autowired
+    ConversationsRepository conversationsRepository;
 
     CqlSession session;
 
@@ -49,7 +52,7 @@ class ChatServiceIntegrationTest {
     void setUp() {
         session = connector.connect();
         session.execute("TRUNCATE messages.messages");
-        session.execute("TRUNCATE messages.conversations");
+        conversationsRepository.deleteAll();
     }
 
     @Test
@@ -65,45 +68,47 @@ class ChatServiceIntegrationTest {
 
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
-                "SELECT content FROM messages.messages WHERE room_id = ? AND created_at = ? AND message_id = ?",
+                "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND message_id = ?",
                 savedMessage.getRoomId(), savedMessage.getCreatedAt(), savedMessage.getMessageId()
         );
-        String retrievedContent = connector.getSession()
+        var row = connector.getSession()
                 .execute(selectMessage)
-                .one()
-                .getString("content");
-        assertEquals("Hello, World!", retrievedContent);
+                .one();
+        Message saveResult = Message.builder()
+                .roomId(row.getString("room_id"))
+                .createdAt(row.getInstant("created_at"))
+                .messageId(row.getString("message_id"))
+                .profileId(row.getString("profile_id"))
+                .username(row.getString("username"))
+                .recipientProfileId(row.getString("recipient_profile_id"))
+                .recipientUsername(row.getString("recipient_username"))
+                .content(row.getString("content"))
+                .messageType(row.getString("message_type"))
+                .resourceId(row.getString("resource_id"))
+                .threadId(row.getString("thread_id"))
+                .editedAt(row.getString("edited_at"))
+                .deletedAt(row.getString("deleted_at"))
+                .pinned(row.getBoolean("pinned"))
+                .metadata(row.getMap("metadata", String.class, String.class))
+                .build();
+        assertThat(saveResult).usingRecursiveComparison(new RecursiveComparisonConfiguration())
+                .ignoringFields("createdAt", "messageId")
+                .isEqualTo(Message.builder()
+                        .roomId(CommonUtils.generateRoomId(chatMessage))
+                        .profileId("user1")
+                        .username("User1")
+                        .recipientProfileId("user2")
+                        .recipientUsername("User2")
+                        .content("Hello, World!")
+                        .messageType("CHAT")
+                        .metadata(Collections.emptyMap())
+                        .pinned(false)
+                        .build());
 
-        // Verify conversations table for both users
-        SimpleStatement selectConversation = SimpleStatement.newInstance(
-                "SELECT last_message_at FROM messages.conversations WHERE user_id = ?",
-                savedMessage.getProfileId()
+        assertThat(conversationsRepository.findAll()).containsExactly(
+                new Conversation(new Conversation.Id("user1", "user1:user2"), saveResult.getCreatedAt()),
+                new Conversation(new Conversation.Id("user2", "user1:user2"), saveResult.getCreatedAt())
         );
-        var lastMessageCreatedAt = LocalDateTime.ofInstant(Objects.requireNonNull(
-                        connector.getSession()
-                                .execute(selectConversation)
-                                .one()
-                                .getInstant("last_message_at")),
-                ZoneId.systemDefault());
-
-        assertThat(lastMessageCreatedAt)
-                .usingComparator(timestampComparator())
-                .isEqualTo(LocalDateTime.ofInstant(savedMessage.getCreatedAt(), ZoneId.systemDefault()));
-
-        selectConversation = SimpleStatement.newInstance(
-                "SELECT last_message_at FROM messages.conversations WHERE user_id = ?",
-                savedMessage.getRecipientProfileId()
-        );
-        lastMessageCreatedAt = LocalDateTime.ofInstant(Objects.requireNonNull(
-                        connector.getSession()
-                                .execute(selectConversation)
-                                .one()
-                                .getInstant("last_message_at")),
-                ZoneId.systemDefault());
-
-        assertThat(lastMessageCreatedAt)
-                .usingComparator(timestampComparator())
-                .isEqualTo(LocalDateTime.ofInstant(savedMessage.getCreatedAt(), ZoneId.systemDefault()));
     }
 
     @Test
@@ -143,8 +148,15 @@ class ChatServiceIntegrationTest {
         messageRepository.save(message1);
         messageRepository.save(message2);
         messageRepository.save(message3);
+        // user conversations
+        conversationsRepository.save(new Conversation(new Conversation.Id(userId, roomIdXY), message3.getCreatedAt()));
+        conversationsRepository.save(new Conversation(new Conversation.Id(userId, roomIdXZ), message0.getCreatedAt()));
+        // other party conversations
+        conversationsRepository.save(new Conversation(new Conversation.Id("userY", roomIdXY), message3.getCreatedAt()));
+        conversationsRepository.save(new Conversation(new Conversation.Id("userZ", roomIdXZ), message0.getCreatedAt()));
 
-        MessagePageResponse response = chatService.getConversationsHeaders(userId, null);
+
+        MessagePageResponse response = chatService.getConversationsHeaders(userId, paginationString(0, 10));
 
         assertEquals(2, response.getMessages().size());
         assertEquals("Message 3", response.getMessages().get(0).getContent()); // newest on top
@@ -167,19 +179,25 @@ class ChatServiceIntegrationTest {
                 roomId = "user1:user5";
             }
             var otherUser = roomId.split(":")[1];
-            String sender;
-            String recipient;
+            String senderId;
+            String recipientId;
             if (i % (random.nextInt(2) + 1) == 0) {
-                sender = "user1";
-                recipient = otherUser;
+                senderId = "user1";
+                recipientId = otherUser;
             } else {
-                sender = otherUser;
-                recipient = "user1";
+                senderId = otherUser;
+                recipientId = "user1";
             }
-            messageRepository.save(createChatMessage(roomId, "Message " + (i + 1), sender, recipient, Instant.now()));
+
+            Instant now = Instant.now();
+            messageRepository.save(createChatMessage(roomId, "Message " + (i + 1), senderId, recipientId, now));
+
+            var senderConversation = new Conversation(new Conversation.Id(senderId, roomId), now);
+            var recipientConversation = new Conversation(new Conversation.Id(recipientId, roomId), now);
+            conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
-        MessagePageResponse response = chatService.getConversationsHeaders("user1", null);
+        MessagePageResponse response = chatService.getConversationsHeaders("user1", paginationString(0, 10));
 
         assertEquals(4, response.getMessages().size());
         assertThat(response.getNextPageState()).isNull(); // Assuming pagination
@@ -195,20 +213,30 @@ class ChatServiceIntegrationTest {
         for (int i = 0; i < 30; i++) {
             String roomId = "userA:user" + ((i + 1) % 10);
             var otherUser = roomId.split(":")[1];
-            String sender;
-            String recipient;
+            String senderId;
+            String recipientId;
             if (i % (random.nextInt(2) + 1) == 0) {
-                sender = "userA";
-                recipient = otherUser;
+                senderId = "userA";
+                recipientId = otherUser;
             } else {
-                sender = otherUser;
-                recipient = "userA";
+                senderId = otherUser;
+                recipientId = "userA";
             }
-            messageRepository.save(createChatMessage(roomId, "Message 1", sender, recipient, Instant.now().plusSeconds(0L)));
-            messageRepository.save(createChatMessage(roomId, "Message 2", recipient, sender, Instant.now().plusSeconds(1L)));
+            Instant now = Instant.now();
+
+            messageRepository.save(createChatMessage(roomId, "Message 1", senderId, recipientId, now));
+            var senderConversation1 = new Conversation(new Conversation.Id(senderId, roomId), now);
+            var recipientConversation1 = new Conversation(new Conversation.Id(recipientId, roomId), now);
+            conversationsRepository.saveAll(List.of(senderConversation1, recipientConversation1));
+
+            Instant secondAhead = now.plusSeconds(1L);
+            messageRepository.save(createChatMessage(roomId, "Message 2", recipientId, senderId, secondAhead));
+            var senderConversation2 = new Conversation(new Conversation.Id(senderId, roomId), now);
+            var recipientConversation2 = new Conversation(new Conversation.Id(recipientId, roomId), now);
+            conversationsRepository.saveAll(List.of(senderConversation2, recipientConversation2));
         }
         List<ChatMessageResponse> messages = new ArrayList<>();
-        MessagePageResponse response = new MessagePageResponse(Collections.emptyList(), null);
+        MessagePageResponse response = new MessagePageResponse(Collections.emptyList(), paginationString(0, 10));
 
         do {
             response = chatService.getConversationsHeaders("userA", response.getNextPageState());

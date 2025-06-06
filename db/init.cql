@@ -20,24 +20,6 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     PRIMARY KEY (room_id, created_at, message_id))
 WITH CLUSTERING ORDER BY (created_at DESC, message_id ASC);
 
--- Conversations list
-CREATE TABLE IF NOT EXISTS messages.conversations (
-    user_id VARCHAR,
-    last_message_at TIMESTAMP,
-    room_id VARCHAR,
-    other_user_id VARCHAR,
-    other_username VARCHAR,
-    last_message_content TEXT,
-    PRIMARY KEY (user_id, last_message_at, room_id)
-) WITH CLUSTERING ORDER BY (last_message_at DESC, room_id ASC);
-
-CREATE TABLE IF NOT EXISTS messages.conversations_index (
-    user_id VARCHAR,
-    room_id VARCHAR,
-    last_message_at TIMESTAMP,
-    PRIMARY KEY (user_id, room_id)
-) WITH CLUSTERING ORDER BY (room_id ASC);
-
 -- Reactions
 CREATE TABLE IF NOT EXISTS messages.reactions (
     message_id VARCHAR,

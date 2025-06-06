@@ -15,10 +15,15 @@ public class TestcontainersConfiguration {
     Logger log = LoggerFactory.getLogger(TestcontainersConfiguration.class);
 
     @Bean
-    @ServiceConnection
-    CassandraContainer<?> cassandraContainer() {
-        return new CassandraContainer<>(DockerImageName.parse("cassandra:4.1.3"))
-                .withInitScript("init.cql");
+//    @ServiceConnection
+    public CassandraContainer<?> cassandraContainer() {
+        return new CassandraContainer<>(DockerImageName.parse("cr.dtsx.io/datastax/dse-server:6.8.50").asCompatibleSubstituteFor("cassandra"))
+                .withEnv("DS_LICENSE", "accept")
+                .withExposedPorts(9042)
+                .withInitScript("init.cql")
+                .withStartupTimeout(java.time.Duration.ofSeconds(300))
+//                .withLogConsumer(new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("astra-container")))
+                ;
     }
 
     @Bean

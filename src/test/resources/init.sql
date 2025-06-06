@@ -142,6 +142,13 @@ CREATE TABLE comments (
     CONSTRAINT fk_comments_username FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS conversations (
+    user_id VARCHAR(255),
+    room_id VARCHAR(255),
+    last_message_at TIMESTAMP,
+    PRIMARY KEY (user_id, room_id) -- indexed
+);
+
 -- Add foreign key constraints
 ALTER TABLE profiles
     ADD CONSTRAINT fk_profiles_lifestyle FOREIGN KEY (lifestyle_id) REFERENCES lifestyle(id) ON DELETE SET NULL;
@@ -209,3 +216,4 @@ CREATE INDEX idx_posts_created_at ON posts(created_at);
 CREATE INDEX idx_comments_post_id ON comments(post_id);
 CREATE INDEX idx_comments_profile_id ON comments(profile_id);
 CREATE INDEX idx_comments_created_at ON comments(created_at);
+CREATE INDEX idx_conversations_last_message_at ON conversations(last_message_at);

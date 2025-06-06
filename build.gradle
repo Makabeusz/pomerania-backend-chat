@@ -39,6 +39,8 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
@@ -57,7 +59,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.testcontainers:cassandra:1.20.0'
+	testImplementation 'org.testcontainers:cassandra:1.21.1'
 	testImplementation 'org.testcontainers:postgresql:1.21.0'
 //	testImplementation 'io.projectreactor:reactor-test'
 //	testImplementation 'org.testcontainers:cassandra'

@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.util;
 
+import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Message;
 
 import java.time.Duration;
@@ -37,4 +38,9 @@ public class TestUtils {
         message.setMessageType("CHAT");
         return message;
     }
+
+    public static String paginationString(int pageNumber, int pageSize) {
+        return PaginationMapper.toEncodedString(new Pagination(pageNumber, pageSize));
+    }
+
 }

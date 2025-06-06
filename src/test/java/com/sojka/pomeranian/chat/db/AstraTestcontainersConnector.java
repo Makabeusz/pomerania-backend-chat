@@ -36,10 +36,11 @@ public class AstraTestcontainersConnector extends AstraConnector {
             DriverConfigLoader configLoader = DriverConfigLoader.programmaticBuilder()
                     .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(5))
                     .build();
-            log.info("Attempting to connect to Testcontainers Cassandra");
+            log.info("Attempting to connect to Testcontainers Cassandra, contactPoint=({}), localdatacenter=({})",
+                    cassandraContainer.getContactPoint(), cassandraContainer.getLocalDatacenter());
             CqlSession newSession = CqlSession.builder()
                     .addContactPoint(cassandraContainer.getContactPoint())
-                    .withLocalDatacenter(cassandraContainer.getLocalDatacenter())
+                    .withLocalDatacenter("dc1")
                     .withAuthCredentials("cassandra", "cassandra") // Default credentials
                     .withKeyspace("messages")
                     .withConfigLoader(configLoader)
