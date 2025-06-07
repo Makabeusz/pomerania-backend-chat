@@ -16,24 +16,24 @@ import java.util.List;
 @NoArgsConstructor
 public class ChatResponse<T> {
 
-    private List<T> response;
+    private List<T> data;
     private MessageType type;
 
-    public ChatResponse(@NonNull List<T> response) {
-        if (response.isEmpty()) {
+    public ChatResponse(@NonNull List<T> data) {
+        if (data.isEmpty()) {
             throw new IllegalArgumentException("Response list cannot be empty");
         }
 
-        this.response = response;
+        this.data = data;
 
-        this.type = switch (response.getFirst().getClass().getSimpleName()) {
+        this.type = switch (data.getFirst().getClass().getSimpleName()) {
             case "ChatMessagePersisted" -> MessageType.CHAT;
-            default -> throw new RuntimeException("Unrecognized chat response type: " + response.get(0).getClass());
+            default -> throw new RuntimeException("Unrecognized chat response type: " + data.get(0).getClass());
         };
 
     }
 
-    public ChatResponse(@NonNull T response) {
-        this(List.of(response));
+    public ChatResponse(@NonNull T data) {
+        this(List.of(data));
     }
 }

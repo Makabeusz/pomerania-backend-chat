@@ -64,11 +64,10 @@ public class ChatController {
 //        );
 
         log.info("readIndicator user online: {}", sessionTracker.isUserOnline(user.getId()));
-        if (sessionTracker.isUserOnline(user.getId())) {
-//            messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private", response);
-        } else {
-            log.warn("NO ACTIVE SESSION TO PUBLISH READ INDICATOR: size={}, last_key={}", keys.size(), keys.getLast());
+        messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private", null);
+        if (!sessionTracker.isUserOnline(user.getId())) {
             // TODO: push notification, will implement this later
+            log.warn("NO ACTIVE SESSION TO PUBLISH READ INDICATOR: size={}, last_key={}", keys.size(), keys.getLast());
         }
     }
 
