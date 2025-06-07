@@ -25,7 +25,7 @@ public class SessionTracker {
         if (failed) {
             log.error("Failed to put cache entry, user_id={}", user.getId());
         } else {
-            log.info("Connected to the chat: {}", user.getId());
+            log.info("Connected to the chat: username={}, user_id={}", user.getUsername(), user.getId());
         }
     }
 
@@ -37,7 +37,7 @@ public class SessionTracker {
         if (failed) {
             log.error("Failed to remove cache entry, user_id={}", user.getId());
         } else {
-            log.info("Disconnected from a chat: {}", user.getId());
+            log.info("Disconnected from the chat: username={}, user_id={}", user.getUsername(), user.getId());
         }
     }
 

@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 
 public final class CommonUtils {
 
@@ -42,8 +43,7 @@ public final class CommonUtils {
         if (instant == null) {
             return null;
         }
-        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return LocalDateTime.ofInstant(instant, ZoneId.of("UTC")).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     /**
@@ -66,5 +66,13 @@ public final class CommonUtils {
         } catch (Exception e) {
             throw new SecurityException("User authentication failed", e);
         }
+    }
+
+    public static String getRecipientIdFromRoomId(String roomId, String userId) {
+        return Arrays.stream(roomId.split(":"))
+                .filter(i -> !i.equals(userId))
+                .findAny()
+                .orElseThrow(() -> new SecurityException("The user_id=%s is not part of the room_id=%s"
+                        .formatted(userId, roomId)));
     }
 }

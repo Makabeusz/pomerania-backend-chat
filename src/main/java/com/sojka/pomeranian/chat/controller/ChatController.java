@@ -21,6 +21,7 @@ import java.security.Principal;
 import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.formatToDateString;
+import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
 
 @Slf4j
 @Controller
@@ -37,7 +38,7 @@ public class ChatController {
         // todo: don't send sender ID from frontend, fetch it with auth
         User user = CommonUtils.getAuthUser(principal);
 
-        boolean online = sessionTracker.isUserOnline(user.getId());
+        boolean online = sessionTracker.isUserOnline(chatMessage.getRecipient().id());
         log.info("sendMessage user online: {}", online);
 
         var message = chatService.saveMessage(chatMessage, online);
@@ -51,8 +52,10 @@ public class ChatController {
     public void readIndicator(@Payload List<ReadMessageDto> dto,
                               Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
+        var recipientId = getRecipientIdFromRoomId(dto.getFirst().roomId(), user.getId());
+
         List<MessageKey> keys = dto.stream()
-                .map(m -> new MessageKey(m.roomId(), CommonUtils.formatToInstant(m.createdAt()), user.getId()))
+                .map(m -> new MessageKey(m.roomId(), CommonUtils.formatToInstant(m.createdAt()), recipientId))
                 .toList();
 
         var readAt = chatService.markRead(keys);

@@ -28,6 +28,7 @@ public class ChatResponse<T> {
 
         this.type = switch (data.getFirst().getClass().getSimpleName()) {
             case "ChatMessagePersisted" -> MessageType.CHAT;
+            case "ChatRead" -> MessageType.READ;
             default -> throw new RuntimeException("Unrecognized chat response type: " + data.get(0).getClass());
         };
 

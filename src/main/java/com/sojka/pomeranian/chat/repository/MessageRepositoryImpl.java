@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -109,6 +110,9 @@ public class MessageRepositoryImpl implements MessageRepository {
     @Override
     public Message save(Message message) {
         try {
+            Objects.requireNonNull(message.getContent());
+            Objects.requireNonNull(message.getUsername());
+
             // Insert into messages.messages
             RegularInsert messageInsert = QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
@@ -124,6 +128,7 @@ public class MessageRepositoryImpl implements MessageRepository {
                     .value("edited_at", literal(message.getEditedAt()))
                     .value("deleted_at", literal(message.getDeletedAt()))
                     .value("pinned", literal(message.getPinned()))
+                    .value("read_at", literal(message.getReadAt()))
                     .value("metadata", literal(message.getMetadata()));
 
             CqlSession session = connector.getSession();
