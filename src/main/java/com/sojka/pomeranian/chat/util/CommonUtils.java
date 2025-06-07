@@ -39,6 +39,9 @@ public final class CommonUtils {
      * TODO: return epoch seconds or millis and create a date in the frontend.
      */
     public static String formatToDateString(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
         return LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
@@ -47,6 +50,9 @@ public final class CommonUtils {
      * TODO: return epoch seconds or millis and create a date in the frontend.
      */
     public static Instant formatToInstant(String datetime) {
+        if (datetime == null) {
+            return null;
+        }
         return Instant.parse(datetime + "Z");
     }
 

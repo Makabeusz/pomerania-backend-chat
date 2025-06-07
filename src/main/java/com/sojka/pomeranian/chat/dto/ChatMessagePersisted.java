@@ -22,12 +22,13 @@ public class ChatMessagePersisted extends ChatMessage {
     private String editedAt;
     private String deletedAt;
     private Boolean pinned;
+    private String readAt;
     private Map<String, String> metadata;
 
     @Builder
     public ChatMessagePersisted(String content, ChatUser sender, ChatUser recipient,
                                 String roomId, String createdAt, String resourceId, String threadId, String editedAt,
-                                String deletedAt, Boolean pinned, Map<String, String> metadata) {
+                                String deletedAt, Boolean pinned, Map<String, String> metadata, String readAt) {
         super(content, sender, recipient);
         this.roomId = roomId;
         this.createdAt = createdAt;
@@ -36,6 +37,7 @@ public class ChatMessagePersisted extends ChatMessage {
         this.editedAt = editedAt;
         this.deletedAt = deletedAt;
         this.pinned = pinned;
+        this.readAt = readAt;
         this.metadata = metadata;
     }
 }

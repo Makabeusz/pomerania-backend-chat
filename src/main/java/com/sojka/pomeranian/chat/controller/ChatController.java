@@ -1,10 +1,9 @@
 package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
-import com.sojka.pomeranian.chat.dto.ChatReadResponse;
+import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessageKeyResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.SessionTracker;
@@ -20,6 +19,8 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.util.List;
+
+import static com.sojka.pomeranian.chat.util.CommonUtils.formatToDateString;
 
 @Slf4j
 @Controller
@@ -56,15 +57,13 @@ public class ChatController {
 
         var readAt = chatService.markRead(keys);
 
-//        var response = new ChatReadResponse(keys.stream()
-//                .map(k -> new MessageKey(
-//                        k.roomId(), CommonUtils.formatToDateString(k.createdAt()), k.profileId()))
-//                .toList(),
-//                CommonUtils.formatToDateString(readAt)
-//        );
+        var keysResponse = keys.stream()
+                .map(k -> formatToDateString(k.createdAt()))
+                .toList();
 
         log.info("readIndicator user online: {}", sessionTracker.isUserOnline(user.getId()));
-        messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private", null);
+        messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private",
+                new ChatResponse<>(new ChatRead(keysResponse, CommonUtils.formatToDateString(readAt))));
         if (!sessionTracker.isUserOnline(user.getId())) {
             // TODO: push notification, will implement this later
             log.warn("NO ACTIVE SESSION TO PUBLISH READ INDICATOR: size={}, last_key={}", keys.size(), keys.getLast());

@@ -20,6 +20,7 @@ public final class MessageMapper {
                 .editedAt(message.getEditedAt())
                 .deletedAt(message.getDeletedAt())
                 .pinned(message.getPinned())
+                .readAt(formatToDateString(message.getReadAt()))
                 .metadata(message.getMetadata())
                 .build();
     }
