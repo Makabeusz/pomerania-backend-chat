@@ -16,7 +16,6 @@ public class Message {
 
     private String roomId;
     private Instant createdAt;
-    private String messageId;
     private String profileId;
     private String username;
     private String recipientProfileId;
@@ -28,5 +27,6 @@ public class Message {
     private String editedAt;
     private String deletedAt;
     private Boolean pinned;
+    private Instant readAt;
     private Map<String, String> metadata;
 }

@@ -8,19 +8,21 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.sojka.pomeranian.chat.db.AstraConnector;
+import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.chat.util.CommonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-import static com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder.DESC;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
 @Slf4j
@@ -64,7 +66,6 @@ public class MessageRepositoryImpl implements MessageRepository {
                 Message message = new Message();
                 message.setRoomId(row.getString("room_id"));
                 message.setCreatedAt(row.getInstant("created_at"));
-                message.setMessageId(row.getString("message_id"));
                 message.setProfileId(row.getString("profile_id"));
                 message.setUsername(row.getString("username"));
                 message.setRecipientUsername(row.getString("recipient_username"));
@@ -76,6 +77,7 @@ public class MessageRepositoryImpl implements MessageRepository {
                 message.setEditedAt(row.getString("edited_at"));
                 message.setDeletedAt(row.getString("deleted_at"));
                 message.setPinned(row.getBoolean("pinned"));
+                message.setReadAt(row.getInstant("read_at"));
                 message.setMetadata(row.getMap("metadata", String.class, String.class));
                 messages.add(message);
 
@@ -109,7 +111,6 @@ public class MessageRepositoryImpl implements MessageRepository {
             RegularInsert messageInsert = QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
                     .value("created_at", literal(message.getCreatedAt()))
-                    .value("message_id", literal(message.getMessageId()))
                     .value("profile_id", literal(message.getProfileId()))
                     .value("username", literal(message.getUsername()))
                     .value("recipient_profile_id", literal(message.getRecipientProfileId()))
@@ -125,7 +126,7 @@ public class MessageRepositoryImpl implements MessageRepository {
 
             CqlSession session = connector.getSession();
             session.execute(messageInsert.build());
-            log.info("Saved message and updated conversations: room_id={}, message_id={}", message.getRoomId(), message.getMessageId());
+            log.info("Saved message and updated conversations: {}", new MessageKey(message));
             return message;
         } catch (Exception e) {
             log.error("Failed to save message and conversations: {}", e.getMessage(), e);
@@ -133,4 +134,25 @@ public class MessageRepositoryImpl implements MessageRepository {
         }
     }
 
+    @Override
+    public Instant markRead(MessageKey key) {
+        try {
+            Instant readTime = CommonUtils.getCurrentInstant();
+            var update = QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
+                    .value("room_id", literal(key.roomId()))
+                    .value("created_at", literal(key.createdAt()))
+                    .value("profile_id", literal(key.profileId()))
+                    .value("read_at", literal(readTime));
+
+            CqlSession session = connector.getSession();
+            session.execute(update.build());
+
+            log.info("Marked message as read: {}, read_at={}", key, readTime);
+
+            return readTime;
+        } catch (Exception e) {
+            log.error("Failed to mark message as read: {}", key, e);
+            throw new AstraException("Failed mark message as read: " + key, e);
+        }
+    }
 }

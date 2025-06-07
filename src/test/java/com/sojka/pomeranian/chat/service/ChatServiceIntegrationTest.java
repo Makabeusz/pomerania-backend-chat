@@ -64,12 +64,12 @@ class ChatServiceIntegrationTest {
                 .recipient(new ChatUser("user2", "User2"))
                 .build();
 
-        Message savedMessage = chatService.saveMessage(chatMessage);
+        Message savedMessage = chatService.saveMessage(chatMessage, false);
 
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
                 "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND message_id = ?",
-                savedMessage.getRoomId(), savedMessage.getCreatedAt(), savedMessage.getMessageId()
+                savedMessage.getRoomId(), savedMessage.getCreatedAt(), savedMessage.getProfileId()
         );
         var row = connector.getSession()
                 .execute(selectMessage)
@@ -77,7 +77,6 @@ class ChatServiceIntegrationTest {
         Message saveResult = Message.builder()
                 .roomId(row.getString("room_id"))
                 .createdAt(row.getInstant("created_at"))
-                .messageId(row.getString("message_id"))
                 .profileId(row.getString("profile_id"))
                 .username(row.getString("username"))
                 .recipientProfileId(row.getString("recipient_profile_id"))

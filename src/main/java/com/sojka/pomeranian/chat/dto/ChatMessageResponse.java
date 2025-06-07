@@ -15,7 +15,6 @@ public class ChatMessageResponse {
 
     private String roomId;
     private String createdAt;
-    private String messageId;
     private String content;
     private MessageType type;
     private ChatUser sender;

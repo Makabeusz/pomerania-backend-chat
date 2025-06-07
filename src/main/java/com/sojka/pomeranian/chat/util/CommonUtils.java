@@ -1,6 +1,15 @@
 package com.sojka.pomeranian.chat.util;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
+import com.sojka.pomeranian.security.model.User;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+import java.security.Principal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public final class CommonUtils {
 
@@ -17,5 +26,39 @@ public final class CommonUtils {
      */
     public static String generateRoomId(String userId1, String userId2) {
         return userId1.compareTo(userId2) < 0 ? userId1 + ":" + userId2 : userId2 + ":" + userId1;
+    }
+
+    /**
+     * Returns standardised {@link Instant}, truncated to milliseconds for all databases compatibility.
+     */
+    public static Instant getCurrentInstant() {
+        return Instant.now().truncatedTo(ChronoUnit.MILLIS);
+    }
+
+    /**
+     * TODO: return epoch seconds or millis and create a date in the frontend.
+     */
+    public static String formatToDateString(Instant instant) {
+        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    /**
+     * TODO: return epoch seconds or millis and create a date in the frontend.
+     */
+    public static Instant formatToInstant(String datetime) {
+        return Instant.parse(datetime + "Z");
+    }
+
+    public static User getAuthUser(Principal principal) {
+        try {
+            if (principal instanceof UsernamePasswordAuthenticationToken p) {
+                return (User) p.getPrincipal();
+            } else {
+                throw new SecurityException("User authentication failed: Not found principal");
+            }
+        } catch (Exception e) {
+            throw new SecurityException("User authentication failed", e);
+        }
     }
 }

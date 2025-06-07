@@ -3,7 +3,7 @@ package com.sojka.pomeranian.chat.db;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.sojka.pomeranian.chat.config.AstraConfig;
-import com.sojka.pomeranian.chat.exception.AstraConnectionException;
+import com.sojka.pomeranian.chat.exception.AstraException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,13 +48,13 @@ public class AstraConnector {
             return session;
         } catch (DriverException e) {
             log.error(String.format("Failed to connect to Astra: %s", e.getMessage()), e);
-            throw new AstraConnectionException("Astra connection failed", e);
+            throw new AstraException("Astra connection failed", e);
         } catch (IllegalArgumentException e) {
             log.error(String.format("Invalid configuration: %s", e.getMessage()), e);
-            throw new AstraConnectionException("Invalid configuration: " + e.getMessage(), e);
+            throw new AstraException("Invalid configuration: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error(String.format("Unexpected error connecting to Astra: %s", e.getMessage()), e);
-            throw new AstraConnectionException("Unexpected error connecting to Astra", e);
+            throw new AstraException("Unexpected error connecting to Astra", e);
         }
     }
 
