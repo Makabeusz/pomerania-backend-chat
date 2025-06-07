@@ -20,25 +20,13 @@ public class SessionTracker {
     public void handleSessionConnected(SessionConnectedEvent event) {
         User user = CommonUtils.getAuthUser(event.getUser());
 
-        boolean failed = !cache.put(user.getId());
-
-        if (failed) {
-            log.error("Failed to put cache entry, user_id={}", user.getId());
-        } else {
-            log.info("Connected to the chat: username={}, user_id={}", user.getUsername(), user.getId());
-        }
+        cache.put(user.getId());
     }
 
     @EventListener
     public void handleSessionDisconnected(SessionDisconnectEvent event) {
         User user = CommonUtils.getAuthUser(event.getUser());
-        boolean failed = !cache.remove(user.getId());
-
-        if (failed) {
-            log.error("Failed to remove cache entry, user_id={}", user.getId());
-        } else {
-            log.info("Disconnected from the chat: username={}, user_id={}", user.getUsername(), user.getId());
-        }
+        cache.remove(user.getId());
     }
 
     public boolean isUserOnline(String userId) {

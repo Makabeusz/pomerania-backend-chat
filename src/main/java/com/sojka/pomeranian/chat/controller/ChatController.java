@@ -67,10 +67,6 @@ public class ChatController {
         log.info("readIndicator user online: {}", sessionTracker.isUserOnline(user.getId()));
         messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private",
                 new ChatResponse<>(new ChatRead(keysResponse, CommonUtils.formatToDateString(readAt))));
-        if (!sessionTracker.isUserOnline(user.getId())) {
-            // TODO: push notification, will implement this later
-            log.warn("NO ACTIVE SESSION TO PUBLISH READ INDICATOR: size={}, last_key={}", keys.size(), keys.getLast());
-        }
     }
 
 }
