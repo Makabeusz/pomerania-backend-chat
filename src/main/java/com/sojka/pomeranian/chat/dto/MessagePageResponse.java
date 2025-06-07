@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 public class MessagePageResponse {
 
-    private List<ChatMessageResponse> messages;
+    private List<ChatMessagePersisted> messages;
     private String nextPageState;
 }

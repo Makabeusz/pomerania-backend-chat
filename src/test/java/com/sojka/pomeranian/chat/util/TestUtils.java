@@ -7,7 +7,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.UUID;
 
 public class TestUtils {
 
@@ -28,7 +27,6 @@ public class TestUtils {
     public static Message createChatMessage(String roomId, String content, String senderId, String recipientId, Instant createdAt) {
         Message message = new Message();
         message.setRoomId(roomId);
-        message.setMessageId(UUID.randomUUID().toString());
         message.setCreatedAt(createdAt);
         message.setProfileId(senderId);
         message.setUsername("User" + senderId);

@@ -53,7 +53,6 @@ public class ChatService {
                 .recipientProfileId(chatMessage.getRecipient().id())
                 .recipientUsername(chatMessage.getRecipient().username())
                 .content(chatMessage.getContent())
-                .messageType(chatMessage.getType().toString())
                 .readAt(isRead ? now : null)
                 .build();
 
@@ -67,8 +66,8 @@ public class ChatService {
         return savedMessage;
     }
 
-    public Instant markRead(MessageKey key) {
-        return messageRepository.markRead(key);
+    public Instant markRead(List<MessageKey> keys) {
+        return messageRepository.markRead(keys);
     }
 
     public MessagePageResponse getConversation(String userId1, String userId2, String pageState) {

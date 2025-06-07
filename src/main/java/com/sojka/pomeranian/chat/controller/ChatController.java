@@ -2,7 +2,9 @@ package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatReadResponse;
+import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
+import com.sojka.pomeranian.chat.dto.MessageKeyResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.SessionTracker;
@@ -17,7 +19,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Controller
@@ -35,27 +37,37 @@ public class ChatController {
         User user = CommonUtils.getAuthUser(principal);
 
         boolean online = sessionTracker.isUserOnline(user.getId());
-        log.info("User online: {}", online);
+        log.info("sendMessage user online: {}", online);
 
         var message = chatService.saveMessage(chatMessage, online);
         var messageResponse = MessageMapper.toDto(message);
 
-        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), "/queue/private", messageResponse);
+        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), "/queue/private",
+                new ChatResponse<>(messageResponse));
     }
 
     @MessageMapping("/chat.readMessage")
-    public void readIndicator(@Payload ReadMessageDto dto,
+    public void readIndicator(@Payload List<ReadMessageDto> dto,
                               Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
-        var key = new MessageKey(dto.roomId(), CommonUtils.formatToInstant(dto.createdAt()), user.getId());
-        var readAt = chatService.markRead(key);
-        var response = new ChatReadResponse(key, CommonUtils.formatToDateString(readAt));
+        List<MessageKey> keys = dto.stream()
+                .map(m -> new MessageKey(m.roomId(), CommonUtils.formatToInstant(m.createdAt()), user.getId()))
+                .toList();
 
-        log.info("User online: {}", sessionTracker.isUserOnline(user.getId()));
+        var readAt = chatService.markRead(keys);
+
+//        var response = new ChatReadResponse(keys.stream()
+//                .map(k -> new MessageKey(
+//                        k.roomId(), CommonUtils.formatToDateString(k.createdAt()), k.profileId()))
+//                .toList(),
+//                CommonUtils.formatToDateString(readAt)
+//        );
+
+        log.info("readIndicator user online: {}", sessionTracker.isUserOnline(user.getId()));
         if (sessionTracker.isUserOnline(user.getId())) {
-            messagingTemplate.convertAndSendToUser(dto.roomId(), "/queue/private/read", response);
+//            messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private", response);
         } else {
-            log.warn("NO ACTIVE SESSION TO PUBLISH READ INDICATOR: {}", key);
+            log.warn("NO ACTIVE SESSION TO PUBLISH READ INDICATOR: size={}, last_key={}", keys.size(), keys.getLast());
             // TODO: push notification, will implement this later
         }
     }

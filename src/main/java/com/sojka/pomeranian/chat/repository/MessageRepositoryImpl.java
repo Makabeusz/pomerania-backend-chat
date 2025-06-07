@@ -1,6 +1,8 @@
 package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -135,17 +137,24 @@ public class MessageRepositoryImpl implements MessageRepository {
     }
 
     @Override
-    public Instant markRead(MessageKey key) {
+    public Instant markRead(List<MessageKey> key) {
         try {
             Instant readTime = CommonUtils.getCurrentInstant();
-            var update = QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
-                    .value("room_id", literal(key.roomId()))
-                    .value("created_at", literal(key.createdAt()))
-                    .value("profile_id", literal(key.profileId()))
-                    .value("read_at", literal(readTime));
+            var update = key.stream()
+                    .map(k -> QueryBuilder.insertInto(KEYSPACE, MESSAGES_TABLE)
+                            .value("room_id", literal(k.roomId()))
+                            .value("created_at", literal(k.createdAt()))
+                            .value("profile_id", literal(k.profileId()))
+                            .value("read_at", literal(readTime))
+                            .build())
+                    .toList();
+
+            BatchStatement statement = BatchStatement.builder(BatchType.LOGGED)
+                    .addStatements(new ArrayList<>(update))
+                    .build();
 
             CqlSession session = connector.getSession();
-            session.execute(update.build());
+            session.execute(statement);
 
             log.info("Marked message as read: {}, read_at={}", key, readTime);
 

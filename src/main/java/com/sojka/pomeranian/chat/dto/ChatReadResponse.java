@@ -2,6 +2,8 @@ package com.sojka.pomeranian.chat.dto;
 
 import com.sojka.pomeranian.chat.util.CommonUtils;
 
+import java.util.List;
+
 public record ChatReadResponse(
         String roomId,
         String createdAt,

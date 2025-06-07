@@ -5,10 +5,9 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.TestcontainersConfiguration;
 import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
-import com.sojka.pomeranian.chat.dto.ChatMessageResponse;
+import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
-import com.sojka.pomeranian.chat.dto.MessageType;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
@@ -57,9 +56,8 @@ class ChatServiceIntegrationTest {
 
     @Test
     void saveMessage_message_savedWithBothConversations() {
-        ChatMessage chatMessage = ChatMessage.builder()
+        ChatMessage chatMessage = ChatMessage.basicBuilder()
                 .content("Hello, World!")
-                .type(MessageType.CHAT)
                 .sender(new ChatUser("user1", "User1"))
                 .recipient(new ChatUser("user2", "User2"))
                 .build();
@@ -234,7 +232,7 @@ class ChatServiceIntegrationTest {
             var recipientConversation2 = new Conversation(new Conversation.Id(recipientId, roomId), now);
             conversationsRepository.saveAll(List.of(senderConversation2, recipientConversation2));
         }
-        List<ChatMessageResponse> messages = new ArrayList<>();
+        List<ChatMessagePersisted> messages = new ArrayList<>();
         MessagePageResponse response = new MessagePageResponse(Collections.emptyList(), paginationString(0, 10));
 
         do {

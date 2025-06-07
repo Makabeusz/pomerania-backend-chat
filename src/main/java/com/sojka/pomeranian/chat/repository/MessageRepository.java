@@ -5,6 +5,7 @@ import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.model.Message;
 
 import java.time.Instant;
+import java.util.List;
 
 public interface MessageRepository {
 
@@ -13,10 +14,10 @@ public interface MessageRepository {
     Message save(Message message);
 
     /**
-     * Marks message as read.
+     * Marks messages as read.
      *
      * @return The read time
      */
-    Instant markRead(MessageKey key);
+    Instant markRead(List<MessageKey> key);
 
 }

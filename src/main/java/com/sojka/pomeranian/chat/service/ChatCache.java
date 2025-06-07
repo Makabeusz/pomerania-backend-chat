@@ -7,4 +7,6 @@ public interface ChatCache {
     boolean put(String userId);
 
     boolean remove(String userId);
+
+    void purge();
 }

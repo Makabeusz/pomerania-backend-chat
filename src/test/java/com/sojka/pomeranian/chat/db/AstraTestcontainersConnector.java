@@ -4,12 +4,12 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.sojka.pomeranian.chat.exception.AstraConnectionException;
+import com.sojka.pomeranian.chat.exception.AstraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.testcontainers.containers.CassandraContainer;
+import org.testcontainers.cassandra.CassandraContainer;
 
 import java.time.Duration;
 
@@ -19,11 +19,11 @@ public class AstraTestcontainersConnector extends AstraConnector {
 
     Logger log = LoggerFactory.getLogger(AstraTestcontainersConnector.class);
 
-    private final CassandraContainer<?> cassandraContainer;
+    private final CassandraContainer cassandraContainer;
     private volatile CqlSession session;
     private final Object lock = new Object();
 
-    public AstraTestcontainersConnector(CassandraContainer<?> cassandraContainer) {
+    public AstraTestcontainersConnector(CassandraContainer cassandraContainer) {
         super(null);
         this.cassandraContainer = cassandraContainer;
     }
@@ -54,10 +54,10 @@ public class AstraTestcontainersConnector extends AstraConnector {
             return session;
         } catch (DriverException e) {
             log.error("Failed to connect to Testcontainers Cassandra: {}", e.getMessage(), e);
-            throw new AstraConnectionException("Testcontainers Cassandra connection failed", e);
+            throw new AstraException("Testcontainers Cassandra connection failed", e);
         } catch (Exception e) {
             log.error("Unexpected error connecting to Testcontainers Cassandra: {}", e.getMessage(), e);
-            throw new AstraConnectionException("Unexpected error connecting to Testcontainers Cassandra", e);
+            throw new AstraException("Unexpected error connecting to Testcontainers Cassandra", e);
         }
     }
 
