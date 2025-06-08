@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.testcontainers.cassandra.CassandraContainer;
+import org.testcontainers.containers.CassandraContainer;
 
 import java.time.Duration;
 
@@ -19,11 +19,11 @@ public class AstraTestcontainersConnector extends AstraConnector {
 
     Logger log = LoggerFactory.getLogger(AstraTestcontainersConnector.class);
 
-    private final CassandraContainer cassandraContainer;
+    private final CassandraContainer<?> cassandraContainer;
     private volatile CqlSession session;
     private final Object lock = new Object();
 
-    public AstraTestcontainersConnector(CassandraContainer cassandraContainer) {
+    public AstraTestcontainersConnector(CassandraContainer<?> cassandraContainer) {
         super(null);
         this.cassandraContainer = cassandraContainer;
     }

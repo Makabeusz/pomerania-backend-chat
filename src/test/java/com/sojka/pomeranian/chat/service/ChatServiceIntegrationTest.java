@@ -66,7 +66,7 @@ class ChatServiceIntegrationTest {
 
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
-                "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND message_id = ?",
+                "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
                 saved.getRoomId(), saved.getCreatedAt(), saved.getProfileId()
         );
         var row = connector.getSession()
