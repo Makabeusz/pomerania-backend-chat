@@ -46,7 +46,7 @@ class MessageRepositoryImplUnitTest {
     @Test
     void save_unexpectedException_throwRuntimeException() {
         when(mockedSection.execute(any(SimpleStatement.class))).thenThrow(new RuntimeException("unexpected error"));
-        assertThatThrownBy(() -> repository.save(Message.builder().roomId("user1:user2").build()))
+        assertThatThrownBy(() -> repository.save(Message.builder().roomId("user1:user2").content("dummy").username("dummy").build()))
                 .isExactlyInstanceOf(AstraException.class)
                 .hasCauseExactlyInstanceOf(RuntimeException.class)
                 .hasMessage("Failed to save message for room_id=user1:user2");
