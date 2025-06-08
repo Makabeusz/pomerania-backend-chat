@@ -33,7 +33,6 @@ public class TestUtils {
         message.setRecipientProfileId(recipientId);
         message.setRecipientUsername("User" + recipientId);
         message.setContent(content);
-        message.setMessageType("CHAT");
         return message;
     }
 

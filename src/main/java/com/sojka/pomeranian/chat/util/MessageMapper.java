@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.util;
 
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.model.Message;
@@ -22,6 +23,25 @@ public final class MessageMapper {
                 .pinned(message.getPinned())
                 .readAt(formatToDateString(message.getReadAt()))
                 .metadata(message.getMetadata())
+                .build();
+    }
+
+    public static Message fromAstraRow(Row row) {
+        return Message.builder()
+                .roomId(row.getString("room_id"))
+                .createdAt(row.getInstant("created_at"))
+                .profileId(row.getString("profile_id"))
+                .username(row.getString("username"))
+                .recipientUsername(row.getString("recipient_username"))
+                .recipientProfileId(row.getString("recipient_profile_id"))
+                .content(row.getString("content"))
+                .resourceId(row.getString("resource_id"))
+                .threadId(row.getString("thread_id"))
+                .editedAt(row.getString("edited_at"))
+                .deletedAt(row.getString("deleted_at"))
+                .pinned(row.getBoolean("pinned"))
+                .readAt(row.getInstant("read_at"))
+                .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
     }
 }

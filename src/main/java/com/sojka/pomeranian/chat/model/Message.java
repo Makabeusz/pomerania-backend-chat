@@ -21,7 +21,6 @@ public class Message {
     private String recipientProfileId;
     private String recipientUsername;
     private String content;
-    private String messageType;
     private String resourceId;
     private String threadId;
     private String editedAt;

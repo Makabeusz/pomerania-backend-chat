@@ -7,11 +7,9 @@ import com.sojka.pomeranian.chat.model.Message;
 import java.time.Instant;
 import java.util.List;
 
-public interface MessageRepository {
+public interface MessageRepository extends AstraRepository<Message>{
 
     MessagePage findByRoomId(String roomId, String pageState, int pageSize);
-
-    Message save(Message message);
 
     /**
      * Marks messages as read.

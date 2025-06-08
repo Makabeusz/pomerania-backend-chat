@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     recipient_profile_id VARCHAR,
     recipient_username VARCHAR,
     content TEXT,
-    message_type VARCHAR,
     resource_id VARCHAR,
     thread_id VARCHAR,
     edited_at VARCHAR,
@@ -19,6 +18,16 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     metadata MAP<VARCHAR, VARCHAR>,
     PRIMARY KEY (room_id, created_at, profile_id))
 WITH CLUSTERING ORDER BY (created_at DESC, profile_id ASC);
+
+-- Messages notifications
+CREATE TABLE IF NOT EXISTS messages.notifications (
+    profile_id VARCHAR,
+    created_at TIMESTAMP,
+    sender_id VARCHAR,
+    sender_username VARCHAR,
+    content VARCHAR,
+    PRIMARY KEY (profile_id, created_at, sender_id)
+) WITH CLUSTERING ORDER BY (created_at DESC, sender_id ASC);
 
 -- Read receipts (for group chats)
 --CREATE TABLE IF NOT EXISTS messages.read_reactions (

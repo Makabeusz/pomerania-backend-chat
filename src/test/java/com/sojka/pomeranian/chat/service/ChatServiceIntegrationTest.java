@@ -80,7 +80,6 @@ class ChatServiceIntegrationTest {
                 .recipientProfileId(row.getString("recipient_profile_id"))
                 .recipientUsername(row.getString("recipient_username"))
                 .content(row.getString("content"))
-                .messageType(row.getString("message_type"))
                 .resourceId(row.getString("resource_id"))
                 .threadId(row.getString("thread_id"))
                 .editedAt(row.getString("edited_at"))
@@ -97,7 +96,6 @@ class ChatServiceIntegrationTest {
                         .recipientProfileId("user2")
                         .recipientUsername("User2")
                         .content("Hello, World!")
-                        .messageType("CHAT")
                         .metadata(Collections.emptyMap())
                         .pinned(false)
                         .build());
