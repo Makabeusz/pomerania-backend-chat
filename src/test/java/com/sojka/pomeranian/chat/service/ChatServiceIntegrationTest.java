@@ -62,12 +62,12 @@ class ChatServiceIntegrationTest {
                 .recipient(new ChatUser("user2", "User2"))
                 .build();
 
-        Message savedMessage = chatService.saveMessage(chatMessage, false);
+        var saved = chatService.saveMessage(chatMessage, false).message();
 
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
                 "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND message_id = ?",
-                savedMessage.getRoomId(), savedMessage.getCreatedAt(), savedMessage.getProfileId()
+                saved.getRoomId(), saved.getCreatedAt(), saved.getProfileId()
         );
         var row = connector.getSession()
                 .execute(selectMessage)

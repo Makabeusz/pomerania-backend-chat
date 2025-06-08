@@ -1,5 +1,7 @@
 package com.sojka.pomeranian.chat.repository;
 
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.chat.db.AstraConnector;
@@ -9,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
@@ -24,11 +28,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     private final AstraConnector connector;
 
     private static final String DELETE_ONE = """
-            DELETE FROM ?.? \
+            DELETE FROM %s.%s \
             WHERE profile_id = ? \
             AND created_at = ? \
             AND sender_id = ?
-            """;
+            """.formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
 
     @Override
     public Notification save(Notification notification) {
@@ -56,8 +60,8 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public void delete(Notification notification) {
         try {
             var statement = SimpleStatement.builder(DELETE_ONE)
-                    .addPositionalValues(List.of(ASTRA_KEYSPACE, NOTIFICATION_TABLE, notification.getProfileId(),
-                            notification.getCreatedAt(), notification.getSenderId()))
+                    .addPositionalValues(List.of(
+                            notification.getProfileId(), notification.getCreatedAt(), notification.getSenderId()))
                     .build();
 
             var session = connector.getSession();
@@ -67,6 +71,29 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             log.error("Failed to delete notification: {}", e.getMessage(), e);
             throw new AstraException("Failed to delete notification: profile_id=%s, created_at=%s, sender_id=%s"
                     .formatted(notification.getProfileId(), notification.getCreatedAt(), notification.getSenderId()), e);
+        }
+    }
+
+    @Override
+    public void deleteAllByPrimaryKeys(String profileId, List<Instant> createdAt, String senderId) {
+        try {
+            var deletes = createdAt.stream()
+                    .map(ts -> SimpleStatement.builder(DELETE_ONE)
+                            .addPositionalValues(List.of(profileId, ts, senderId))
+                            .build())
+                    .toList();
+
+            var batchDeleteStatement = BatchStatement.builder(BatchType.LOGGED)
+                    .addStatements(new ArrayList<>(deletes))
+                    .build();
+
+            var session = connector.getSession();
+            session.execute(batchDeleteStatement);
+            log.info("Deleted notifications: profile_id={}, sender_id={}, created_at={},", profileId, senderId, createdAt);
+        } catch (Exception e) {
+            log.error("Failed to delete notification: {}", e.getMessage(), e);
+            throw new AstraException("Failed to delete notification: profile_id=%s, sender_id=%s, created_at=%s"
+                    .formatted(profileId, senderId, createdAt), e);
         }
     }
 }

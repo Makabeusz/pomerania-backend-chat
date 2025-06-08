@@ -7,8 +7,10 @@ import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.chat.model.Notification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
+import com.sojka.pomeranian.chat.repository.NotificationRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.MessageMapper;
 import com.sojka.pomeranian.chat.util.PaginationMapper;
@@ -30,19 +32,22 @@ import static com.sojka.pomeranian.chat.util.CommonUtils.getCurrentInstant;
 @RequiredArgsConstructor
 public class ChatService {
 
-    //    todo: make it a property or always read from frontend
+    // todo: make it a property or always read from frontend
     private static final int CONVERSATIONS_PAGE_SIZE = 10;
 
     private final MessageRepository messageRepository;
     private final ConversationsRepository conversationsRepository;
+    private final NotificationRepository notificationRepository;
 
     /**
-     * Saves message to AstraDB and sender + recipient conversations to Postgres.
+     * Saves message to AstraDB.<br>
+     * Also, saves sender and recipient conversations to Postgres to allow to fetch conversations headers.<br>
+     * If user is not online then additionally saves the AstraDB notification for the recipient.
      *
      * @param chatMessage The message got from the user chat
-     * @return Saved {@link Message}
+     * @return {@link MessageSaveResult} with saved message and notification if recipient is not online
      */
-    public Message saveMessage(ChatMessage chatMessage, boolean isRead) {
+    public MessageSaveResult saveMessage(ChatMessage chatMessage, boolean isOnline) {
         String roomId = CommonUtils.generateRoomId(chatMessage);
         Instant now = getCurrentInstant();
         var message = Message.builder()
@@ -53,7 +58,7 @@ public class ChatService {
                 .recipientProfileId(chatMessage.getRecipient().id())
                 .recipientUsername(chatMessage.getRecipient().username())
                 .content(chatMessage.getContent())
-                .readAt(isRead ? now : null)
+                .readAt(isOnline ? now : null)
                 .build();
 
         var savedMessage = messageRepository.save(message);
@@ -61,13 +66,29 @@ public class ChatService {
         var senderConversation = new Conversation(new Conversation.Id(chatMessage.getSender().id(), roomId), now);
         var recipientConversation = new Conversation(new Conversation.Id(chatMessage.getRecipient().id(), roomId), now);
 
+        Notification notification = null;
+        if (!isOnline) {
+            notification = notificationRepository.save(Notification.builder()
+                    .profileId(chatMessage.getRecipient().id())
+                    .createdAt(now)
+                    .senderId(chatMessage.getSender().id())
+                    .senderUsername(chatMessage.getSender().username())
+                    .content(chatMessage.getContent())
+                    .build());
+        }
+
         conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
 
-        return savedMessage;
+        return new MessageSaveResult(savedMessage, notification);
     }
 
-    public Instant markRead(List<MessageKey> keys) {
-        return messageRepository.markRead(keys);
+    public Instant markRead(MessageKey keys) {
+        var readAt = messageRepository.markRead(keys);
+
+        notificationRepository.deleteAllByPrimaryKeys(keys.profileId(), keys.createdAt(),
+                CommonUtils.getRecipientIdFromRoomId(keys.roomId(), keys.profileId()));
+
+        return readAt;
     }
 
     public MessagePageResponse getConversation(String userId1, String userId2, String pageState) {
@@ -108,6 +129,12 @@ public class ChatService {
                 : null;
 
         return new MessagePageResponse(headers, pageState);
+    }
+
+    public record MessageSaveResult(
+            Message message,
+            Notification notification
+    ) {
     }
 
 }

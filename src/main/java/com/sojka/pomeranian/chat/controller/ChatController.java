@@ -18,15 +18,16 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.util.List;
 
-import static com.sojka.pomeranian.chat.util.CommonUtils.formatToDateString;
 import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
+
+    private static final String DM_DESTINATION = "/queue/private";
+    private static final String NOTIFY_DESTINATION = "/queue/private/notification";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
@@ -38,35 +39,36 @@ public class ChatController {
         // todo: don't send sender ID from frontend, fetch it with auth
         User user = CommonUtils.getAuthUser(principal);
 
-        boolean online = sessionTracker.isUserOnline(chatMessage.getRecipient().id());
-        log.info("sendMessage user online: {}", online);
+        boolean isOnline = sessionTracker.isUserOnline(chatMessage.getRecipient().id());
 
-        var message = chatService.saveMessage(chatMessage, online);
-        var messageResponse = MessageMapper.toDto(message);
+        var messageSaveResult = chatService.saveMessage(chatMessage, isOnline);
+        var messageResponse = MessageMapper.toDto(messageSaveResult.message());
 
-        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), "/queue/private",
+        // Update both users chat
+        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), DM_DESTINATION,
                 new ChatResponse<>(messageResponse));
+        // Publish unread message notification
+        if (!isOnline) {
+            var notification = messageSaveResult.notification();
+            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, notification);
+        }
     }
 
     @MessageMapping("/chat.readMessage")
-    public void readIndicator(@Payload List<ReadMessageDto> dto,
+    public void readIndicator(@Payload ReadMessageDto dto,
                               Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
-        var recipientId = getRecipientIdFromRoomId(dto.getFirst().roomId(), user.getId());
+        var recipientId = getRecipientIdFromRoomId(dto.roomId(), user.getId());
 
-        List<MessageKey> keys = dto.stream()
-                .map(m -> new MessageKey(m.roomId(), CommonUtils.formatToInstant(m.createdAt()), recipientId))
-                .toList();
-
-        var readAt = chatService.markRead(keys);
-
-        var keysResponse = keys.stream()
-                .map(k -> formatToDateString(k.createdAt()))
-                .toList();
+        var readAt = chatService.markRead(
+                new MessageKey(dto.roomId(), dto.createdAt().stream()
+                        .map(CommonUtils::formatToInstant)
+                        .toList(), recipientId));
 
         log.info("readIndicator user online: {}", sessionTracker.isUserOnline(user.getId()));
-        messagingTemplate.convertAndSendToUser(dto.getFirst().roomId(), "/queue/private",
-                new ChatResponse<>(new ChatRead(keysResponse, CommonUtils.formatToDateString(readAt))));
+        messagingTemplate.convertAndSendToUser(dto.roomId(), DM_DESTINATION,
+                new ChatResponse<>(new ChatRead(dto.createdAt(), CommonUtils.formatToDateString(readAt))));
+
     }
 
 }

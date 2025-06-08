@@ -5,9 +5,8 @@ import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.model.Message;
 
 import java.time.Instant;
-import java.util.List;
 
-public interface MessageRepository extends AstraRepository<Message>{
+public interface MessageRepository extends AstraRepository<Message> {
 
     MessagePage findByRoomId(String roomId, String pageState, int pageSize);
 
@@ -16,6 +15,6 @@ public interface MessageRepository extends AstraRepository<Message>{
      *
      * @return The read time
      */
-    Instant markRead(List<MessageKey> key);
+    Instant markRead(MessageKey key);
 
 }

@@ -1,7 +1,9 @@
 package com.sojka.pomeranian.chat.dto;
 
+import java.util.List;
+
 public record ReadMessageDto(
         String roomId,
-        String createdAt
+        List<String> createdAt
 ) {
 }

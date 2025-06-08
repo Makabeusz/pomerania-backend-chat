@@ -121,14 +121,14 @@ public class MessageRepositoryImpl implements MessageRepository {
     }
 
     @Override
-    public Instant markRead(List<MessageKey> key) {
+    public Instant markRead(MessageKey key) {
         try {
             var readTime = CommonUtils.getCurrentInstant();
-            var update = key.stream()
+            var update = key.createdAt().stream()
                     .map(k -> QueryBuilder.insertInto(ASTRA_KEYSPACE, MESSAGES_TABLE)
-                            .value("room_id", literal(k.roomId()))
-                            .value("created_at", literal(k.createdAt()))
-                            .value("profile_id", literal(k.profileId()))
+                            .value("room_id", literal(key.roomId()))
+                            .value("created_at", literal(k))
+                            .value("profile_id", literal(key.profileId()))
                             .value("read_at", literal(readTime))
                             .build())
                     .toList();
