@@ -10,7 +10,7 @@ import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.chat.util.MessageMapper;
+import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

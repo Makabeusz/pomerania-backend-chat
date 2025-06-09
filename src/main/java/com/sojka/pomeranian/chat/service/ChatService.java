@@ -4,6 +4,7 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
+import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
@@ -12,8 +13,8 @@ import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.repository.NotificationRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.chat.util.MessageMapper;
-import com.sojka.pomeranian.chat.util.PaginationMapper;
+import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import com.sojka.pomeranian.chat.util.mapper.PaginationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -67,6 +68,8 @@ public class ChatService {
         var recipientConversation = new Conversation(new Conversation.Id(chatMessage.getRecipient().id(), roomId), now);
 
         Notification notification = null;
+
+        log.info("saveMessage: online={}, messageContent={}", isOnline, chatMessage.getContent());
         if (!isOnline) {
             notification = notificationRepository.save(Notification.builder()
                     .profileId(chatMessage.getRecipient().id())
@@ -131,10 +134,8 @@ public class ChatService {
         return new MessagePageResponse(headers, pageState);
     }
 
-    public record MessageSaveResult(
-            Message message,
-            Notification notification
-    ) {
+    public Long countNotifications(String userId) {
+        return notificationRepository.countByProfileId(userId).orElseThrow();
     }
 
 }

@@ -5,9 +5,12 @@ import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -18,18 +21,28 @@ public class SessionTracker {
 
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
-        User user = CommonUtils.getAuthUser(event.getUser());
+        String connector = getConnectorHeaderValue(event);
 
-        cache.put(user.getId());
-    }
+        if ("chat".equals(connector)) {
+            User user = CommonUtils.getAuthUser(event.getUser());
+            cache.put(user.getId());
+        }
 
-    @EventListener
-    public void handleSessionDisconnected(SessionDisconnectEvent event) {
-        User user = CommonUtils.getAuthUser(event.getUser());
-        cache.remove(user.getId());
     }
 
     public boolean isUserOnline(String userId) {
         return cache.isOnline(userId);
+    }
+
+    String getConnectorHeaderValue(SessionConnectedEvent event) {
+        try {
+            GenericMessage<?> genericMessage = (GenericMessage<?>) event.getMessage().getHeaders().get("simpConnectMessage");
+            Map nativeHeaders = (Map) genericMessage.getHeaders().get("nativeHeaders");
+            List connectorList = (List) nativeHeaders.get("connector");
+            return (String) connectorList.getFirst();
+        } catch (Exception e) {
+            log.error("Can't recognise socket source", e);
+        }
+        return null;
     }
 }

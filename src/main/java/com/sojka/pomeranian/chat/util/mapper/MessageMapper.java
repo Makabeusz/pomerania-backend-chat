@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.chat.util;
+package com.sojka.pomeranian.chat.util.mapper;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
@@ -8,6 +8,9 @@ import com.sojka.pomeranian.chat.model.Message;
 import static com.sojka.pomeranian.chat.util.CommonUtils.formatToDateString;
 
 public final class MessageMapper {
+
+    private MessageMapper() {
+    }
 
     public static ChatMessagePersisted toDto(Message message) {
         return ChatMessagePersisted.builder()

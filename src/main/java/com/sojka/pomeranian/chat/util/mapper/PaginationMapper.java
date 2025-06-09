@@ -1,13 +1,17 @@
-package com.sojka.pomeranian.chat.util;
+package com.sojka.pomeranian.chat.util.mapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sojka.pomeranian.chat.dto.Pagination;
+import com.sojka.pomeranian.chat.util.JsonMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public final class PaginationMapper {
+
+    private PaginationMapper() {
+    }
 
     public static String toEncodedString(Pagination pagination) {
         try {

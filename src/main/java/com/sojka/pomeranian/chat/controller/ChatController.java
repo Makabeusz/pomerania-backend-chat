@@ -4,18 +4,27 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
+import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
+import com.sojka.pomeranian.chat.dto.StompConnector;
+import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.SessionTracker;
 import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.chat.util.MessageMapper;
+import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
 
@@ -32,6 +41,7 @@ public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
     private final SessionTracker sessionTracker;
+    private final ChatCache cache;
 
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatMessage chatMessage,
@@ -49,14 +59,15 @@ public class ChatController {
                 new ChatResponse<>(messageResponse));
         // Publish unread message notification
         if (!isOnline) {
-            var notification = messageSaveResult.notification();
-            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, notification);
+            var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
+            messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
+                    new NotificationResponse<>(notificationDto));
         }
     }
 
     @MessageMapping("/chat.readMessage")
-    public void readIndicator(@Payload ReadMessageDto dto,
-                              Principal principal) {
+    public void readMessage(@Payload ReadMessageDto dto,
+                            Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
         var recipientId = getRecipientIdFromRoomId(dto.roomId(), user.getId());
 
@@ -71,4 +82,25 @@ public class ChatController {
 
     }
 
+    @MessageMapping("/chat.disconnect")
+    public void disconnect(@Payload StompConnector connector,
+                           Principal principal) {
+        removeFromCache(CommonUtils.getAuthUser(principal).getId(), connector.getName());
+    }
+
+    @PostMapping
+    @RequestMapping("/api/chat/disconnect/{connector}")
+    public ResponseEntity<?> disconnectRest(@AuthenticationPrincipal User user,
+                                            @PathVariable("connector") StompConnector connector) {
+        removeFromCache(user.getId(), connector.getName());
+
+        return ResponseEntity.ok("disconnected");
+    }
+
+    void removeFromCache(String userId, String connector) {
+        if ("chat".equals(connector)) {
+            cache.remove(userId);
+            log.info("Disconnected user={}", userId);
+        }
+    }
 }

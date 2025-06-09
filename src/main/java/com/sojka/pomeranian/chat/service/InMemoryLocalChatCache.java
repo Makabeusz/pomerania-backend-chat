@@ -10,6 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * An in-memory implementation of {@link ChatCache} for tracking active chat users.
  * Uses a thread-safe {@link ConcurrentHashMap.KeySetView} to store user IDs.
  * Suitable for single-instance deployments; not designed for distributed environments.
+ *
+ * todo: make it a proper cache with normal entries and TTL - if not refreshed for say 30 minutes
+ *       assume the user is offline and remove cache entry
  */
 @Component
 public class InMemoryLocalChatCache implements ChatCache {

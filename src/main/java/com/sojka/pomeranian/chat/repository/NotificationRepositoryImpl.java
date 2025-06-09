@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.ASTRA_KEYSPACE;
@@ -32,6 +34,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             WHERE profile_id = ? \
             AND created_at = ? \
             AND sender_id = ?
+            """.formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
+    private static final String COUNT_BY_PROFILE_ID = """
+            SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?
             """.formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
 
     @Override
@@ -94,6 +99,26 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             log.error("Failed to delete notification: {}", e.getMessage(), e);
             throw new AstraException("Failed to delete notification: profile_id=%s, sender_id=%s, created_at=%s"
                     .formatted(profileId, senderId, createdAt), e);
+        }
+    }
+
+    @Override
+    public Optional<Long> countByProfileId(String profileId) {
+        try {
+            var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValue(profileId).build();
+
+            log.info("Debug, count query: {}", statement.getQuery());
+
+            var session = connector.getSession();
+            var row = session.execute(statement).one();
+
+            Objects.requireNonNull(row);
+            Optional<Long> count = Optional.of(row.getLong("count"));
+
+            log.info("Fetched notifications count={}, profile_id={}", count.orElse(-1L), profileId);
+            return count;
+        } catch (Exception e) {
+            throw new AstraException("Failed to fetch notifications count: profile_id=%s".formatted(profileId), e);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.sojka.pomeranian.chat.util;
 
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.chat.util.mapper.PaginationMapper;
 
 import java.time.Duration;
 import java.time.Instant;
