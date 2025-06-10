@@ -2,14 +2,17 @@ package com.sojka.pomeranian.chat.dto;
 
 import lombok.Getter;
 
-public enum StompConnector {
+public record StompConnector(StompConnectorType type) {
 
-    CHAT("chat"), NOTIFICATIONS("notifications");
+    public enum StompConnectorType {
 
-    @Getter
-    private final String name;
+        CHAT("chat"), NOTIFICATIONS("notifications");
 
-    StompConnector(String name) {
-        this.name = name;
+        @Getter
+        private final String name;
+
+        StompConnectorType(String name) {
+            this.name = name;
+        }
     }
 }

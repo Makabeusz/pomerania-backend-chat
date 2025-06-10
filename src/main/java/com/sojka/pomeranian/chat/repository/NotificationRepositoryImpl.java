@@ -35,9 +35,12 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             AND created_at = ? \
             AND sender_id = ?
             """.formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
-    private static final String COUNT_BY_PROFILE_ID = """
-            SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?
-            """.formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
+    private static final String COUNT_BY_PROFILE_ID =
+            "SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?".formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
+    private static final String SELECT_ALL_BY_PROFILE_ID =
+            "SELECT * FROM %s.%s WHERE profile_id = ?".formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
+
+//    select * from notifications where profile_id='57bab9b4-6368-4014-88fa-18a0dbca4372'
 
     @Override
     public Notification save(Notification notification) {
@@ -121,4 +124,34 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             throw new AstraException("Failed to fetch notifications count: profile_id=%s".formatted(profileId), e);
         }
     }
+
+//    @Override
+//    public List<Notification> findByProfileId(String profileId) {
+//        try {
+//            var statement = SimpleStatement.builder(SELECT_ALL_BY_PROFILE_ID).addPositionalValue(profileId).build();
+//
+//            log.info("Debug, get notifications query: {}", statement.getQuery());
+//
+//            var session = connector.getSession();
+//            var resultSet = session.execute(statement);
+//            List<Notification> notifications = new ArrayList<>();
+//            int rowCount = 0;
+//
+//            for (Row row : resultSet) {
+//                notifications.add(NotificationMapper.fromAstraRow(row));
+//
+//                if (++rowCount >= pageSize) {
+//                    break;
+//                }
+//            }
+//
+//            Objects.requireNonNull(row);
+//            Optional<Long> count = Optional.of(row.getLong("count"));
+//
+//            log.info("Fetched notifications count={}, profile_id={}", count.orElse(-1L), profileId);
+//
+//        } catch (Exception e) {
+//            throw new AstraException("Failed to fetch notifications count: profile_id=%s".formatted(profileId), e);
+//        }
+//    }
 }

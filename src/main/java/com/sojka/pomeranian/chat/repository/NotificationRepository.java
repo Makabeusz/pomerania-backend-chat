@@ -11,4 +11,6 @@ public interface NotificationRepository extends AstraRepository<Notification> {
     void deleteAllByPrimaryKeys(String profileId, List<Instant> createdAt, String senderId);
 
     Optional<Long> countByProfileId(String profileId);
+
+//    List<Notification> findByProfileId(String profileId);
 }

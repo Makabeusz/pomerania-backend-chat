@@ -24,7 +24,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
 
@@ -85,17 +84,36 @@ public class ChatController {
     @MessageMapping("/chat.disconnect")
     public void disconnect(@Payload StompConnector connector,
                            Principal principal) {
-        removeFromCache(CommonUtils.getAuthUser(principal).getId(), connector.getName());
+        removeFromCache(CommonUtils.getAuthUser(principal).getId(), connector.type().getName());
     }
 
-    @PostMapping
-    @RequestMapping("/api/chat/disconnect/{connector}")
+    @PostMapping("/api/chat/disconnect/{connector}")
     public ResponseEntity<?> disconnectRest(@AuthenticationPrincipal User user,
-                                            @PathVariable("connector") StompConnector connector) {
-        removeFromCache(user.getId(), connector.getName());
+                                            @PathVariable("connector") String connector) {
+        removeFromCache(user.getId(), connector);
 
-        return ResponseEntity.ok("disconnected");
+        return ResponseEntity.ok("Disconnected");
     }
+
+    @MessageMapping("/chat.connect")
+    public void connect(@Payload StompConnector connector,
+                        Principal principal) {
+        if ("chat".equals(connector.type().getName())) {
+            User user = CommonUtils.getAuthUser(principal);
+            cache.put(user.getId());
+            log.info("Connected, user_id={}", user.getId());
+        }
+    }
+
+//    @PostMapping("/api/chat/connect/{connector}")
+//    public ResponseEntity<?> connectRest(@AuthenticationPrincipal User user,
+//                                         @PathVariable("connector") StompConnector connector) {
+//        if ("chat".equals(connector.getName())) {
+//            cache.put(user.getId());
+//        }
+//
+//        return ResponseEntity.ok("Connected");
+//    }
 
     void removeFromCache(String userId, String connector) {
         if ("chat".equals(connector)) {
