@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.getCurrentInstant;
+import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
 
 @Slf4j
 @Service
@@ -88,8 +89,9 @@ public class ChatService {
     public Instant markRead(MessageKey keys) {
         var readAt = messageRepository.markRead(keys);
 
-        notificationRepository.deleteAllByPrimaryKeys(keys.profileId(), keys.createdAt(),
-                CommonUtils.getRecipientIdFromRoomId(keys.roomId(), keys.profileId()));
+        notificationRepository.deleteAllByPrimaryKeys(
+                getRecipientIdFromRoomId(keys.roomId(), keys.profileId()), keys.createdAt(), keys.profileId()
+        );
 
         return readAt;
     }

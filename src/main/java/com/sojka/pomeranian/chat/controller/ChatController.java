@@ -6,10 +6,10 @@ import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
-import com.sojka.pomeranian.chat.dto.StompConnector;
+import com.sojka.pomeranian.chat.dto.StompConnectorResponse;
+import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.service.ChatService;
-import com.sojka.pomeranian.chat.service.SessionTracker;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
@@ -35,11 +35,10 @@ import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomI
 public class ChatController {
 
     private static final String DM_DESTINATION = "/queue/private";
-    private static final String NOTIFY_DESTINATION = "/queue/private/notification";
+    private static final String NOTIFY_DESTINATION = "/queue/notification";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
-    private final SessionTracker sessionTracker;
     private final ChatCache cache;
 
     @MessageMapping("/chat.sendMessage")
@@ -48,7 +47,7 @@ public class ChatController {
         // todo: don't send sender ID from frontend, fetch it with auth
         User user = CommonUtils.getAuthUser(principal);
 
-        boolean isOnline = sessionTracker.isUserOnline(chatMessage.getRecipient().id());
+        boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), StompSubscription.CHAT);
 
         var messageSaveResult = chatService.saveMessage(chatMessage, isOnline);
         var messageResponse = MessageMapper.toDto(messageSaveResult.message());
@@ -75,14 +74,14 @@ public class ChatController {
                         .map(CommonUtils::formatToInstant)
                         .toList(), recipientId));
 
-        log.info("readIndicator user online: {}", sessionTracker.isUserOnline(user.getId()));
+        log.info("Marked as read: {}", dto);
         messagingTemplate.convertAndSendToUser(dto.roomId(), DM_DESTINATION,
                 new ChatResponse<>(new ChatRead(dto.createdAt(), CommonUtils.formatToDateString(readAt))));
 
     }
 
     @MessageMapping("/chat.disconnect")
-    public void disconnect(@Payload StompConnector connector,
+    public void disconnect(@Payload StompConnectorResponse connector,
                            Principal principal) {
         removeFromCache(CommonUtils.getAuthUser(principal).getId(), connector.type().getName());
     }
@@ -96,24 +95,12 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.connect")
-    public void connect(@Payload StompConnector connector,
+    public void connect(@Payload StompConnectorResponse connector,
                         Principal principal) {
-        if ("chat".equals(connector.type().getName())) {
-            User user = CommonUtils.getAuthUser(principal);
-            cache.put(user.getId());
-            log.info("Connected, user_id={}", user.getId());
-        }
+        User user = CommonUtils.getAuthUser(principal);
+        cache.put(user.getId(), connector.type());
+        log.info("Connected, user_id={}", user.getId());
     }
-
-//    @PostMapping("/api/chat/connect/{connector}")
-//    public ResponseEntity<?> connectRest(@AuthenticationPrincipal User user,
-//                                         @PathVariable("connector") StompConnector connector) {
-//        if ("chat".equals(connector.getName())) {
-//            cache.put(user.getId());
-//        }
-//
-//        return ResponseEntity.ok("Connected");
-//    }
 
     void removeFromCache(String userId, String connector) {
         if ("chat".equals(connector)) {
