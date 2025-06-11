@@ -1,13 +1,13 @@
 package com.sojka.pomeranian.chat.model;
 
-import com.sojka.pomeranian.chat.dto.StompSubscription;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The online-status cache model.
@@ -19,7 +19,8 @@ import java.util.Set;
 public class ActiveUser {
 
     private String userId;
-    private Set<StompSubscription> subscriptions;
+    private Map<String, List<String>> subscriptions;
+    private String simpSessionId;
     private Instant createdAt;
 
 }

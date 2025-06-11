@@ -49,8 +49,7 @@ public class ChatService {
      * @param chatMessage The message got from the user chat
      * @return {@link MessageSaveResult} with saved message and notification if recipient is not online
      */
-    public MessageSaveResult saveMessage(ChatMessage chatMessage, boolean isOnline) {
-        String roomId = CommonUtils.generateRoomId(chatMessage);
+    public MessageSaveResult saveMessage(ChatMessage chatMessage, String roomId, boolean isOnline) {
         Instant now = getCurrentInstant();
         var message = Message.builder()
                 .roomId(roomId)

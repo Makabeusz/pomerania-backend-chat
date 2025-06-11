@@ -3,8 +3,13 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
 
+import java.util.List;
 import java.util.Optional;
 
+
+/**
+ * TODO: Add docs here, implementation don't need too much docs.
+ */
 public interface ChatCache {
 
     boolean isOnline(String userId, StompSubscription subscription);
@@ -17,9 +22,15 @@ public interface ChatCache {
      */
     Optional<ActiveUser> get(String userId);
 
+    List<ActiveUser> getAll();
+
     boolean put(String userId, StompSubscription subscription);
 
+    boolean create(String userId, String simpSessionId);
+
     boolean remove(String userId);
+
+    boolean remove(String userId, List<StompSubscription> subscription);
 
     void purge();
 }

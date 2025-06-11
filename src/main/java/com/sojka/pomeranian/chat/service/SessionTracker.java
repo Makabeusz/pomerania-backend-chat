@@ -5,35 +5,32 @@ import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.util.List;
-import java.util.Map;
-
-//@Slf4j
-//@Component
-//@RequiredArgsConstructor
+@Slf4j
+@Component
+@RequiredArgsConstructor
 public class SessionTracker {
 
-//    private final ChatCache cache;
-//
-//    @EventListener
-//    public void handleSessionConnected(SessionConnectedEvent event) {
-//        String connector = getConnectorHeaderValue(event);
-//
-//        if ("chat".equals(connector)) {
-//            User user = CommonUtils.getAuthUser(event.getUser());
-//            cache.put(user.getId());
-//        }
-//
-//    }
-//
-//    public boolean isUserOnline(String userId) {
-//        return cache.isOnline(userId);
-//    }
-//
+    private final ChatCache cache;
+
+    @EventListener
+    public void handleSessionConnected(SessionConnectedEvent event) {
+        String simpSessionId = (String) event.getMessage().getHeaders().get("simpSessionId");
+        User user = CommonUtils.getAuthUser(event.getUser());
+        cache.create(user.getId(), simpSessionId);
+        log.info("Online: user_id={}", user.getId());
+    }
+
+    @EventListener
+    public void handleSessionDisconnected(SessionDisconnectEvent event) {
+        User user = CommonUtils.getAuthUser(event.getUser());
+        cache.remove(user.getId());
+        log.info("Offline: user_id={}", user.getId());
+    }
+
 //    String getConnectorHeaderValue(SessionConnectedEvent event) {
 //        try {
 //            GenericMessage<?> genericMessage = (GenericMessage<?>) event.getMessage().getHeaders().get("simpConnectMessage");

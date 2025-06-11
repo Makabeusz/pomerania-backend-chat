@@ -3,13 +3,16 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
 import com.sojka.pomeranian.chat.util.CommonUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -17,21 +20,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * Uses a thread-safe {@link ConcurrentHashMap.KeySetView} to store user IDs.
  * Suitable for single-instance deployments; not designed for distributed environments.
  * <p>
- * todo: make it a proper cache with normal entries and TTL - if not refreshed for say 30 minutes
- *       assume the user is offline and remove cache entry
  */
+@Slf4j
 @Component
 public class InMemoryLocalChatCache implements ChatCache {
 
-    private final Map<String, ActiveUser> activeUsers;
+    private final Map<String, ActiveUser> cache;
 
     /**
      * Constructs an instance with a provided map of active users.
      *
-     * @param activeUsers The map to store active user IDs.
+     * @param cache The map to store active user IDs.
      */
-    public InMemoryLocalChatCache(Map<String, ActiveUser> activeUsers) {
-        this.activeUsers = activeUsers;
+    public InMemoryLocalChatCache(Map<String, ActiveUser> cache) {
+        this.cache = cache;
     }
 
     /**
@@ -39,7 +41,7 @@ public class InMemoryLocalChatCache implements ChatCache {
      */
     @Autowired
     public InMemoryLocalChatCache() {
-        this.activeUsers = new ConcurrentHashMap<>();
+        this.cache = new ConcurrentHashMap<>();
     }
 
     /**
@@ -50,16 +52,23 @@ public class InMemoryLocalChatCache implements ChatCache {
      */
     @Override
     public boolean isOnline(String userId, StompSubscription subscription) {
-        ActiveUser activeUser = activeUsers.get(userId);
+        ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
-            return activeUser.getSubscriptions().contains(subscription);
+            return activeUser.getSubscriptions()
+                    .getOrDefault(subscription.type().name(), Collections.emptyList())
+                    .contains(subscription.id());
         }
         return false;
     }
 
     @Override
     public Optional<ActiveUser> get(String userId) {
-        throw new RuntimeException("not implemented");
+        return Optional.ofNullable(cache.get(userId));
+    }
+
+    @Override
+    public List<ActiveUser> getAll() {
+        return new ArrayList<>(cache.values());
     }
 
     /**
@@ -67,26 +76,40 @@ public class InMemoryLocalChatCache implements ChatCache {
      *
      * @param userId       The ID of the user to add.
      * @param subscription The online subscription
-     * @return {@code true} if the user was added (was not already online),
-     * {@code false} if the user was already present.
+     * @return {@code true} if the subscription was added (was not already online)
      */
     @Override
     public boolean put(String userId, StompSubscription subscription) {
-        ActiveUser activeUser = activeUsers.get(userId);
+        ActiveUser activeUser = cache.get(userId);
         if (activeUser == null) {
-            activeUsers.put(userId, new ActiveUser(userId, Set.of(subscription), CommonUtils.getCurrentInstant()));
-            return true;
-        } else {
-            var subscriptions = new HashSet<>(activeUser.getSubscriptions());
-            boolean added = subscriptions.add(subscription);
-            if (added) {
-                activeUser.setSubscriptions(subscriptions);
-                activeUsers.put(userId, activeUser);
-                return true;
-            }
+            log.error("The user session does not exists");
+            return false;
         }
+        var subscriptions = activeUser.getSubscriptions();
 
-        return false;
+        if (subscriptions.containsKey(subscription.type().name())) {
+            List<String> ids = subscriptions.get(subscription.type().name());
+            if (ids.contains(subscription.id())) {
+                log.error("Subscription already exists: user_id={}, subscription={}", userId, subscription);
+                return false;
+            }
+            subscriptions.get(subscription.type().name()).add(subscription.id());
+        } else {
+            List<String> ids = new ArrayList<>();
+            ids.add(subscription.id());
+            subscriptions.put(subscription.type().name(), ids);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean create(String userId, String simpSessionId) {
+        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, CommonUtils.getCurrentInstant()));
+        if (previousEntry != null) {
+            log.error("User already online: {}", previousEntry);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -98,7 +121,28 @@ public class InMemoryLocalChatCache implements ChatCache {
      */
     @Override
     public boolean remove(String userId) {
-        return activeUsers.remove(userId) != null;
+        return cache.remove(userId) != null;
+    }
+
+    @Override
+    public boolean remove(String userId, List<StompSubscription> subscriptions) {
+        ActiveUser activeUser = cache.get(userId);
+        if (activeUser != null) {
+            for (StompSubscription subscription : subscriptions) {
+                if (subscription.id() == null || subscription.id().isBlank()) {
+                    return activeUser.getSubscriptions().remove(subscription.type().name()) != null;
+                } else {
+                    var ids = activeUser.getSubscriptions().get(subscription.type().name());
+                    ids = ids.stream()
+                            .filter(id -> !id.equals(subscription.id()))
+                            .toList();
+                    if (ids.isEmpty()) {
+                        activeUser.getSubscriptions().remove(subscription.type().name());
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -106,6 +150,6 @@ public class InMemoryLocalChatCache implements ChatCache {
      */
     @Override
     public void purge() {
-        activeUsers.clear();
+        cache.clear();
     }
 }

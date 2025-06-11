@@ -6,7 +6,6 @@ import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
-import com.sojka.pomeranian.chat.dto.StompConnectorResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.service.ChatService;
@@ -22,10 +21,11 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
+import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
 
@@ -46,10 +46,10 @@ public class ChatController {
                             Principal principal) {
         // todo: don't send sender ID from frontend, fetch it with auth
         User user = CommonUtils.getAuthUser(principal);
+        String roomId = CommonUtils.generateRoomId(chatMessage);
 
-        boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), StompSubscription.CHAT);
-
-        var messageSaveResult = chatService.saveMessage(chatMessage, isOnline);
+        boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));
+        var messageSaveResult = chatService.saveMessage(chatMessage, roomId, isOnline);
         var messageResponse = MessageMapper.toDto(messageSaveResult.message());
 
         // Update both users chat
@@ -81,31 +81,30 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.disconnect")
-    public void disconnect(@Payload StompConnectorResponse connector,
+    public void disconnect(@Payload List<StompSubscription> subscriptions,
                            Principal principal) {
-        removeFromCache(CommonUtils.getAuthUser(principal).getId(), connector.type().getName());
+        removeFromCache(CommonUtils.getAuthUser(principal).getId(), subscriptions);
+
     }
 
-    @PostMapping("/api/chat/disconnect/{connector}")
+    @PostMapping("/api/chat/disconnect")
     public ResponseEntity<?> disconnectRest(@AuthenticationPrincipal User user,
-                                            @PathVariable("connector") String connector) {
-        removeFromCache(user.getId(), connector);
+                                            @RequestBody List<StompSubscription> connectors) {
+        removeFromCache(user.getId(), connectors);
 
         return ResponseEntity.ok("Disconnected");
     }
 
     @MessageMapping("/chat.connect")
-    public void connect(@Payload StompConnectorResponse connector,
+    public void connect(@Payload StompSubscription subscription,
                         Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
-        cache.put(user.getId(), connector.type());
-        log.info("Connected, user_id={}", user.getId());
+        cache.put(user.getId(), subscription);
+        log.info("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
     }
 
-    void removeFromCache(String userId, String connector) {
-        if ("chat".equals(connector)) {
-            cache.remove(userId);
-            log.info("Disconnected user={}", userId);
-        }
+    void removeFromCache(String userId, List<StompSubscription> connectors) {
+        cache.remove(userId, connectors);
+        log.info("Unsubscribed: user={}, subscription={}", userId, connectors);
     }
 }

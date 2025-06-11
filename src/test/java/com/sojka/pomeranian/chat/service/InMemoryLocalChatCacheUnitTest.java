@@ -5,9 +5,10 @@ import com.sojka.pomeranian.chat.model.ActiveUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,39 +26,40 @@ class InMemoryLocalChatCacheUnitTest {
     @Test
     void put_newEntry_true() {
         String userId = "user1";
+        db.put(userId, new ActiveUser(userId, new HashMap<>(), "", null));
 
-        assertTrue(cache.put(userId, StompSubscription.CHAT));
+        assertTrue(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
         assertTrue(db.containsKey(userId));
     }
 
     @Test
     void put_existingEntry_false() {
         String userId = "user1";
-        db.put(userId, new ActiveUser(userId, Set.of(StompSubscription.CHAT), null));
+        db.put(userId, new ActiveUser(userId, Map.of("CHAT", new ArrayList<>(List.of(userId))), null, null));
 
-        assertFalse(cache.put(userId, StompSubscription.CHAT));
+        assertFalse(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
         assertTrue(db.containsKey(userId));
     }
 
     @Test
     void isOnline_userPresent_true() {
         String userId = "user1";
-        db.put(userId, new ActiveUser(userId, Set.of(StompSubscription.CHAT), null));
+        db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of(userId)), null, null));
 
-        assertTrue(cache.isOnline(userId, StompSubscription.CHAT));
+        assertTrue(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
     }
 
     @Test
     void isOnline_userAbsent_false() {
         String userId = "user1";
 
-        assertFalse(cache.isOnline(userId, StompSubscription.CHAT));
+        assertFalse(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
     }
 
     @Test
     void remove_existingUser_true() {
         String userId = "user1";
-        db.put(userId, new ActiveUser(userId, Set.of(StompSubscription.CHAT), null));
+        db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of(userId)), null, null));
 
         assertTrue(cache.remove(userId));
         assertFalse(db.containsKey(userId));

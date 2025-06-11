@@ -61,8 +61,9 @@ class ChatServiceIntegrationTest {
                 .sender(new ChatUser("user1", "User1"))
                 .recipient(new ChatUser("user2", "User2"))
                 .build();
+        String roomId = CommonUtils.generateRoomId(chatMessage);
 
-        var saved = chatService.saveMessage(chatMessage, false).message();
+        var saved = chatService.saveMessage(chatMessage, roomId, false).message();
 
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
@@ -90,7 +91,7 @@ class ChatServiceIntegrationTest {
         assertThat(saveResult).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("createdAt", "messageId")
                 .isEqualTo(Message.builder()
-                        .roomId(CommonUtils.generateRoomId(chatMessage))
+                        .roomId(roomId)
                         .profileId("user1")
                         .username("User1")
                         .recipientProfileId("user2")

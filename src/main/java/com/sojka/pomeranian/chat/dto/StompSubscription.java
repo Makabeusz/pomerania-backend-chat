@@ -1,15 +1,13 @@
 package com.sojka.pomeranian.chat.dto;
 
-import lombok.Getter;
 
-public enum StompSubscription {
+public record StompSubscription(
+        Type type,
+        String id
+) {
 
-    CHAT("chat"), NOTIFICATIONS("notifications");
+    public enum Type {
 
-    @Getter
-    private final String name;
-
-    StompSubscription(String name) {
-        this.name = name;
+        CHAT, CHAT_NOTIFICATIONS
     }
 }
