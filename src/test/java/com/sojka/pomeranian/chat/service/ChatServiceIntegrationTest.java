@@ -7,15 +7,22 @@ import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
+import com.sojka.pomeranian.chat.dto.MessageKey;
+import com.sojka.pomeranian.chat.dto.NotificationMessage;
 import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.chat.model.Notification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
+import com.sojka.pomeranian.chat.repository.NotificationRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -25,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
 import static com.sojka.pomeranian.chat.util.TestUtils.paginationString;
@@ -44,6 +52,8 @@ class ChatServiceIntegrationTest {
     AstraTestcontainersConnector connector;
     @Autowired
     ConversationsRepository conversationsRepository;
+    @Autowired
+    NotificationRepository notificationRepository;
 
     CqlSession session;
 
@@ -51,6 +61,7 @@ class ChatServiceIntegrationTest {
     void setUp() {
         session = connector.connect();
         session.execute("TRUNCATE messages.messages");
+        session.execute("TRUNCATE messages.notifications");
         conversationsRepository.deleteAll();
     }
 
@@ -129,8 +140,9 @@ class ChatServiceIntegrationTest {
         assertNull(response.getNextPageState()); // No more pages
     }
 
-    @Test
-    void getConversationsHeaders_twoConversationsWithFewMessagesEach_twoConversationHeaders() {
+    @ParameterizedTest
+    @MethodSource("conversationHeadersSource")
+    void getConversationsHeaders_twoConversationsWithFewMessagesEach_twoConversationHeaders(String pagination) {
         String userId = "userX";
         String roomIdXY = "userX:userY";
         String roomIdXZ = "userX:userZ";
@@ -152,12 +164,19 @@ class ChatServiceIntegrationTest {
         conversationsRepository.save(new Conversation(new Conversation.Id("userZ", roomIdXZ), message0.getCreatedAt()));
 
 
-        ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders(userId, paginationString(0, 10));
+        ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders(userId, pagination);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("Message 3", response.getResults().get(0).getContent()); // newest on top
+        assertEquals("Message 3", response.getResults().get(0).getContent()); // most recent on top
         assertEquals("Message 0", response.getResults().get(1).getContent());
         assertNull(response.getNextPageState()); // No more pages
+    }
+
+    static Stream<Arguments> conversationHeadersSource() {
+        return Stream.of(
+                Arguments.of(paginationString(0, 10)),
+                Arguments.of((String) null)
+        );
     }
 
     @Test
@@ -247,6 +266,206 @@ class ChatServiceIntegrationTest {
         assertThat(messagesWithoutFirst).allMatch(m -> m.getCreatedAt().compareTo(first.getCreatedAt()) < 0);
         // last page
         assertNull(response.getNextPageState());
+    }
+
+    @Test
+    void saveMessage_offlineRecipient_savedWithNotification() {
+        ChatMessage chatMessage = ChatMessage.basicBuilder()
+                .content("Hey, you there?")
+                .sender(new ChatUser("user1", "User1"))
+                .recipient(new ChatUser("user2", "User2"))
+                .build();
+        String roomId = CommonUtils.generateRoomId(chatMessage);
+
+        var saved = chatService.saveMessage(chatMessage, roomId, false);
+
+        // Verify message in messages table
+        SimpleStatement selectMessage = SimpleStatement.newInstance(
+                "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
+                saved.message().getRoomId(), saved.message().getCreatedAt(), saved.message().getProfileId()
+        );
+        var row = connector.getSession()
+                .execute(selectMessage)
+                .one();
+        Message savedMessage = Message.builder()
+                .roomId(row.getString("room_id"))
+                .createdAt(row.getInstant("created_at"))
+                .profileId(row.getString("profile_id"))
+                .username(row.getString("username"))
+                .recipientProfileId(row.getString("recipient_profile_id"))
+                .recipientUsername(row.getString("recipient_username"))
+                .content(row.getString("content"))
+                .resourceId(row.getString("resource_id"))
+                .threadId(row.getString("thread_id"))
+                .editedAt(row.getString("edited_at"))
+                .deletedAt(row.getString("deleted_at"))
+                .pinned(row.getBoolean("pinned"))
+                .metadata(row.getMap("metadata", String.class, String.class))
+                .build();
+        assertThat(savedMessage).usingRecursiveComparison(new RecursiveComparisonConfiguration())
+                .ignoringFields("createdAt", "messageId")
+                .isEqualTo(Message.builder()
+                        .roomId(roomId)
+                        .profileId("user1")
+                        .username("User1")
+                        .recipientProfileId("user2")
+                        .recipientUsername("User2")
+                        .content("Hey, you there?")
+                        .metadata(Collections.emptyMap())
+                        .pinned(false)
+                        .build());
+
+        // Verify notification
+        SimpleStatement selectNotification = SimpleStatement.newInstance(
+                "SELECT * FROM messages.notifications WHERE profile_id = ? AND created_at = ?",
+                "user2", saved.message().getCreatedAt()
+        );
+        var notificationRow = connector.getSession()
+                .execute(selectNotification)
+                .one();
+        Notification savedNotification = Notification.builder()
+                .profileId(notificationRow.getString("profile_id"))
+                .createdAt(notificationRow.getInstant("created_at"))
+                .senderId(notificationRow.getString("sender_id"))
+                .senderUsername(notificationRow.getString("sender_username"))
+                .content(notificationRow.getString("content"))
+                .build();
+        assertThat(savedNotification).usingRecursiveComparison(new RecursiveComparisonConfiguration())
+                .ignoringFields("createdAt")
+                .isEqualTo(Notification.builder()
+                        .profileId("user2")
+                        .senderId("user1")
+                        .senderUsername("User1")
+                        .content("Hey, you there?")
+                        .build());
+
+        // Verify conversations
+        assertThat(conversationsRepository.findAll()).containsExactlyInAnyOrder(
+                new Conversation(new Conversation.Id("user1", roomId), saved.message().getCreatedAt()),
+                new Conversation(new Conversation.Id("user2", roomId), saved.message().getCreatedAt())
+        );
+    }
+
+    @Test
+    void markRead_messageExists_readAtUpdatedAndNotificationDeleted() {
+        String roomId = "user1:user2";
+        Message message = createChatMessage(roomId, "Hello!", "user1", "user2", Instant.now());
+        messageRepository.save(message);
+        Notification notification = Notification.builder()
+                .profileId("user2")
+                .createdAt(message.getCreatedAt())
+                .senderId("user1")
+                .senderUsername("User1")
+                .content("Hello!")
+                .build();
+        notificationRepository.save(notification);
+
+        MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt()), "user1");
+        Instant readAt = chatService.markRead(key);
+
+        // Verify message readAt updated
+        SimpleStatement selectMessage = SimpleStatement.newInstance(
+                "SELECT read_at FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
+                roomId, message.getCreatedAt(), "user1"
+        );
+        var row = connector.getSession().execute(selectMessage).one();
+        assertThat(row.getInstant("read_at")).isEqualTo(readAt);
+
+        // Verify notification deleted
+        SimpleStatement selectNotification = SimpleStatement.newInstance(
+                "SELECT * FROM messages.notifications WHERE profile_id = ? AND created_at = ?",
+                "user2", message.getCreatedAt()
+        );
+        assertThat(connector.getSession().execute(selectNotification).one()).isNull();
+    }
+
+    @Test
+    void countNotifications_multipleNotifications_correctCount() {
+        String userId = "user1";
+        Instant now = Instant.now();
+        Notification notification1 = Notification.builder()
+                .profileId(userId)
+                .createdAt(now)
+                .senderId("user2")
+                .senderUsername("User2")
+                .content("Message 1")
+                .build();
+        Notification notification2 = Notification.builder()
+                .profileId(userId)
+                .createdAt(now.plusSeconds(1))
+                .senderId("user3")
+                .senderUsername("User3")
+                .content("Message 2")
+                .build();
+        Notification otherUserNotification = Notification.builder()
+                .profileId("user4")
+                .createdAt(now)
+                .senderId("user1")
+                .senderUsername("User1")
+                .content("Message 3")
+                .build();
+        notificationRepository.save(notification1);
+        notificationRepository.save(notification2);
+        notificationRepository.save(otherUserNotification);
+
+        Long count = chatService.countNotifications(userId);
+
+        assertEquals(2L, count);
+    }
+
+    @Test
+    void getNotifications_fewNotifications_sortedByCreatedAtDesc() {
+        String userId = "user1";
+        Instant now = Instant.now();
+        Notification notification1 = Notification.builder()
+                .profileId(userId)
+                .createdAt(now.minusSeconds(10))
+                .senderId("user2")
+                .senderUsername("User2")
+                .content("Old message")
+                .build();
+        Notification notification2 = Notification.builder()
+                .profileId(userId)
+                .createdAt(now)
+                .senderId("user3")
+                .senderUsername("User3")
+                .content("New message")
+                .build();
+        notificationRepository.save(notification1);
+        notificationRepository.save(notification2);
+
+        ResultsPage<NotificationMessage> response = chatService.getNotifications(userId, null);
+
+        assertEquals(2, response.getResults().size());
+        assertEquals("New message", response.getResults().get(0).getContent());
+        assertEquals("Old message", response.getResults().get(1).getContent());
+        assertNull(response.getNextPageState());
+    }
+
+    @Test
+    void getConversation_manyMessages_twoPagedResults() {
+        String userId1 = "user1";
+        String userId2 = "user2";
+        String roomId = CommonUtils.generateRoomId(userId1, userId2);
+        List<Message> messages = new ArrayList<>();
+        for (int i = 1; i <= 15; i++) {
+            messages.add(createChatMessage(roomId, "Message " + i, userId1, userId2, Instant.now().minusSeconds(15 - i)));
+        }
+        messages.forEach(messageRepository::save);
+
+        // First page
+        ResultsPage<ChatMessagePersisted> response1 = chatService.getConversation(userId1, userId2, null);
+        assertEquals(10, response1.getResults().size());
+        assertEquals("Message 6", response1.getResults().get(0).getContent());
+        assertEquals("Message 15", response1.getResults().get(9).getContent());
+        assertThat(response1.getNextPageState()).isNotNull();
+
+        // Second page
+        ResultsPage<ChatMessagePersisted> response2 = chatService.getConversation(userId1, userId2, response1.getNextPageState());
+        assertEquals(5, response2.getResults().size());
+        assertEquals("Message 1", response2.getResults().get(0).getContent());
+        assertEquals("Message 5", response2.getResults().get(4).getContent());
+        assertNull(response2.getNextPageState());
     }
 
 }

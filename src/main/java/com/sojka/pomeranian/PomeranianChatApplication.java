@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @RequiredArgsConstructor
-@EnableJpaRepositories( // check if security works
+@EnableJpaRepositories(
         basePackages = {"com.sojka.pomeranian.chat.repository"}
 )
 public class PomeranianChatApplication {

@@ -3,6 +3,7 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
 import com.sojka.pomeranian.chat.util.CommonUtils;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -125,7 +126,7 @@ public class InMemoryLocalChatCache implements ChatCache {
     }
 
     @Override
-    public boolean remove(String userId, List<StompSubscription> subscriptions) {
+    public boolean remove(String userId, @NonNull List<StompSubscription> subscriptions) {
         ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             for (StompSubscription subscription : subscriptions) {
@@ -136,9 +137,12 @@ public class InMemoryLocalChatCache implements ChatCache {
                     ids = ids.stream()
                             .filter(id -> !id.equals(subscription.id()))
                             .toList();
+                    activeUser.getSubscriptions().put(subscription.type().name(), ids);
+
                     if (ids.isEmpty()) {
-                        activeUser.getSubscriptions().remove(subscription.type().name());
+                        return activeUser.getSubscriptions().remove(subscription.type().name()) != null;
                     }
+                    return true;
                 }
             }
         }
