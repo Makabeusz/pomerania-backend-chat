@@ -134,6 +134,9 @@ public class InMemoryLocalChatCache implements ChatCache {
                     return activeUser.getSubscriptions().remove(subscription.type().name()) != null;
                 } else {
                     var ids = activeUser.getSubscriptions().get(subscription.type().name());
+                    if (ids == null) {
+                        return false;
+                    }
                     ids = ids.stream()
                             .filter(id -> !id.equals(subscription.id()))
                             .toList();
