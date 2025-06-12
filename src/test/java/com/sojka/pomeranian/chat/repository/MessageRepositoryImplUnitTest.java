@@ -22,7 +22,8 @@ class MessageRepositoryImplUnitTest {
         assertThatThrownBy(() -> repository.findByRoomId("dummyRoomId", "ERROR", 10))
                 .isExactlyInstanceOf(AstraException.class)
                 .hasCauseExactlyInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid pageState for room_id dummyRoomId: Last unit does not have enough valid bits");
+                .hasMessage("Invalid pageState")
+                .hasRootCauseMessage("Last unit does not have enough valid bits");
     }
 
     @Test

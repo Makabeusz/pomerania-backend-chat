@@ -2,7 +2,6 @@ package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
-import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.chat.db.AstraConnector;
@@ -12,6 +11,7 @@ import com.sojka.pomeranian.chat.model.Notification;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
@@ -143,20 +143,12 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
         try {
             var session = connector.getSession();
             var resultSet = session.execute(statement);
-            List<Notification> notifications = new ArrayList<>();
-            int rowCount = 0;
 
-            for (Row row : resultSet) {
-                notifications.add(NotificationMapper.fromAstraRow(row));
+            var result = resultsPage(resultSet, pageSize, NotificationMapper::fromAstraRow);
 
-                if (++rowCount >= pageSize) {
-                    break;
-                }
-            }
+            log.info("Fetched {} notifications, profile_id={}", result.getResults().size(), profileId);
 
-            log.info("Fetched {} notifications, profile_id={}", notifications.size(), profileId);
-
-            return resultsPage(notifications, resultSet);
+            return result;
         } catch (IllegalStateException e) {
             log.error(String.format("CqlSession not initialized for profile_id %s: %s", profileId, e.getMessage()), e);
             throw new AstraException("Cassandra session not initialized", e);

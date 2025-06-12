@@ -1,12 +1,15 @@
 package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.exception.AstraException;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Abstract base class for repositories interacting with DataStax Astra, a cloud-native Cassandra database.
@@ -58,9 +61,20 @@ public abstract class AstraRepository {
      * @param resultSet the Cassandra {@link ResultSet} containing query execution metadata,
      *                  including the pagination state
      * @return a {@link ResultsPage} containing the provided results and the Base64-encoded
-     *         pagination state for the next page, or {@code null} if no further pages exist
+     * pagination state for the next page, or {@code null} if no further pages exist
      */
-    public <T> ResultsPage<T> resultsPage(List<T> results, ResultSet resultSet) {
+    public <T> ResultsPage<T> resultsPage(ResultSet resultSet, int pageSize, Function<Row, T> mapper) {
+        List<T> results = new ArrayList<>();
+        int rowCount = 0;
+
+        for (Row row : resultSet) {
+            results.add(mapper.apply(row));
+
+            if (++rowCount >= pageSize) {
+                break;
+            }
+        }
+
         var pagingState = resultSet.getExecutionInfo().getPagingState();
         var nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
 

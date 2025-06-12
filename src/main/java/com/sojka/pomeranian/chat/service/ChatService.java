@@ -2,7 +2,6 @@ package com.sojka.pomeranian.chat.service;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.NotificationMessage;
@@ -102,7 +101,7 @@ public class ChatService {
         String roomId = CommonUtils.generateRoomId(userId1, userId2);
         var page = messageRepository.findByRoomId(roomId, pageState, 10);
         return new MessagePageResponse(
-                page.getMessages().stream()
+                page.getResults().stream()
                         .sorted(Comparator.comparing(Message::getCreatedAt))
                         .map(MessageMapper::toDto)
                         .toList(),
@@ -126,7 +125,7 @@ public class ChatService {
 
         var headers = conversations.stream()
                 .map(c -> messageRepository.findByRoomId(c.getId().getRoomId(), null, 1))
-                .map(MessagePage::getMessages)
+                .map(ResultsPage::getResults)
                 .flatMap(Collection::stream)
                 .map(MessageMapper::toDto)
                 .toList();

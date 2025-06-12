@@ -2,24 +2,22 @@ package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
-import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.chat.db.AstraConnector;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessagePage;
+import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
 import java.util.Objects;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
@@ -35,7 +33,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
     private final AstraConnector connector;
 
     @Override
-    public MessagePage findByRoomId(String roomId, String pageState, int pageSize) {
+    public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {
         var select = QueryBuilder.selectFrom(MESSAGES_TABLE)
                 .all()
                 .whereColumn("room_id").isEqualTo(literal(roomId));
@@ -51,24 +49,12 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
         try {
             var session = connector.getSession();
             var resultSet = session.execute(statement);
-            List<Message> messages = new ArrayList<>();
-            int rowCount = 0;
 
-            for (Row row : resultSet) {
-                messages.add(MessageMapper.fromAstraRow(row));
+            var result = resultsPage(resultSet, pageSize, MessageMapper::fromAstraRow);
 
-                if (++rowCount >= pageSize) {
-                    break;
-                }
-            }
+            log.info(String.format("Fetched %d messages for room_id=%s", result.getResults().size(), roomId));
 
-            log.info(String.format("Fetched %d messages for room_id=%s", messages.size(), roomId));
-
-            var pagingState = resultSet.getExecutionInfo().getPagingState();
-            var nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
-
-            // TODO: use ResultsPage<T> resultsPage(List<T> results, ResultSet resultSet)
-            return new MessagePage(messages, nextPageState);
+            return result;
         } catch (IllegalStateException e) {
             log.error(String.format("CqlSession not initialized for room_id %s: %s", roomId, e.getMessage()), e);
             throw new AstraException("Cassandra session not initialized", e);
