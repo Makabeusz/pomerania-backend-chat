@@ -7,7 +7,7 @@ import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
-import com.sojka.pomeranian.chat.dto.MessagePageResponse;
+import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
@@ -119,12 +119,12 @@ class ChatServiceIntegrationTest {
         messageRepository.save(message2);
         messageRepository.save(message3);
 
-        MessagePageResponse response = chatService.getConversation(userId1, userId2, null);
+        var response = chatService.getConversation(userId1, userId2, null);
 
-        assertEquals(3, response.getMessages().size());
-        assertEquals("Message 1", response.getMessages().get(0).getContent()); // Sorted by created_at DESC
-        assertEquals("Message 2", response.getMessages().get(1).getContent());
-        assertEquals("Message 3", response.getMessages().get(2).getContent());
+        assertEquals(3, response.getResults().size());
+        assertEquals("Message 1", response.getResults().get(0).getContent()); // Sorted by created_at DESC
+        assertEquals("Message 2", response.getResults().get(1).getContent());
+        assertEquals("Message 3", response.getResults().get(2).getContent());
 
         assertNull(response.getNextPageState()); // No more pages
     }
@@ -152,11 +152,11 @@ class ChatServiceIntegrationTest {
         conversationsRepository.save(new Conversation(new Conversation.Id("userZ", roomIdXZ), message0.getCreatedAt()));
 
 
-        MessagePageResponse response = chatService.getConversationsHeaders(userId, paginationString(0, 10));
+        ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders(userId, paginationString(0, 10));
 
-        assertEquals(2, response.getMessages().size());
-        assertEquals("Message 3", response.getMessages().get(0).getContent()); // newest on top
-        assertEquals("Message 0", response.getMessages().get(1).getContent());
+        assertEquals(2, response.getResults().size());
+        assertEquals("Message 3", response.getResults().get(0).getContent()); // newest on top
+        assertEquals("Message 0", response.getResults().get(1).getContent());
         assertNull(response.getNextPageState()); // No more pages
     }
 
@@ -193,14 +193,14 @@ class ChatServiceIntegrationTest {
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
-        MessagePageResponse response = chatService.getConversationsHeaders("user1", paginationString(0, 10));
+        ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders("user1", paginationString(0, 10));
 
-        assertEquals(4, response.getMessages().size());
+        assertEquals(4, response.getResults().size());
         assertThat(response.getNextPageState()).isNull(); // Assuming pagination
-        assertThat(response.getMessages().get(0).getContent()).isEqualTo("Message 12");
-        assertThat(response.getMessages().get(1).getContent()).isEqualTo("Message 11");
-        assertThat(response.getMessages().get(2).getContent()).isEqualTo("Message 10");
-        assertThat(response.getMessages().get(3).getContent()).isEqualTo("Message 9");
+        assertThat(response.getResults().get(0).getContent()).isEqualTo("Message 12");
+        assertThat(response.getResults().get(1).getContent()).isEqualTo("Message 11");
+        assertThat(response.getResults().get(2).getContent()).isEqualTo("Message 10");
+        assertThat(response.getResults().get(3).getContent()).isEqualTo("Message 9");
     }
 
     @Test
@@ -232,11 +232,11 @@ class ChatServiceIntegrationTest {
             conversationsRepository.saveAll(List.of(senderConversation2, recipientConversation2));
         }
         List<ChatMessagePersisted> messages = new ArrayList<>();
-        MessagePageResponse response = new MessagePageResponse(Collections.emptyList(), paginationString(0, 10));
+        ResultsPage<ChatMessagePersisted> response = new ResultsPage<>(Collections.emptyList(), paginationString(0, 10));
 
         do {
             response = chatService.getConversationsHeaders("userA", response.getNextPageState());
-            messages.addAll(response.getMessages());
+            messages.addAll(response.getResults());
         } while (response.getNextPageState() != null);
 
         assertThat(messages).hasSize(10);

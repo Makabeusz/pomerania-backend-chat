@@ -1,8 +1,8 @@
 package com.sojka.pomeranian.chat.service;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
+import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.NotificationMessage;
 import com.sojka.pomeranian.chat.dto.Pagination;
@@ -97,10 +97,10 @@ public class ChatService {
         return readAt;
     }
 
-    public MessagePageResponse getConversation(String userId1, String userId2, String pageState) {
+    public ResultsPage<ChatMessagePersisted> getConversation(String userId1, String userId2, String pageState) {
         String roomId = CommonUtils.generateRoomId(userId1, userId2);
         var page = messageRepository.findByRoomId(roomId, pageState, 10);
-        return new MessagePageResponse(
+        return new ResultsPage<>(
                 page.getResults().stream()
                         .sorted(Comparator.comparing(Message::getCreatedAt))
                         .map(MessageMapper::toDto)
@@ -109,7 +109,7 @@ public class ChatService {
         );
     }
 
-    public MessagePageResponse getConversationsHeaders(String userId, String pageState) {
+    public ResultsPage<ChatMessagePersisted> getConversationsHeaders(String userId, String pageState) {
         log.info("Getting conversation headers for user_id={} pageState={}", userId, pageState);
         Pagination pagination;
         if (pageState != null) {
@@ -134,7 +134,7 @@ public class ChatService {
                 ? PaginationMapper.toEncodedString(new Pagination(pagination.pageNumber() + 1, pagination.pageSize()))
                 : null;
 
-        return new MessagePageResponse(headers, pageState);
+        return new ResultsPage<>(headers, pageState);
     }
 
     public Long countNotifications(String userId) {

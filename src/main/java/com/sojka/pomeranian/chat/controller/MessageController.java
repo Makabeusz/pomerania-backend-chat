@@ -1,6 +1,7 @@
 package com.sojka.pomeranian.chat.controller;
 
-import com.sojka.pomeranian.chat.dto.MessagePageResponse;
+import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
+import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class MessageController {
     private final ChatService chatService;
 
     @GetMapping
-    public ResponseEntity<MessagePageResponse> getConversation(
+    public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversation(
             @RequestParam String recipientId,
             @RequestParam(required = false) String nextPageState,
             @AuthenticationPrincipal User user
@@ -30,7 +31,7 @@ public class MessageController {
     }
 
     @GetMapping("/headers")
-    public ResponseEntity<MessagePageResponse> getConversationHeaders(
+    public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversationHeaders(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState
     ) {

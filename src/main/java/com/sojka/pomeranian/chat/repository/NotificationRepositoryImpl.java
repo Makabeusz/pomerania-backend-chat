@@ -11,7 +11,6 @@ import com.sojka.pomeranian.chat.model.Notification;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
@@ -47,7 +46,7 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
     @Override
     public Notification save(Notification notification) {
         try {
-            // Insert into messages.messages
+            // Insert into messages.messages todo: to plain text query
             var notificationInsert = QueryBuilder.insertInto(ASTRA_KEYSPACE, NOTIFICATION_TABLE)
                     .value("profile_id", literal(notification.getProfileId()))
                     .value("created_at", literal(notification.getCreatedAt()))

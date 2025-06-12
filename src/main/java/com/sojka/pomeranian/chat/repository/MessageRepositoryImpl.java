@@ -12,7 +12,6 @@ import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
@@ -73,7 +72,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
             Objects.requireNonNull(message.getContent());
             Objects.requireNonNull(message.getUsername());
 
-            // Insert into messages.messages
+            // Insert into messages.messages todo: refactor to plain text query
             var messageInsert = QueryBuilder.insertInto(ASTRA_KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
                     .value("created_at", literal(message.getCreatedAt()))
@@ -105,6 +104,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
         try {
             var readTime = CommonUtils.getCurrentInstant();
             var update = key.createdAt().stream()
+                    // todo: to plain text query
                     .map(k -> QueryBuilder.insertInto(ASTRA_KEYSPACE, MESSAGES_TABLE)
                             .value("room_id", literal(key.roomId()))
                             .value("created_at", literal(k))
