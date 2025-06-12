@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class NotificationMessage {
+public class NotificationDto {
 
     private String profileId;
     private String createdAt;

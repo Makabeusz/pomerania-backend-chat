@@ -4,7 +4,7 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
-import com.sojka.pomeranian.chat.dto.NotificationMessage;
+import com.sojka.pomeranian.chat.dto.NotificationDto;
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
@@ -73,13 +73,14 @@ public class ChatService {
 
         log.info("saveMessage: online={}, messageContent={}", isOnline, chatMessage.getContent());
         if (!isOnline) {
-            notification = notificationRepository.save(Notification.builder()
-                    .profileId(chatMessage.getRecipient().id())
-                    .createdAt(now)
-                    .senderId(chatMessage.getSender().id())
-                    .senderUsername(chatMessage.getSender().username())
-                    .content(chatMessage.getContent())
-                    .build());
+            // Keep maximum 100 chars for message notification content
+            String contentSlice = chatMessage.getContent().length() > 96
+                    ? chatMessage.getContent().substring(0, 97) + " ..."
+                    : chatMessage.getContent();
+            notification = notificationRepository.save(
+                    new Notification(new Notification.Id(chatMessage.getRecipient().id(), now, chatMessage.getSender().id()),
+                            chatMessage.getSender().username(), contentSlice)
+            );
         }
 
         conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
@@ -89,10 +90,13 @@ public class ChatService {
 
     public Instant markRead(MessageKey keys) {
         var readAt = messageRepository.markRead(keys);
+        String senderId = getRecipientIdFromRoomId(keys.roomId(), keys.profileId());
 
-        notificationRepository.deleteAllByPrimaryKeys(
-                getRecipientIdFromRoomId(keys.roomId(), keys.profileId()), keys.createdAt(), keys.profileId()
-        );
+        var ids = keys.createdAt().stream()
+                .map(createdAt -> new Notification.Id(senderId, createdAt, keys.profileId()))
+                .toList();
+
+        notificationRepository.deleteAllByIdInBatch(ids);
 
         return readAt;
     }
@@ -111,12 +115,7 @@ public class ChatService {
 
     public ResultsPage<ChatMessagePersisted> getConversationsHeaders(String userId, String pageState) {
         log.info("Getting conversation headers for user_id={} pageState={}", userId, pageState);
-        Pagination pagination;
-        if (pageState != null) {
-            pagination = PaginationMapper.toPagination(pageState);
-        } else {
-            pagination = new Pagination(0, CONVERSATIONS_PAGE_SIZE);
-        }
+        Pagination pagination = pageStateToPagination(pageState, CONVERSATIONS_PAGE_SIZE);
 
         List<Conversation> conversations = conversationsRepository.findByIdUserId(
                 userId, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
@@ -138,17 +137,34 @@ public class ChatService {
     }
 
     public Long countNotifications(String userId) {
-        return notificationRepository.countByProfileId(userId).orElseThrow();
+        return notificationRepository.countByIdProfileId(userId).orElseThrow();
     }
 
-    public ResultsPage<NotificationMessage> getNotifications(String userId, String pageState) {
-        var resultsPage = notificationRepository.findByProfileId(userId, pageState, 10);
-        var dtoResults = resultsPage
-                .getResults().stream()
+    public ResultsPage<NotificationDto> getMessageNotifications(String userId, String pageState) {
+        Pagination pagination = pageStateToPagination(pageState, 10);
+
+        List<Notification> notifications = notificationRepository.findByIdProfileId(userId, PageRequest.of(
+                pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "created_at")
+        ));
+
+        pageState = notifications.size() == pagination.pageSize()
+                ? PaginationMapper.toEncodedString(new Pagination(pagination.pageNumber() + 1, pagination.pageSize()))
+                : null;
+        var notificationsDto = notifications.stream()
                 .map(NotificationMapper::toDto)
                 .toList();
 
-        return new ResultsPage<>(dtoResults, resultsPage.getNextPageState());
+        return new ResultsPage<>(notificationsDto, pageState);
+    }
+
+    Pagination pageStateToPagination(String pageState, int pageSize) {
+        Pagination pagination;
+        if (pageState != null) {
+            pagination = PaginationMapper.toPagination(pageState);
+        } else {
+            pagination = new Pagination(0, pageSize);
+        }
+        return pagination;
     }
 
 }

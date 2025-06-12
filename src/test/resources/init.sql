@@ -142,12 +142,23 @@ CREATE TABLE comments (
     CONSTRAINT fk_comments_username FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
+-- messages backup START --
 CREATE TABLE IF NOT EXISTS conversations (
     user_id VARCHAR(255),
     room_id VARCHAR(255),
-    last_message_at TIMESTAMP,
-    PRIMARY KEY (user_id, room_id) -- indexed
+    last_message_at TIMESTAMP, -- indexed
+    PRIMARY KEY (user_id, room_id)
 );
+
+CREATE TABLE IF NOT EXISTS message_notifications (
+    profile_id VARCHAR,
+    created_at TIMESTAMP,
+    sender_id VARCHAR,
+    sender_username VARCHAR,
+    content VARCHAR,
+    PRIMARY KEY (profile_id, created_at, sender_id)
+);
+-- messages backup END --
 
 -- Add foreign key constraints
 ALTER TABLE profiles
@@ -217,3 +228,4 @@ CREATE INDEX idx_comments_post_id ON comments(post_id);
 CREATE INDEX idx_comments_profile_id ON comments(profile_id);
 CREATE INDEX idx_comments_created_at ON comments(created_at);
 CREATE INDEX idx_conversations_last_message_at ON conversations(last_message_at);
+CREATE INDEX idx_message_notifications_created_at ON message_notifications(created_at);

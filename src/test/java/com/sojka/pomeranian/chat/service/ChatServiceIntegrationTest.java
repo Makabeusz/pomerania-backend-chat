@@ -8,7 +8,7 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.NotificationMessage;
+import com.sojka.pomeranian.chat.dto.NotificationDto;
 import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
@@ -324,17 +324,18 @@ class ChatServiceIntegrationTest {
                 .execute(selectNotification)
                 .one();
         Notification savedNotification = Notification.builder()
-                .profileId(notificationRow.getString("profile_id"))
-                .createdAt(notificationRow.getInstant("created_at"))
-                .senderId(notificationRow.getString("sender_id"))
+                .id(new Notification.Id(notificationRow.getString("profile_id"),
+                        notificationRow.getInstant("created_at"),
+                        notificationRow.getString("sender_id")))
                 .senderUsername(notificationRow.getString("sender_username"))
                 .content(notificationRow.getString("content"))
                 .build();
         assertThat(savedNotification).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("createdAt")
                 .isEqualTo(Notification.builder()
-                        .profileId("user2")
-                        .senderId("user1")
+                        .id(new Notification.Id("user2",
+                                null,
+                                "user1"))
                         .senderUsername("User1")
                         .content("Hey, you there?")
                         .build());
@@ -352,9 +353,9 @@ class ChatServiceIntegrationTest {
         Message message = createChatMessage(roomId, "Hello!", "user1", "user2", Instant.now());
         messageRepository.save(message);
         Notification notification = Notification.builder()
-                .profileId("user2")
-                .createdAt(message.getCreatedAt())
-                .senderId("user1")
+                .id(new Notification.Id("user2",
+                        message.getCreatedAt(),
+                        "user1"))
                 .senderUsername("User1")
                 .content("Hello!")
                 .build();
@@ -384,23 +385,23 @@ class ChatServiceIntegrationTest {
         String userId = "user1";
         Instant now = Instant.now();
         Notification notification1 = Notification.builder()
-                .profileId(userId)
-                .createdAt(now)
-                .senderId("user2")
+                .id(new Notification.Id(userId,
+                        now,
+                        "user2"))
                 .senderUsername("User2")
                 .content("Message 1")
                 .build();
         Notification notification2 = Notification.builder()
-                .profileId(userId)
-                .createdAt(now.plusSeconds(1))
-                .senderId("user3")
+                .id(new Notification.Id(userId,
+                        now.plusSeconds(1L),
+                        "user3"))
                 .senderUsername("User3")
                 .content("Message 2")
                 .build();
         Notification otherUserNotification = Notification.builder()
-                .profileId("user4")
-                .createdAt(now)
-                .senderId("user1")
+                .id(new Notification.Id("user4",
+                        now,
+                        "user1"))
                 .senderUsername("User1")
                 .content("Message 3")
                 .build();
@@ -414,27 +415,27 @@ class ChatServiceIntegrationTest {
     }
 
     @Test
-    void getNotifications_fewNotifications_sortedByCreatedAtDesc() {
+    void getNotifications_fewMessageNotifications_sortedByCreatedAtDesc() {
         String userId = "user1";
         Instant now = Instant.now();
         Notification notification1 = Notification.builder()
-                .profileId(userId)
-                .createdAt(now.minusSeconds(10))
-                .senderId("user2")
+                .id(new Notification.Id(userId,
+                        now.minusSeconds(10L),
+                        "user2"))
                 .senderUsername("User2")
                 .content("Old message")
                 .build();
         Notification notification2 = Notification.builder()
-                .profileId(userId)
-                .createdAt(now)
-                .senderId("user3")
+                .id(new Notification.Id(userId,
+                        now,
+                        "user3"))
                 .senderUsername("User3")
                 .content("New message")
                 .build();
         notificationRepository.save(notification1);
         notificationRepository.save(notification2);
 
-        ResultsPage<NotificationMessage> response = chatService.getNotifications(userId, null);
+        ResultsPage<NotificationDto> response = chatService.getMessageNotifications(userId, null);
 
         assertEquals(2, response.getResults().size());
         assertEquals("New message", response.getResults().get(0).getContent());

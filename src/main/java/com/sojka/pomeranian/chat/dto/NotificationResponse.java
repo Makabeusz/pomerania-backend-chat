@@ -21,7 +21,7 @@ public class NotificationResponse<T> {
         this.data = data;
 
         this.type = switch (data.getClass().getSimpleName()) {
-            case "NotificationMessage" -> NotificationType.MESSAGE;
+            case "NotificationDto" -> NotificationType.MESSAGE;
             default -> throw new RuntimeException("Unrecognized chat response type: " + data.getClass());
         };
 

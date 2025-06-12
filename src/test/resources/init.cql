@@ -20,14 +20,14 @@ CREATE TABLE IF NOT EXISTS messages.messages (
 WITH CLUSTERING ORDER BY (created_at DESC, profile_id ASC);
 
 -- Messages notifications
-CREATE TABLE IF NOT EXISTS messages.notifications (
-    profile_id VARCHAR,
-    created_at TIMESTAMP,
-    sender_id VARCHAR,
-    sender_username VARCHAR,
-    content VARCHAR,
-    PRIMARY KEY (profile_id, created_at, sender_id)
-) WITH CLUSTERING ORDER BY (created_at DESC, sender_id ASC);
+--CREATE TABLE IF NOT EXISTS messages.notifications (
+--    profile_id VARCHAR,
+--    created_at TIMESTAMP,
+--    sender_id VARCHAR,
+--    sender_username VARCHAR,
+--    content VARCHAR,
+--    PRIMARY KEY (profile_id, created_at, sender_id)
+--) WITH CLUSTERING ORDER BY (created_at DESC, sender_id ASC);
 
 -- Read receipts (for group chats)
 --CREATE TABLE IF NOT EXISTS messages.read_reactions (
