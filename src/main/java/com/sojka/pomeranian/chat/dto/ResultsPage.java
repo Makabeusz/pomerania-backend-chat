@@ -1,4 +1,3 @@
-
 package com.sojka.pomeranian.chat.dto;
 
 import lombok.AllArgsConstructor;
@@ -6,14 +5,10 @@ import lombok.Data;
 
 import java.util.List;
 
-/**
- * @deprecated Replace with {@link ResultsPage} and remove this.
- */
-@Deprecated
 @Data
 @AllArgsConstructor
-public class MessagePageResponse {
+public class ResultsPage<T> {
 
-    private List<ChatMessagePersisted> messages;
+    private List<T> results;
     private String nextPageState;
 }

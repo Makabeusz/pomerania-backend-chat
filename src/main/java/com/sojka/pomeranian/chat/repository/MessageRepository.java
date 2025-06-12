@@ -6,7 +6,7 @@ import com.sojka.pomeranian.chat.model.Message;
 
 import java.time.Instant;
 
-public interface MessageRepository extends AstraRepository<Message> {
+public interface MessageRepository extends AstraCrudRepository<Message> {
 
     MessagePage findByRoomId(String roomId, String pageState, int pageSize);
 

@@ -2,15 +2,19 @@ package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.chat.db.AstraConnector;
+import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Notification;
+import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +27,7 @@ import static com.sojka.pomeranian.chat.util.Constants.ASTRA_KEYSPACE;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class NotificationRepositoryImpl implements NotificationRepository {
+public class NotificationRepositoryImpl extends AstraRepository implements NotificationRepository {
 
     private static final String NOTIFICATION_TABLE = "notifications";
 
@@ -39,8 +43,6 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             "SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?".formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
     private static final String SELECT_ALL_BY_PROFILE_ID =
             "SELECT * FROM %s.%s WHERE profile_id = ?".formatted(ASTRA_KEYSPACE, NOTIFICATION_TABLE);
-
-//    select * from notifications where profile_id='57bab9b4-6368-4014-88fa-18a0dbca4372'
 
     @Override
     public Notification save(Notification notification) {
@@ -125,33 +127,42 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         }
     }
 
-//    @Override
-//    public List<Notification> findByProfileId(String profileId) {
-//        try {
-//            var statement = SimpleStatement.builder(SELECT_ALL_BY_PROFILE_ID).addPositionalValue(profileId).build();
-//
-//            log.info("Debug, get notifications query: {}", statement.getQuery());
-//
-//            var session = connector.getSession();
-//            var resultSet = session.execute(statement);
-//            List<Notification> notifications = new ArrayList<>();
-//            int rowCount = 0;
-//
-//            for (Row row : resultSet) {
-//                notifications.add(NotificationMapper.fromAstraRow(row));
-//
-//                if (++rowCount >= pageSize) {
-//                    break;
-//                }
-//            }
-//
-//            Objects.requireNonNull(row);
-//            Optional<Long> count = Optional.of(row.getLong("count"));
-//
-//            log.info("Fetched notifications count={}, profile_id={}", count.orElse(-1L), profileId);
-//
-//        } catch (Exception e) {
-//            throw new AstraException("Failed to fetch notifications count: profile_id=%s".formatted(profileId), e);
-//        }
-//    }
+    @Override
+    public ResultsPage<Notification> findByProfileId(String profileId, String pageState, int pageSize) {
+
+        var select = SimpleStatement.builder(SELECT_ALL_BY_PROFILE_ID).addPositionalValue(profileId);
+
+        ByteBuffer pagingStateBuffer = decodePageState(pageState);
+
+        var statement = select.build()
+                .setPageSize(pageSize)
+                .setPagingState(pagingStateBuffer);
+
+        log.info("Querying a notifications for profile_id={}", profileId);
+
+        try {
+            var session = connector.getSession();
+            var resultSet = session.execute(statement);
+            List<Notification> notifications = new ArrayList<>();
+            int rowCount = 0;
+
+            for (Row row : resultSet) {
+                notifications.add(NotificationMapper.fromAstraRow(row));
+
+                if (++rowCount >= pageSize) {
+                    break;
+                }
+            }
+
+            log.info("Fetched {} notifications, profile_id={}", notifications.size(), profileId);
+
+            return resultsPage(notifications, resultSet);
+        } catch (IllegalStateException e) {
+            log.error(String.format("CqlSession not initialized for profile_id %s: %s", profileId, e.getMessage()), e);
+            throw new AstraException("Cassandra session not initialized", e);
+        } catch (Exception e) {
+            log.error(String.format("Failed to find messages for profile_id %s: %s", profileId, e.getMessage()), e);
+            throw new AstraException("Unexpected issue", e);
+        }
+    }
 }

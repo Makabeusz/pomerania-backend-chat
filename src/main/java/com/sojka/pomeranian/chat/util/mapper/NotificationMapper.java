@@ -20,13 +20,13 @@ public final class NotificationMapper {
                 .build();
     }
 
-//    public static Notification fromAstraRow(Row row) {
-//        return Notification.builder()
-//                .profileId(row.getString("profile_id"))
-//                .createdAt(row.getInstant("created_at"))
-//                .senderId(row.getString("sender_id"))
-//                .senderUsername(row.getString("sender_username"))
-//                .content(row.getString("content"))
-//                .build();
-//    }
+    public static Notification fromAstraRow(Row row) {
+        return Notification.builder()
+                .profileId(row.getString("profile_id"))
+                .createdAt(row.getInstant("created_at"))
+                .senderId(row.getString("sender_id"))
+                .senderUsername(row.getString("sender_username"))
+                .content(row.getString("content"))
+                .build();
+    }
 }

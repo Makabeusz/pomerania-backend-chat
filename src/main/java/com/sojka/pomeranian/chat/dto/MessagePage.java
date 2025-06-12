@@ -6,6 +6,11 @@ import lombok.Data;
 
 import java.util.List;
 
+
+/**
+ * @deprecated Replace with {@link ResultsPage} and remove this.
+ */
+@Deprecated
 @Data
 @AllArgsConstructor
 public class MessagePage {

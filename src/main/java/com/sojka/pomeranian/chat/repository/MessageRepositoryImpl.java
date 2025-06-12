@@ -28,7 +28,7 @@ import static com.sojka.pomeranian.chat.util.Constants.ASTRA_KEYSPACE;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class MessageRepositoryImpl implements MessageRepository {
+public class MessageRepositoryImpl extends AstraRepository implements MessageRepository {
 
     private static final String MESSAGES_TABLE = "messages";
 
@@ -42,14 +42,7 @@ public class MessageRepositoryImpl implements MessageRepository {
 
         log.info(String.format("Querying room_id=%s, pageState=%s", roomId, pageState));
 
-        ByteBuffer pagingStateBuffer = null;
-        if (pageState != null) {
-            try {
-                pagingStateBuffer = ByteBuffer.wrap(Base64.getUrlDecoder().decode(pageState));
-            } catch (IllegalArgumentException e) {
-                throw new AstraException("Invalid pageState for room_id %s: %s".formatted(roomId, e.getMessage()), e);
-            }
-        }
+        ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
         var statement = select.build()
                 .setPageSize(pageSize)
@@ -74,6 +67,7 @@ public class MessageRepositoryImpl implements MessageRepository {
             var pagingState = resultSet.getExecutionInfo().getPagingState();
             var nextPageState = pagingState != null ? Base64.getUrlEncoder().withoutPadding().encodeToString(pagingState.array()) : null;
 
+            // TODO: use ResultsPage<T> resultsPage(List<T> results, ResultSet resultSet)
             return new MessagePage(messages, nextPageState);
         } catch (IllegalStateException e) {
             log.error(String.format("CqlSession not initialized for room_id %s: %s", roomId, e.getMessage()), e);

@@ -15,14 +15,10 @@ import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
 import java.util.List;
@@ -85,14 +81,6 @@ public class ChatController {
                            Principal principal) {
         removeFromCache(CommonUtils.getAuthUser(principal).getId(), subscriptions);
 
-    }
-
-    @PostMapping("/api/chat/disconnect")
-    public ResponseEntity<?> disconnectRest(@AuthenticationPrincipal User user,
-                                            @RequestBody List<StompSubscription> connectors) {
-        removeFromCache(user.getId(), connectors);
-
-        return ResponseEntity.ok("Disconnected");
     }
 
     @MessageMapping("/chat.connect")

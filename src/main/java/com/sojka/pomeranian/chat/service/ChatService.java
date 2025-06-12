@@ -5,7 +5,9 @@ import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessagePage;
 import com.sojka.pomeranian.chat.dto.MessagePageResponse;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
+import com.sojka.pomeranian.chat.dto.NotificationMessage;
 import com.sojka.pomeranian.chat.dto.Pagination;
+import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.Notification;
@@ -14,6 +16,7 @@ import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.repository.NotificationRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.chat.util.mapper.PaginationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -137,6 +140,16 @@ public class ChatService {
 
     public Long countNotifications(String userId) {
         return notificationRepository.countByProfileId(userId).orElseThrow();
+    }
+
+    public ResultsPage<NotificationMessage> getNotifications(String userId, String pageState) {
+        var resultsPage = notificationRepository.findByProfileId(userId, pageState, 10);
+        var dtoResults = resultsPage
+                .getResults().stream()
+                .map(NotificationMapper::toDto)
+                .toList();
+
+        return new ResultsPage<>(dtoResults, resultsPage.getNextPageState());
     }
 
 }
