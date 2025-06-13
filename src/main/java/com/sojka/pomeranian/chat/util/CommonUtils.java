@@ -40,10 +40,28 @@ public final class CommonUtils {
      * TODO: return epoch seconds or millis and create a date in the frontend.
      */
     public static String formatToDateString(Instant instant) {
+        return formatToDateString(formatToLocalDateTime(instant));
+    }
+
+    /**
+     * TODO: return epoch seconds or millis and create a date in the frontend.
+     */
+    public static String formatToDateString(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        return dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+
+    /**
+     * TODO: return epoch seconds or millis and create a date in the frontend.
+     */
+    public static LocalDateTime formatToLocalDateTime(Instant instant) {
         if (instant == null) {
             return null;
         }
-        return LocalDateTime.ofInstant(instant, ZoneId.of("UTC")).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
     }
 
     /**

@@ -28,9 +28,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -61,8 +64,8 @@ class ChatServiceIntegrationTest {
     void setUp() {
         session = connector.connect();
         session.execute("TRUNCATE messages.messages");
-        session.execute("TRUNCATE messages.notifications");
         conversationsRepository.deleteAll();
+        notificationRepository.deleteAll();
     }
 
     @Test
@@ -316,22 +319,11 @@ class ChatServiceIntegrationTest {
                         .build());
 
         // Verify notification
-        SimpleStatement selectNotification = SimpleStatement.newInstance(
-                "SELECT * FROM messages.notifications WHERE profile_id = ? AND created_at = ?",
-                "user2", saved.message().getCreatedAt()
-        );
-        var notificationRow = connector.getSession()
-                .execute(selectNotification)
-                .one();
-        Notification savedNotification = Notification.builder()
-                .id(new Notification.Id(notificationRow.getString("profile_id"),
-                        notificationRow.getInstant("created_at"),
-                        notificationRow.getString("sender_id")))
-                .senderUsername(notificationRow.getString("sender_username"))
-                .content(notificationRow.getString("content"))
-                .build();
+        Notification savedNotification = notificationRepository.findById(new Notification.Id(
+                "user2", LocalDateTime.ofInstant(saved.message().getCreatedAt(), ZoneId.of("UTC")), "user1")
+        ).orElseThrow();
         assertThat(savedNotification).usingRecursiveComparison(new RecursiveComparisonConfiguration())
-                .ignoringFields("createdAt")
+                .ignoringFields("id.createdAt")
                 .isEqualTo(Notification.builder()
                         .id(new Notification.Id("user2",
                                 null,
@@ -354,7 +346,7 @@ class ChatServiceIntegrationTest {
         messageRepository.save(message);
         Notification notification = Notification.builder()
                 .id(new Notification.Id("user2",
-                        message.getCreatedAt(),
+                        fromInstant(message.getCreatedAt()),
                         "user1"))
                 .senderUsername("User1")
                 .content("Hello!")
@@ -373,17 +365,16 @@ class ChatServiceIntegrationTest {
         assertThat(row.getInstant("read_at")).isEqualTo(readAt);
 
         // Verify notification deleted
-        SimpleStatement selectNotification = SimpleStatement.newInstance(
-                "SELECT * FROM messages.notifications WHERE profile_id = ? AND created_at = ?",
-                "user2", message.getCreatedAt()
+        Optional<Notification> notExisting = notificationRepository.findById(new Notification.Id(
+                "user2", LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), "user1")
         );
-        assertThat(connector.getSession().execute(selectNotification).one()).isNull();
+        assertThat(notExisting).isEmpty();
     }
 
     @Test
     void countNotifications_multipleNotifications_correctCount() {
         String userId = "user1";
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         Notification notification1 = Notification.builder()
                 .id(new Notification.Id(userId,
                         now,
@@ -417,7 +408,7 @@ class ChatServiceIntegrationTest {
     @Test
     void getNotifications_fewMessageNotifications_sortedByCreatedAtDesc() {
         String userId = "user1";
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         Notification notification1 = Notification.builder()
                 .id(new Notification.Id(userId,
                         now.minusSeconds(10L),
@@ -469,4 +460,7 @@ class ChatServiceIntegrationTest {
         assertNull(response2.getNextPageState());
     }
 
+    public LocalDateTime fromInstant(Instant instant) {
+        return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
+    }
 }

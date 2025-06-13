@@ -11,7 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "message_notifications")
@@ -40,7 +40,7 @@ public class Notification {
         private String profileId;
 
         @Column(name = "created_at", nullable = false, updatable = false)
-        private Instant createdAt;
+        private LocalDateTime createdAt;
 
         @Column(name = "sender_id", nullable = false, updatable = false)
         private String senderId;

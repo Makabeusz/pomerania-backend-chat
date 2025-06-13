@@ -5,6 +5,7 @@ import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
@@ -78,7 +79,7 @@ public class ChatService {
                     ? chatMessage.getContent().substring(0, 97) + " ..."
                     : chatMessage.getContent();
             notification = notificationRepository.save(
-                    new Notification(new Notification.Id(chatMessage.getRecipient().id(), now, chatMessage.getSender().id()),
+                    new Notification(new Notification.Id(chatMessage.getRecipient().id(), CommonUtils.formatToLocalDateTime(now), chatMessage.getSender().id()),
                             chatMessage.getSender().username(), contentSlice)
             );
         }
@@ -93,7 +94,9 @@ public class ChatService {
         String senderId = getRecipientIdFromRoomId(keys.roomId(), keys.profileId());
 
         var ids = keys.createdAt().stream()
-                .map(createdAt -> new Notification.Id(senderId, createdAt, keys.profileId()))
+                .map(createdAt -> new Notification.Id(
+                        senderId, CommonUtils.formatToLocalDateTime(createdAt), keys.profileId())
+                )
                 .toList();
 
         notificationRepository.deleteAllByIdInBatch(ids);
@@ -129,9 +132,7 @@ public class ChatService {
                 .map(MessageMapper::toDto)
                 .toList();
 
-        pageState = conversations.size() == pagination.pageSize()
-                ? PaginationMapper.toEncodedString(new Pagination(pagination.pageNumber() + 1, pagination.pageSize()))
-                : null;
+        pageState = createPageState(conversations.size(), pagination.pageSize(), pagination);
 
         return new ResultsPage<>(headers, pageState);
     }
@@ -144,17 +145,30 @@ public class ChatService {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         List<Notification> notifications = notificationRepository.findByIdProfileId(userId, PageRequest.of(
-                pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "created_at")
+                pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "id.createdAt")
         ));
 
-        pageState = notifications.size() == pagination.pageSize()
-                ? PaginationMapper.toEncodedString(new Pagination(pagination.pageNumber() + 1, pagination.pageSize()))
-                : null;
+        pageState = createPageState(notifications.size(), pagination.pageSize(), pagination);
         var notificationsDto = notifications.stream()
                 .map(NotificationMapper::toDto)
                 .toList();
 
         return new ResultsPage<>(notificationsDto, pageState);
+    }
+
+    public ResultsPage<NotificationHeaderDto> getMessageNotificationHeaders(String userId, String pageState) {
+        Pagination pagination = pageStateToPagination(pageState, 10);
+
+        var headers = notificationRepository.findNotificationsHeaders(userId, PageRequest.of(
+                pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "id.createdAt")
+        ));
+
+        pageState = createPageState(headers.size(), pagination.pageSize(), pagination);
+        var results = headers.stream()
+                .map(NotificationMapper::toDto)
+                .toList();
+
+        return new ResultsPage<>(results, pageState);
     }
 
     Pagination pageStateToPagination(String pageState, int pageSize) {
@@ -165,6 +179,12 @@ public class ChatService {
             pagination = new Pagination(0, pageSize);
         }
         return pagination;
+    }
+
+    String createPageState(int currentPageSize, int paginationSize, Pagination previous) {
+        return currentPageSize == paginationSize
+                ? PaginationMapper.toEncodedString(new Pagination(previous.pageNumber() + 1, previous.pageSize()))
+                : null;
     }
 
 }

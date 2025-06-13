@@ -1,6 +1,7 @@
 package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.dto.ResultsPage;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.security.model.User;
@@ -31,6 +32,13 @@ public class NotificationController {
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState) {
         return ResponseEntity.ok(chatService.getMessageNotifications(user.getId(), nextPageState));
+    }
+
+    @GetMapping("/headers")
+    public ResponseEntity<ResultsPage<NotificationHeaderDto>> getNotificationHeaders(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String nextPageState) {
+        return ResponseEntity.ok(chatService.getMessageNotificationHeaders(user.getId(), nextPageState));
     }
 
 }

@@ -5,19 +5,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class NotificationHeader {
+public class NotificationHeaderDto {
 
     private String profileId;
-    private Timestamp createdAt;
+    private String createdAt;
     private String senderId;
     private String senderUsername;
     private String content;
-    private Long count;
+    private Integer count;
 
 }
