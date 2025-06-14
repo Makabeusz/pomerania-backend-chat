@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ import java.time.Duration;
 
 @Primary
 @Component
-public class AstraTestcontainersConnector extends AstraConnector {
+public class AstraTestcontainersConnector extends Connector {
 
     Logger log = LoggerFactory.getLogger(AstraTestcontainersConnector.class);
 

@@ -2,7 +2,7 @@ package com.sojka.pomeranian.chat.repository;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.sojka.pomeranian.chat.db.AstraConnector;
+import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Message;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ class MessageRepositoryImplUnitTest {
                 .hasMessage("Failed to save message for room_id=user1:user2");
     }
 
-    public static class AstraDummyConnector extends AstraConnector {
+    public static class AstraDummyConnector extends Connector {
 
         private final CqlSession cqlSession;
 

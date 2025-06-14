@@ -7,7 +7,7 @@ import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.NotificationDto;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.dto.Pagination;
-import com.sojka.pomeranian.chat.dto.ResultsPage;
+import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.Notification;

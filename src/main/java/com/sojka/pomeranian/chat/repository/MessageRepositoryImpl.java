@@ -3,9 +3,10 @@ package com.sojka.pomeranian.chat.repository;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
-import com.sojka.pomeranian.chat.db.AstraConnector;
+import com.sojka.pomeranian.astra.connection.Connector;
+import com.sojka.pomeranian.astra.repository.AstraRepository;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.ResultsPage;
+import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.CommonUtils;
@@ -29,7 +30,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
 
     private static final String MESSAGES_TABLE = "messages";
 
-    private final AstraConnector connector;
+    private final Connector connector;
 
     @Override
     public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {

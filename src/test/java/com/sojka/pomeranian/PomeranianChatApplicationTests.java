@@ -1,7 +1,7 @@
 package com.sojka.pomeranian;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.sojka.pomeranian.chat.config.AstraConfig;
+import com.sojka.pomeranian.astra.config.AstraConfig;
 import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

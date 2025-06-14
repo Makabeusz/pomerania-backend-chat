@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 8081
 
 spring:
 # required for security - change to some custom stuff and leave spring configuration alone
