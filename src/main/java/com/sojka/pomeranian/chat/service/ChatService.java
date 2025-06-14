@@ -160,7 +160,7 @@ public class ChatService {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         var headers = notificationRepository.findNotificationsHeaders(userId, PageRequest.of(
-                pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "id.createdAt")
+                pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "created_at")
         ));
 
         pageState = createPageState(headers.size(), pagination.pageSize(), pagination);

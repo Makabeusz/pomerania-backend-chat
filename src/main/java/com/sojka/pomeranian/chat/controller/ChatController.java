@@ -21,23 +21,21 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
+import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
+import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
 
-    private static final String DM_DESTINATION = "/queue/private";
-    private static final String NOTIFY_DESTINATION = "/queue/notification";
-
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
     private final ChatCache cache;
 
-    @MessageMapping("/chat.sendMessage")
+    @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,
                             Principal principal) {
         // todo: don't send sender ID from frontend, fetch it with auth
@@ -59,7 +57,7 @@ public class ChatController {
         }
     }
 
-    @MessageMapping("/chat.readMessage")
+    @MessageMapping("/chat.read")
     public void readMessage(@Payload ReadMessageDto dto,
                             Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
@@ -74,25 +72,5 @@ public class ChatController {
         messagingTemplate.convertAndSendToUser(dto.roomId(), DM_DESTINATION,
                 new ChatResponse<>(new ChatRead(dto.createdAt(), CommonUtils.formatToDateString(readAt))));
 
-    }
-
-    @MessageMapping("/chat.disconnect")
-    public void disconnect(@Payload List<StompSubscription> subscriptions,
-                           Principal principal) {
-        removeFromCache(CommonUtils.getAuthUser(principal).getId(), subscriptions);
-
-    }
-
-    @MessageMapping("/chat.connect")
-    public void connect(@Payload StompSubscription subscription,
-                        Principal principal) {
-        User user = CommonUtils.getAuthUser(principal);
-        cache.put(user.getId(), subscription);
-        log.info("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
-    }
-
-    void removeFromCache(String userId, List<StompSubscription> connectors) {
-        cache.remove(userId, connectors);
-        log.info("Unsubscribed: user={}, subscription={}", userId, connectors);
     }
 }
