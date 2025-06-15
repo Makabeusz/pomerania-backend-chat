@@ -23,4 +23,4 @@ astra:
   connectionBundleFilePath: '/Users/msojka/IdeaProjects/pomeranian-chat/src/main/resources/db/secure-connect-pomeranian.zip'
   clientId: ${ASTRA_CLIENT_ID}
   clientSecret: ${ASTRA_SECRET}
-  keyspace: 'messages'
+#  keyspace: 'messages' # using 2 keyspaces with a single connection, specifying keyspace for each query

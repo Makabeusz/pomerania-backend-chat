@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Slf4j
 @Controller
-@RequestMapping("/api/message/notifications")
+@RequestMapping("/api/chat/notification")
 @RequiredArgsConstructor
-public class NotificationController {
+public class ChatNotificationController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
