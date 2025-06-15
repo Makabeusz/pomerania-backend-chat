@@ -27,6 +27,21 @@ public final class NotificationMapper {
                 .build();
     }
 
+    public static Notification toDomain(NotificationDto notification) {
+        if (notification == null) {
+            return null;
+        }
+        return Notification.builder()
+                .profileId(notification.getProfileId())
+                .createdAt(CommonUtils.formatToInstant(notification.getCreatedAt()))
+                .type(Notification.Type.valueOf(notification.getType()))
+                .readAt(CommonUtils.formatToInstant(notification.getReadAt()))
+                .relatedId(notification.getRelatedId())
+                .content(notification.getContent())
+                .metadata(notification.getMetadata())
+                .build();
+    }
+
     public static Notification fromAstraRow(Row row) {
         if (row == null) {
             return null;

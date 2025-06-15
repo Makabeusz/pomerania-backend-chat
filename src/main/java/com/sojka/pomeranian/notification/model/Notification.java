@@ -23,6 +23,6 @@ public class Notification {
     private Map<String, String> metadata;
 
     public enum Type {
-        FRIEND_REQUEST
+        FOLLOW, UNFOLLOW
     }
 }

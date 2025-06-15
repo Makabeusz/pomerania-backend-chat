@@ -7,9 +7,12 @@ import com.sojka.pomeranian.notification.repository.NotificationRepository;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+
+import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
 
 @Slf4j
 @Service
@@ -18,19 +21,17 @@ public class NotificationService {
 
     private static final int TWO_DAYS_SECONDS = 172800;
     private final NotificationRepository notificationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public Notification publish(Notification notification) {
-        int ttl = notification.getReadAt() != null ? TWO_DAYS_SECONDS : -1;
-        return notificationRepository.save(notification, ttl);
-    }
+    public NotificationDto publish(NotificationDto notification) {
+        var saved = notificationRepository.save(NotificationMapper.toDomain(notification));
+        var dto = NotificationMapper.toDto(saved);
 
-    public Notification save(Notification notification) {
-        int ttl = notification.getReadAt() != null ? TWO_DAYS_SECONDS : -1;
-        return notificationRepository.save(notification, ttl);
-    }
+        messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);
 
-    public Notification save(Notification notification, int ttl) {
-        return notificationRepository.save(notification, ttl);
+        log.info("Published notification: {}", dto);
+
+        return dto;
     }
 
     public NotificationDto get(String profileId, Instant createdAt, Notification.Type type) {

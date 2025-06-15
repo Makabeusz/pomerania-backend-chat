@@ -57,12 +57,14 @@ dependencies {
 	// Astra
 	implementation 'org.apache.cassandra:java-driver-core:4.19.0'
 	implementation 'org.apache.cassandra:java-driver-query-builder:4.19.0'
-//	implementation 'io.stargate.grpc:grpc-proto:1.0.41'
-	implementation 'io.grpc:grpc-netty-shaded:1.41.0'
 
 	// Pomeranian
 	implementation 'com.sojka:Pomeranian-Security:0.0.5-SNAPSHOT'
 	implementation 'com.sojka:pomeranian-astra:0.0.2-SNAPSHOT'
+
+	// GCP
+	implementation platform('com.google.cloud:libraries-bom:26.61.0')
+	implementation 'com.google.cloud:google-cloud-pubsub'
 
 	compileOnly 'org.projectlombok:lombok'
 //	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'

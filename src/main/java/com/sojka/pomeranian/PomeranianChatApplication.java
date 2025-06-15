@@ -1,6 +1,7 @@
 package com.sojka.pomeranian;
 
 import com.sojka.pomeranian.astra.connection.Connector;
+import com.sojka.pomeranian.notification.pubsub.NotificationSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,6 +17,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 public class PomeranianChatApplication {
 
     private final Connector connector;
+    private final NotificationSubscriber subscriber;
 
     public static void main(String[] args) {
         SpringApplication.run(PomeranianChatApplication.class, args);
@@ -24,5 +26,6 @@ public class PomeranianChatApplication {
     @EventListener(ApplicationReadyEvent.class)
     public void doSomethingAfterStartup() {
         connector.initialize();
+        subscriber.subscribeAsync();
     }
 }
