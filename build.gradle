@@ -13,7 +13,6 @@ ext {
 	repsyPassword2 = project.hasProperty('repsyPass2') ? project.repsyPass2 : System.getenv('REPSY_PASSWORD2');
 	repsyUrl = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-security'
 	repsyUrl2 = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-astra'
-
 }
 
 
@@ -63,7 +62,7 @@ dependencies {
 
 	// Pomeranian
 	implementation 'com.sojka:Pomeranian-Security:0.0.5-SNAPSHOT'
-	implementation 'com.sojka:pomeranian-astra:0.0.1-SNAPSHOT'
+	implementation 'com.sojka:pomeranian-astra:0.0.2-SNAPSHOT'
 
 	compileOnly 'org.projectlombok:lombok'
 //	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
