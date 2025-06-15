@@ -5,16 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * The message with minimum informations received from frontend.
- */
 @Data
-@Builder(builderMethodName = "basicBuilder")
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatMessage {
+public class NotificationDto {
 
+    private String profileId;
+    private String createdAt;
+    private String senderId;
+    private String senderUsername;
     private String content;
-    private ChatUser sender;
-    private ChatUser recipient;
+
 }

@@ -5,16 +5,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * The message with minimum informations received from frontend.
- */
+import java.sql.Timestamp;
+
 @Data
-@Builder(builderMethodName = "basicBuilder")
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatMessage {
+public class NotificationHeader {
 
+    private String profileId;
+    private Timestamp createdAt;
+    private String senderId;
+    private String senderUsername;
     private String content;
-    private ChatUser sender;
-    private ChatUser recipient;
+    private Long count;
+
 }

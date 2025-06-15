@@ -10,7 +10,9 @@ version = '0.0.1-SNAPSHOT'
 ext {
 	repsyUsername = project.hasProperty('repsyUser') ? project.repsyUser : System.getenv('REPSY_USERNAME');
 	repsyPassword = project.hasProperty('repsyPass') ? project.repsyPass : System.getenv('REPSY_PASSWORD');
+	repsyPassword2 = project.hasProperty('repsyPass2') ? project.repsyPass2 : System.getenv('REPSY_PASSWORD2');
 	repsyUrl = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-security'
+	repsyUrl2 = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-astra'
 }
 
 
@@ -36,28 +38,42 @@ repositories {
 			password repsyPassword
 		}
 	}
+
+	maven {
+		url repsyUrl2
+		credentials {
+			username repsyUsername
+			password repsyPassword2
+		}
+	}
 }
 
 dependencies {
-//	implementation 'org.springframework.boot:spring-boot-starter-data-cassandra-reactive'
-//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
 	// Astra
 	implementation 'org.apache.cassandra:java-driver-core:4.19.0'
-//	implementation 'io.stargate.grpc:grpc-proto:1.0.41'
-	implementation 'io.grpc:grpc-netty-shaded:1.41.0'
+	implementation 'org.apache.cassandra:java-driver-query-builder:4.19.0'
 
-	// Security
-	implementation 'com.sojka:Pomeranian-Security:0.0.4-SNAPSHOT'
+	// Pomeranian
+	implementation 'com.sojka:Pomeranian-Security:0.0.5-SNAPSHOT'
+	implementation 'com.sojka:pomeranian-astra:0.0.2-SNAPSHOT'
+
+	// GCP
+	implementation platform('com.google.cloud:libraries-bom:26.61.0')
+	implementation 'com.google.cloud:google-cloud-pubsub'
 
 	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+//	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-//	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:cassandra:1.20.1'
+	testImplementation 'org.testcontainers:postgresql:1.21.0'
 //	testImplementation 'io.projectreactor:reactor-test'
 //	testImplementation 'org.testcontainers:cassandra'
 //	testImplementation 'org.testcontainers:junit-jupiter'
