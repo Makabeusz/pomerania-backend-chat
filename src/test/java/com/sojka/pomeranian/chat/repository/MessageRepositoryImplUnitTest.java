@@ -3,7 +3,7 @@ package com.sojka.pomeranian.chat.repository;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
-import com.sojka.pomeranian.chat.exception.AstraException;
+import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.chat.model.Message;
 import org.junit.jupiter.api.Test;
 

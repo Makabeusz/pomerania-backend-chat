@@ -5,7 +5,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.sojka.pomeranian.astra.connection.Connector;
-import com.sojka.pomeranian.chat.exception.AstraException;
+import com.sojka.pomeranian.astra.exception.AstraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
