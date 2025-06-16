@@ -17,13 +17,13 @@ public class NotificationResponse<T> {
     private T data;
     private NotificationType type;
 
-    public NotificationResponse(@NonNull T data) {
+    public NotificationResponse(@NonNull T data, NotificationType type) {
         this.data = data;
+        this.type = type;
+    }
 
-        this.type = switch (data.getClass().getSimpleName()) {
-            case "NotificationDto" -> NotificationType.MESSAGE;
-            default -> throw new RuntimeException("Unrecognized chat response type: " + data.getClass());
-        };
-
+    public NotificationResponse(@NonNull T data, String type) {
+        this.data = data;
+        this.type = NotificationType.valueOf(type);
     }
 }

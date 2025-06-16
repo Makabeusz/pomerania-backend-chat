@@ -10,7 +10,7 @@ import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.chat.model.Notification;
+import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.repository.NotificationRepository;
@@ -70,7 +70,7 @@ public class ChatService {
         var senderConversation = new Conversation(new Conversation.Id(chatMessage.getSender().id(), roomId), now);
         var recipientConversation = new Conversation(new Conversation.Id(chatMessage.getRecipient().id(), roomId), now);
 
-        Notification notification = null;
+        MessageNotification notification = null;
 
         log.info("saveMessage: online={}, messageContent={}", isOnline, chatMessage.getContent());
         if (!isOnline) {
@@ -79,7 +79,7 @@ public class ChatService {
                     ? chatMessage.getContent().substring(0, 97) + " ..."
                     : chatMessage.getContent();
             notification = notificationRepository.save(
-                    new Notification(new Notification.Id(chatMessage.getRecipient().id(), CommonUtils.formatToLocalDateTime(now), chatMessage.getSender().id()),
+                    new MessageNotification(new MessageNotification.Id(chatMessage.getRecipient().id(), CommonUtils.formatToLocalDateTime(now), chatMessage.getSender().id()),
                             chatMessage.getSender().username(), contentSlice)
             );
         }
@@ -94,7 +94,7 @@ public class ChatService {
         String senderId = getRecipientIdFromRoomId(keys.roomId(), keys.profileId());
 
         var ids = keys.createdAt().stream()
-                .map(createdAt -> new Notification.Id(
+                .map(createdAt -> new MessageNotification.Id(
                         senderId, CommonUtils.formatToLocalDateTime(createdAt), keys.profileId())
                 )
                 .toList();
@@ -144,7 +144,7 @@ public class ChatService {
     public ResultsPage<NotificationDto> getMessageNotifications(String userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
-        List<Notification> notifications = notificationRepository.findByIdProfileId(userId, PageRequest.of(
+        List<MessageNotification> notifications = notificationRepository.findByIdProfileId(userId, PageRequest.of(
                 pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "id.createdAt")
         ));
 

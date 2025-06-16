@@ -12,7 +12,7 @@ import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationDto;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.chat.model.Notification;
+import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.repository.NotificationRepository;
@@ -319,13 +319,13 @@ class ChatServiceIntegrationTest {
                         .build());
 
         // Verify notification
-        Notification savedNotification = notificationRepository.findById(new Notification.Id(
+        MessageNotification savedNotification = notificationRepository.findById(new MessageNotification.Id(
                 "user2", LocalDateTime.ofInstant(saved.message().getCreatedAt(), ZoneId.of("UTC")), "user1")
         ).orElseThrow();
         assertThat(savedNotification).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("id.createdAt")
-                .isEqualTo(Notification.builder()
-                        .id(new Notification.Id("user2",
+                .isEqualTo(MessageNotification.builder()
+                        .id(new MessageNotification.Id("user2",
                                 null,
                                 "user1"))
                         .senderUsername("User1")
@@ -344,8 +344,8 @@ class ChatServiceIntegrationTest {
         String roomId = "user1:user2";
         Message message = createChatMessage(roomId, "Hello!", "user1", "user2", Instant.now());
         messageRepository.save(message);
-        Notification notification = Notification.builder()
-                .id(new Notification.Id("user2",
+        MessageNotification notification = MessageNotification.builder()
+                .id(new MessageNotification.Id("user2",
                         fromInstant(message.getCreatedAt()),
                         "user1"))
                 .senderUsername("User1")
@@ -365,7 +365,7 @@ class ChatServiceIntegrationTest {
         assertThat(row.getInstant("read_at")).isEqualTo(readAt);
 
         // Verify notification deleted
-        Optional<Notification> notExisting = notificationRepository.findById(new Notification.Id(
+        Optional<MessageNotification> notExisting = notificationRepository.findById(new MessageNotification.Id(
                 "user2", LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), "user1")
         );
         assertThat(notExisting).isEmpty();
@@ -375,22 +375,22 @@ class ChatServiceIntegrationTest {
     void countNotifications_multipleNotifications_correctCount() {
         String userId = "user1";
         LocalDateTime now = LocalDateTime.now();
-        Notification notification1 = Notification.builder()
-                .id(new Notification.Id(userId,
+        MessageNotification notification1 = MessageNotification.builder()
+                .id(new MessageNotification.Id(userId,
                         now,
                         "user2"))
                 .senderUsername("User2")
                 .content("Message 1")
                 .build();
-        Notification notification2 = Notification.builder()
-                .id(new Notification.Id(userId,
+        MessageNotification notification2 = MessageNotification.builder()
+                .id(new MessageNotification.Id(userId,
                         now.plusSeconds(1L),
                         "user3"))
                 .senderUsername("User3")
                 .content("Message 2")
                 .build();
-        Notification otherUserNotification = Notification.builder()
-                .id(new Notification.Id("user4",
+        MessageNotification otherUserNotification = MessageNotification.builder()
+                .id(new MessageNotification.Id("user4",
                         now,
                         "user1"))
                 .senderUsername("User1")
@@ -409,15 +409,15 @@ class ChatServiceIntegrationTest {
     void getNotifications_fewMessageNotifications_sortedByCreatedAtDesc() {
         String userId = "user1";
         LocalDateTime now = LocalDateTime.now();
-        Notification notification1 = Notification.builder()
-                .id(new Notification.Id(userId,
+        MessageNotification notification1 = MessageNotification.builder()
+                .id(new MessageNotification.Id(userId,
                         now.minusSeconds(10L),
                         "user2"))
                 .senderUsername("User2")
                 .content("Old message")
                 .build();
-        Notification notification2 = Notification.builder()
-                .id(new Notification.Id(userId,
+        MessageNotification notification2 = MessageNotification.builder()
+                .id(new MessageNotification.Id(userId,
                         now,
                         "user3"))
                 .senderUsername("User3")

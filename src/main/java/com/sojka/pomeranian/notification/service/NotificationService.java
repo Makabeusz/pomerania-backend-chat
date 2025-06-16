@@ -1,7 +1,9 @@
 package com.sojka.pomeranian.notification.service;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.NotificationResponse;
+import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
@@ -23,10 +25,12 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public NotificationDto publish(NotificationDto notification) {
-        var saved = notificationRepository.save(NotificationMapper.toDomain(notification));
-        var dto = NotificationMapper.toDto(saved);
+    public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
+        Notification domain = NotificationMapper.toDomain(notification);
+        domain.setCreatedAt(CommonUtils.getCurrentInstant());
 
+        var saved = notificationRepository.save(domain);
+        var dto = new NotificationResponse<>(NotificationMapper.toDto(saved), saved.getType().name());
         messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);
 
         log.info("Published notification: {}", dto);

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -13,8 +15,12 @@ public class NotificationDto {
 
     private String profileId;
     private String createdAt;
+    private String type;
+    private String readAt;
+    private String relatedId;
+    private String content;
     private String senderId;
     private String senderUsername;
-    private String content;
+    private Map<String, String> metadata;
 
 }

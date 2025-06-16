@@ -3,7 +3,7 @@ package com.sojka.pomeranian.chat.util.mapper;
 import com.sojka.pomeranian.chat.dto.NotificationDto;
 import com.sojka.pomeranian.chat.dto.NotificationHeader;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
-import com.sojka.pomeranian.chat.model.Notification;
+import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 
 public final class NotificationMapper {
@@ -11,7 +11,7 @@ public final class NotificationMapper {
     private NotificationMapper() {
     }
 
-    public static NotificationDto toDto(Notification notification) {
+    public static NotificationDto toDto(MessageNotification notification) {
         return NotificationDto.builder()
                 .profileId(notification.getId().getProfileId())
                 .createdAt(CommonUtils.formatToDateString(notification.getId().getCreatedAt()))

@@ -1,8 +1,8 @@
 package com.sojka.pomeranian.notification.util;
 
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.sojka.pomeranian.chat.dto.NotificationDto;
 import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 
 import java.util.Optional;

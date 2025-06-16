@@ -5,6 +5,7 @@ import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
+import com.sojka.pomeranian.chat.dto.NotificationType;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatCache;
@@ -53,7 +54,7 @@ public class ChatController {
         if (!isOnline) {
             var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
             messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
-                    new NotificationResponse<>(notificationDto));
+                    new NotificationResponse<>(notificationDto, NotificationType.MESSAGE));
         }
     }
 

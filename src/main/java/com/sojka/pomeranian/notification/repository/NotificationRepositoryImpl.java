@@ -19,12 +19,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
+import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
+
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class NotificationRepositoryImpl extends AstraRepository implements NotificationRepository {
 
-    public static final String NOTIFICATIONS_KEYSPACE = "notifications";
     private static final String NOTIFICATIONS_TABLE = "notifications";
     private static final String INSERT = """
             INSERT INTO %s.%s ( \
@@ -44,11 +45,11 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
 
     @Override
     public Notification save(Notification notification, int ttl) {
-        return tryCatch(() -> {
+        return execute(() -> {
             String dml = INSERT + (ttl > 0 ? USING_TTL.formatted(ttl) : "");
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
-                            notification.getType(), notification.getReadAt(), notification.getRelatedId(),
+                            notification.getType().name(), notification.getReadAt(), notification.getRelatedId(),
                             notification.getContent(), notification.getMetadata())
                     .build();
 
@@ -68,7 +69,7 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
 
     @Override
     public Optional<Notification> findBy(String profileId, Instant createdAt, Notification.Type type) {
-        return tryCatch(() -> {
+        return execute(() -> {
             var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
                     .addPositionalValues(profileId, createdAt, type)
                     .build();
@@ -82,7 +83,7 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
 
     @Override
     public ResultsPage<Notification> findAllBy(String profileId, String pageState, int pageSize) {
-        return tryCatch(() -> {
+        return execute(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
             var statement = SimpleStatement.builder(SELECT_BY_PROFILE_ID)
@@ -98,7 +99,7 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
         }, "findAllBy", profileId);
     }
 
-    <T> T tryCatch(Callable<T> callable, String methodName, Object id) {
+    <T> T execute(Callable<T> callable, String methodName, Object id) {
         try {
             return callable.call();
         } catch (IllegalStateException e) {

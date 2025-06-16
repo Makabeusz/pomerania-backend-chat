@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.chat.repository;
 
 import com.sojka.pomeranian.chat.dto.NotificationHeader;
-import com.sojka.pomeranian.chat.model.Notification;
+import com.sojka.pomeranian.chat.model.MessageNotification;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, Notification.Id> {
+public interface NotificationRepository extends JpaRepository<MessageNotification, MessageNotification.Id> {
 
     Optional<Long> countByIdProfileId(String profileId);
 
-    List<Notification> findByIdProfileId(String profileId, Pageable pageable);
+    List<MessageNotification> findByIdProfileId(String profileId, Pageable pageable);
 
     @Query(value = """
             SELECT

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
-import static com.sojka.pomeranian.chat.util.Constants.ASTRA_KEYSPACE;
+import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
 
 @Slf4j
 @Repository
@@ -34,7 +34,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
 
     @Override
     public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {
-        var select = QueryBuilder.selectFrom(MESSAGES_TABLE)
+        var select = QueryBuilder.selectFrom(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                 .all()
                 .whereColumn("room_id").isEqualTo(literal(roomId));
 
@@ -74,7 +74,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
             Objects.requireNonNull(message.getUsername());
 
             // Insert into messages.messages todo: refactor to plain text query
-            var messageInsert = QueryBuilder.insertInto(ASTRA_KEYSPACE, MESSAGES_TABLE)
+            var messageInsert = QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
                     .value("created_at", literal(message.getCreatedAt()))
                     .value("profile_id", literal(message.getProfileId()))
@@ -106,7 +106,7 @@ public class MessageRepositoryImpl extends AstraRepository implements MessageRep
             var readTime = CommonUtils.getCurrentInstant();
             var update = key.createdAt().stream()
                     // todo: to plain text query
-                    .map(k -> QueryBuilder.insertInto(ASTRA_KEYSPACE, MESSAGES_TABLE)
+                    .map(k -> QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                             .value("room_id", literal(key.roomId()))
                             .value("created_at", literal(k))
                             .value("profile_id", literal(key.profileId()))
