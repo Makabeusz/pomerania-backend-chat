@@ -5,6 +5,7 @@ import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.notification.model.Notification;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface NotificationRepository {
@@ -28,6 +29,8 @@ public interface NotificationRepository {
      * @throws AstraException If an error occurs during the save operation, wrapping the original exception.
      */
     Notification save(Notification notification);
+
+    List<Notification> saveAll(List<Notification> notification, int ttl);
 
     Optional<Notification> findBy(String profileId, Instant createdAt, Notification.Type type);
 

@@ -46,7 +46,7 @@ public class InMemoryLocalChatCache implements ChatCache {
     }
 
     /**
-     * Checks if a user is online (present in the active users set).
+     * Checks if a user specific subscription is online.
      *
      * @param userId The ID of the user to check.
      * @return {@code true} if the user is online, {@code false} otherwise.
@@ -58,6 +58,21 @@ public class InMemoryLocalChatCache implements ChatCache {
             return activeUser.getSubscriptions()
                     .getOrDefault(subscription.type().name(), Collections.emptyList())
                     .contains(subscription.id());
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a user is online.
+     *
+     * @param userId The ID of the user to check.
+     * @return {@code true} if the user is online, {@code false} otherwise.
+     */
+    @Override
+    public boolean isOnline(String userId, StompSubscription.Type type) {
+        ActiveUser activeUser = cache.get(userId);
+        if (activeUser != null) {
+            return activeUser.getSubscriptions().containsKey(type.name());
         }
         return false;
     }

@@ -1,8 +1,11 @@
 package com.sojka.pomeranian.notification.repository;
 
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
@@ -15,10 +18,12 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 
 @Slf4j
@@ -65,6 +70,32 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
     @Override
     public Notification save(Notification notification) {
         return save(notification, -1);
+    }
+
+    @Override
+    public List<Notification> saveAll(List<Notification> notifications, int ttl) {
+        return execute(() -> {
+            var list = notifications.stream()
+                    .map(n -> QueryBuilder.insertInto(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE)
+                            .value("profile_id", literal(n.getProfileId()))
+                            .value("created_at", literal(n.getCreatedAt()))
+                            .value("type", literal(n.getType().name()))
+                            .value("read_at", literal(n.getReadAt()))
+                            .usingTtl(ttl)
+                            .build())
+                    .toList();
+
+            var statement = BatchStatement.builder(BatchType.LOGGED)
+                    .addStatements(new ArrayList<>(list))
+                    .build();
+
+            var session = connector.getSession();
+            session.execute(statement);
+
+            log.info("Saved {} notifications, usingTtl={}", notifications.size(), ttl);
+
+            return notifications;
+        }, "saveAll", notifications.size() + " notifications");
     }
 
     @Override

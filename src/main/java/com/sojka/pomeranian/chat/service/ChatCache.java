@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface ChatCache {
 
     boolean isOnline(String userId, StompSubscription subscription);
+    boolean isOnline(String userId, StompSubscription.Type type);
 
     /**
      * Get cache entry

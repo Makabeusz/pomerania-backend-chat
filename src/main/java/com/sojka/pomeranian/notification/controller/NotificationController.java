@@ -1,31 +1,32 @@
 package com.sojka.pomeranian.notification.controller;
 
-import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.chat.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.ReadNotificationDto;
+import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
+import java.util.List;
 
 @Slf4j
-@RestController
-@RequestMapping("/api/notification")
+@Controller
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @GetMapping
-    public ResponseEntity<ResultsPage<NotificationDto>> getNotifications(
-            @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState) {
-        var results = notificationService.get(user.getId(), nextPageState, 10);
-        return ResponseEntity.ok(results);
+    @MessageMapping("/notification.read")
+    public void readMessage(@Payload List<ReadNotificationDto> dto,
+                            Principal principal) {
+        User user = CommonUtils.getAuthUser(principal);
+
+        var readAt = notificationService.markRead(user.getId(), dto);
+
+        log.info("Marked {} notification as read_at={}", dto.size(), readAt);
     }
 }
