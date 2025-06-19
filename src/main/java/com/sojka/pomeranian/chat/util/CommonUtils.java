@@ -36,27 +36,17 @@ public final class CommonUtils {
         return Instant.now().truncatedTo(ChronoUnit.MILLIS);
     }
 
-    /**
-     * TODO: return epoch seconds or millis and create a date in the frontend.
-     */
     public static String formatToDateString(Instant instant) {
         return formatToDateString(formatToLocalDateTime(instant));
     }
 
-    /**
-     * TODO: return epoch seconds or millis and create a date in the frontend.
-     */
     public static String formatToDateString(LocalDateTime dateTime) {
         if (dateTime == null) {
             return null;
         }
-        return dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
     }
 
-
-    /**
-     * TODO: return epoch seconds or millis and create a date in the frontend.
-     */
     public static LocalDateTime formatToLocalDateTime(Instant instant) {
         if (instant == null) {
             return null;
@@ -64,14 +54,11 @@ public final class CommonUtils {
         return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
     }
 
-    /**
-     * TODO: return epoch seconds or millis and create a date in the frontend.
-     */
     public static Instant formatToInstant(String datetime) {
         if (datetime == null) {
             return null;
         }
-        return Instant.parse(datetime + "Z");
+        return Instant.parse(datetime);
     }
 
     public static User getAuthUser(Principal principal) {

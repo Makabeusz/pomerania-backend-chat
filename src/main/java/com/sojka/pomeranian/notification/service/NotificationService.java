@@ -58,7 +58,7 @@ public class NotificationService {
         notificationRepository.deleteAll(notifications);
         readNotificationRepository.saveAll(notifications.stream()
                 .map(n -> ReadNotificationMapper.toReadNotificationDomain(n, readAt))
-                .toList(), 155520000); // 30 days TTL
+                .toList(), 3600); // 30  days TTL = 155520000 todo: parametrise that
 
         log.info("Marked {} notifications as read", notifications);
 
