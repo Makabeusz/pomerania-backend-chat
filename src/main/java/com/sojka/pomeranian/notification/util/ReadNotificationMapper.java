@@ -1,11 +1,12 @@
 package com.sojka.pomeranian.notification.util;
 
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.util.CommonUtils;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public final class ReadNotificationMapper {
@@ -13,11 +14,11 @@ public final class ReadNotificationMapper {
     private ReadNotificationMapper() {
     }
 
-    public static MessageNotificationDto toDto(ReadNotification notification) {
+    public static NotificationDto toDto(ReadNotification notification) {
         if (notification == null) {
             return null;
         }
-        return MessageNotificationDto.builder()
+        return NotificationDto.builder()
                 .profileId(notification.getProfileId())
                 .createdAt(CommonUtils.formatToDateString(notification.getCreatedAt()))
                 .type(Optional.ofNullable(notification.getType()).map(NotificationType::name).orElse(null))
@@ -28,7 +29,7 @@ public final class ReadNotificationMapper {
                 .build();
     }
 
-    public static ReadNotification toDomain(MessageNotificationDto notification) {
+    public static ReadNotification toReadNotificationDomain(NotificationDto notification, Instant readAt) {
         if (notification == null) {
             return null;
         }
@@ -36,7 +37,7 @@ public final class ReadNotificationMapper {
                 .profileId(notification.getProfileId())
                 .createdAt(CommonUtils.formatToInstant(notification.getCreatedAt()))
                 .type(NotificationType.valueOf(notification.getType()))
-                .readAt(CommonUtils.formatToInstant(notification.getReadAt()))
+                .readAt(readAt)
                 .relatedId(notification.getRelatedId())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())

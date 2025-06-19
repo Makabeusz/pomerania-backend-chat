@@ -1,17 +1,16 @@
 package com.sojka.pomeranian.notification.service;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
-import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
 import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
+import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -58,21 +57,15 @@ public class NotificationService {
 
         notificationRepository.deleteAll(notifications);
         readNotificationRepository.saveAll(notifications.stream()
-                        .map(n -> NotificationMapper.toReadNotificationDomain(n, readAt))
-                        .toList(), 155520000); // 30 days TTL
+                .map(n -> ReadNotificationMapper.toReadNotificationDomain(n, readAt))
+                .toList(), 155520000); // 30 days TTL
 
         log.info("Marked {} notifications as read", notifications);
 
         return readAt;
     }
 
-    public NotificationDto get(String profileId, Instant createdAt, NotificationType type) {
-        return notificationRepository.findBy(profileId, createdAt, type)
-                .map(NotificationMapper::toDto)
-                .orElse(null);
-    }
-
-    public ResultsPage<NotificationDto> get(String profileId, String pageState, int pageSize) {
+    public ResultsPage<NotificationDto> getUnread(String profileId, String pageState, int pageSize) {
         var resultsPage = notificationRepository.findAllBy(profileId, pageState, pageSize);
         var notifications = resultsPage.getResults().stream()
                 .map(NotificationMapper::toDto)
@@ -81,11 +74,20 @@ public class NotificationService {
         return new ResultsPage<>(notifications, resultsPage.getNextPageState());
     }
 
-    public Long countNotifications(String userId) {
+    public Long countUnreadNotifications(String userId) {
         var count = notificationRepository.countByIdProfileId(userId).orElseThrow();
 
         log.info("Fetched {} unread notifications count", count);
         return count;
+    }
+
+    public ResultsPage<NotificationDto> getRead(String profileId, String pageState, int pageSize) {
+        var resultsPage = readNotificationRepository.findAllBy(profileId, pageState, pageSize);
+        var notifications = resultsPage.getResults().stream()
+                .map(ReadNotificationMapper::toDto)
+                .toList();
+
+        return new ResultsPage<>(notifications, resultsPage.getNextPageState());
     }
 
 }

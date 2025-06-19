@@ -8,7 +8,6 @@ import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.astra.repository.AstraRepository;
-import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 
@@ -35,6 +33,8 @@ public class ReadNotificationRepositoryImpl extends AstraRepository<ReadNotifica
             profile_id, created_at, type, read_at, related_id, content, metadata \
             ) VALUES (?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
+    private static final String SELECT_ALL = QueryConstants.SELECT_ALL_BY_PROFILE_ID
+            .formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
 
     private final Connector connector;
 
@@ -87,13 +87,21 @@ public class ReadNotificationRepositoryImpl extends AstraRepository<ReadNotifica
     }
 
     @Override
-    public Optional<ReadNotification> findBy(String profileId, Instant createdAt, NotificationType type) {
-        return Optional.empty();
-    }
-
-    @Override
     public ResultsPage<ReadNotification> findAllBy(String profileId, String pageState, int pageSize) {
-        return null;
+        return execute(() -> {
+            ByteBuffer pagingStateBuffer = decodePageState(pageState);
+
+            var statement = SimpleStatement.builder(SELECT_ALL)
+                    .addPositionalValues(profileId)
+                    .setPageSize(pageSize)
+                    .setPagingState(pagingStateBuffer)
+                    .build();
+
+            var session = connector.getSession();
+            ResultSet resultSet = session.execute(statement);
+
+            return resultsPage(resultSet, pageSize, ReadNotificationMapper::fromAstraRow);
+        }, "findAllBy", profileId);
     }
 
     private void validateTtl(int ttl) {

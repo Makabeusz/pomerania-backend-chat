@@ -21,16 +21,24 @@ public class NotificationApiController {
 
     private final NotificationService notificationService;
 
-    @GetMapping
-    public ResponseEntity<ResultsPage<NotificationDto>> getNotifications(
+    @GetMapping("/unread")
+    public ResponseEntity<ResultsPage<NotificationDto>> getUnreadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState) {
-        var results = notificationService.get(user.getId(), nextPageState, 10);
+        var results = notificationService.getUnread(user.getId(), nextPageState, 10);
+        return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/read")
+    public ResponseEntity<ResultsPage<NotificationDto>> getReadNotifications(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String nextPageState) {
+        var results = notificationService.getRead(user.getId(), nextPageState, 10);
         return ResponseEntity.ok(results);
     }
 
     @GetMapping("/count")
     public ResponseEntity<Long> count(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(notificationService.countNotifications(user.getId()));
+        return ResponseEntity.ok(notificationService.countUnreadNotifications(user.getId()));
     }
 }

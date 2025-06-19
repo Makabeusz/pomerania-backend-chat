@@ -42,9 +42,8 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             WHERE profile_id = ? \
             AND created_at = ? \
             AND type = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
-    private static final String SELECT_BY_PROFILE_ID = """
-            SELECT * FROM %s.%s \
-            WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+    private static final String SELECT_BY_PROFILE_ID = QueryConstants.SELECT_ALL_BY_PROFILE_ID
+            .formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String DELETE_BY = """
             DELETE FROM %s.%s \
             WHERE profile_id = ? \
