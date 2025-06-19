@@ -28,4 +28,9 @@ public class NotificationApiController {
         var results = notificationService.get(user.getId(), nextPageState, 10);
         return ResponseEntity.ok(results);
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> count(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(notificationService.countNotifications(user.getId()));
+    }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<MessageNotification, MessageNotification.Id> {
+public interface MessageNotificationRepository extends JpaRepository<MessageNotification, MessageNotification.Id> {
 
     Optional<Long> countByIdProfileId(String profileId);
 

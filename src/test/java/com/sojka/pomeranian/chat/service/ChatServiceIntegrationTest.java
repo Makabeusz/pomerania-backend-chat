@@ -15,7 +15,7 @@ import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
-import com.sojka.pomeranian.chat.repository.NotificationRepository;
+import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ class ChatServiceIntegrationTest {
     @Autowired
     ConversationsRepository conversationsRepository;
     @Autowired
-    NotificationRepository notificationRepository;
+    MessageNotificationRepository messageNotificationRepository;
 
     CqlSession session;
 
@@ -65,7 +65,7 @@ class ChatServiceIntegrationTest {
         session = connector.connect();
         session.execute("TRUNCATE messages.messages");
         conversationsRepository.deleteAll();
-        notificationRepository.deleteAll();
+        messageNotificationRepository.deleteAll();
     }
 
     @Test
@@ -319,7 +319,7 @@ class ChatServiceIntegrationTest {
                         .build());
 
         // Verify notification
-        MessageNotification savedNotification = notificationRepository.findById(new MessageNotification.Id(
+        MessageNotification savedNotification = messageNotificationRepository.findById(new MessageNotification.Id(
                 "user2", LocalDateTime.ofInstant(saved.message().getCreatedAt(), ZoneId.of("UTC")), "user1")
         ).orElseThrow();
         assertThat(savedNotification).usingRecursiveComparison(new RecursiveComparisonConfiguration())
@@ -351,7 +351,7 @@ class ChatServiceIntegrationTest {
                 .senderUsername("User1")
                 .content("Hello!")
                 .build();
-        notificationRepository.save(notification);
+        messageNotificationRepository.save(notification);
 
         MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt()), "user1");
         Instant readAt = chatService.markRead(key);
@@ -365,7 +365,7 @@ class ChatServiceIntegrationTest {
         assertThat(row.getInstant("read_at")).isEqualTo(readAt);
 
         // Verify notification deleted
-        Optional<MessageNotification> notExisting = notificationRepository.findById(new MessageNotification.Id(
+        Optional<MessageNotification> notExisting = messageNotificationRepository.findById(new MessageNotification.Id(
                 "user2", LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), "user1")
         );
         assertThat(notExisting).isEmpty();
@@ -396,9 +396,9 @@ class ChatServiceIntegrationTest {
                 .senderUsername("User1")
                 .content("Message 3")
                 .build();
-        notificationRepository.save(notification1);
-        notificationRepository.save(notification2);
-        notificationRepository.save(otherUserNotification);
+        messageNotificationRepository.save(notification1);
+        messageNotificationRepository.save(notification2);
+        messageNotificationRepository.save(otherUserNotification);
 
         Long count = chatService.countNotifications(userId);
 
@@ -423,8 +423,8 @@ class ChatServiceIntegrationTest {
                 .senderUsername("User3")
                 .content("New message")
                 .build();
-        notificationRepository.save(notification1);
-        notificationRepository.save(notification2);
+        messageNotificationRepository.save(notification1);
+        messageNotificationRepository.save(notification2);
 
         ResultsPage<MessageNotificationDto> response = chatService.getMessageNotifications(userId, null);
 

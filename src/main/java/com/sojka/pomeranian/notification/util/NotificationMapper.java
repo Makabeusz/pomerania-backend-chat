@@ -5,7 +5,9 @@ import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.model.NotificationType;
+import com.sojka.pomeranian.notification.model.ReadNotification;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public final class NotificationMapper {
@@ -35,6 +37,21 @@ public final class NotificationMapper {
                 .profileId(notification.getProfileId())
                 .createdAt(CommonUtils.formatToInstant(notification.getCreatedAt()))
                 .type(NotificationType.valueOf(notification.getType()))
+                .relatedId(notification.getRelatedId())
+                .content(notification.getContent())
+                .metadata(notification.getMetadata())
+                .build();
+    }
+
+    public static ReadNotification toReadNotificationDomain(NotificationDto notification, Instant readAt) {
+        if (notification == null) {
+            return null;
+        }
+        return ReadNotification.builder()
+                .profileId(notification.getProfileId())
+                .createdAt(CommonUtils.formatToInstant(notification.getCreatedAt()))
+                .type(NotificationType.valueOf(notification.getType()))
+                .readAt(readAt)
                 .relatedId(notification.getRelatedId())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())

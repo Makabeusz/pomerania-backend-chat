@@ -2,7 +2,7 @@ package com.sojka.pomeranian.notification.repository;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.model.NotificationType;
 
@@ -38,6 +38,8 @@ public interface NotificationRepository {
 
     ResultsPage<Notification> findAllBy(String profileId, String pageState, int pageSize);
 
-    void deleteAll(List<MessageNotificationDto> notifications);
+    void deleteAll(List<NotificationDto> notifications);
+
+    Optional<Long> countByIdProfileId(String profileId);
 
 }

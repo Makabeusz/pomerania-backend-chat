@@ -13,7 +13,7 @@ import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
-import com.sojka.pomeranian.chat.repository.NotificationRepository;
+import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
@@ -42,7 +42,7 @@ public class ChatService {
 
     private final MessageRepository messageRepository;
     private final ConversationsRepository conversationsRepository;
-    private final NotificationRepository notificationRepository;
+    private final MessageNotificationRepository messageNotificationRepository;
 
     /**
      * Saves message to AstraDB.<br>
@@ -78,7 +78,7 @@ public class ChatService {
             String contentSlice = chatMessage.getContent().length() > 96
                     ? chatMessage.getContent().substring(0, 97) + " ..."
                     : chatMessage.getContent();
-            notification = notificationRepository.save(
+            notification = messageNotificationRepository.save(
                     new MessageNotification(new MessageNotification.Id(chatMessage.getRecipient().id(), CommonUtils.formatToLocalDateTime(now), chatMessage.getSender().id()),
                             chatMessage.getSender().username(), contentSlice)
             );
@@ -99,7 +99,7 @@ public class ChatService {
                 )
                 .toList();
 
-        notificationRepository.deleteAllByIdInBatch(ids);
+        messageNotificationRepository.deleteAllByIdInBatch(ids);
 
         return readAt;
     }
@@ -138,13 +138,15 @@ public class ChatService {
     }
 
     public Long countNotifications(String userId) {
-        return notificationRepository.countByIdProfileId(userId).orElseThrow();
+        var count = messageNotificationRepository.countByIdProfileId(userId).orElseThrow();
+        log.info("Fetched {} unread message count", count);
+        return count;
     }
 
     public ResultsPage<MessageNotificationDto> getMessageNotifications(String userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
-        List<MessageNotification> notifications = notificationRepository.findByIdProfileId(userId, PageRequest.of(
+        List<MessageNotification> notifications = messageNotificationRepository.findByIdProfileId(userId, PageRequest.of(
                 pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "id.createdAt")
         ));
 
@@ -159,7 +161,7 @@ public class ChatService {
     public ResultsPage<NotificationHeaderDto> getMessageNotificationHeaders(String userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
-        var headers = notificationRepository.findNotificationsHeaders(userId, PageRequest.of(
+        var headers = messageNotificationRepository.findNotificationsHeaders(userId, PageRequest.of(
                 pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "created_at")
         ));
 

@@ -8,7 +8,6 @@ import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.astra.repository.AstraRepository;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
@@ -63,13 +62,13 @@ public class ReadNotificationRepositoryImpl extends AstraRepository<ReadNotifica
     }
 
     @Override
-    public List<ReadNotification> saveAll(List<MessageNotificationDto> notifications, int ttl) {
+    public List<ReadNotification> saveAll(List<ReadNotification> notifications, int ttl) {
         validateTtl(ttl);
         return execute(() -> {
             var list = notifications.stream()
                     .map(n -> SimpleStatement.builder(INSERT + USING_TTL.formatted(ttl))
                             .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
-                                    n.getType(), n.getReadAt(), n.getRelatedId(),
+                                    n.getType().name(), n.getReadAt(), n.getRelatedId(),
                                     n.getContent(), n.getMetadata())
                             .build())
                     .toList();

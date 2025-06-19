@@ -49,22 +49,17 @@ public class NotificationService {
         return dto;
     }
 
-    public String markRead(String userId, List<MessageNotificationDto> notifications) {
+    public Instant markRead(String userId, List<NotificationDto> notifications) {
         boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
         if (!allAreUserNotifications) {
             throw new SecurityException("User can mark as read only its own notifications");
         }
-        String readAt = CommonUtils.formatToDateString(CommonUtils.getCurrentInstant());
+        var readAt = CommonUtils.getCurrentInstant();
 
         notificationRepository.deleteAll(notifications);
-        //noinspection SimplifyStreamApiCallChains - suppress 'can be replaced with peek'
         readNotificationRepository.saveAll(notifications.stream()
-                        .map(n -> {
-                            n.setReadAt(readAt);
-                            return n;
-                        })
-                        .toList()
-                , 155520000); // 30 days TTL
+                        .map(n -> NotificationMapper.toReadNotificationDomain(n, readAt))
+                        .toList(), 155520000); // 30 days TTL
 
         log.info("Marked {} notifications as read", notifications);
 
@@ -84,6 +79,13 @@ public class NotificationService {
                 .toList();
 
         return new ResultsPage<>(notifications, resultsPage.getNextPageState());
+    }
+
+    public Long countNotifications(String userId) {
+        var count = notificationRepository.countByIdProfileId(userId).orElseThrow();
+
+        log.info("Fetched {} unread notifications count", count);
+        return count;
     }
 
 }

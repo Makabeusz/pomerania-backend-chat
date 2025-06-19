@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.notification.controller;
 
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.util.CommonUtils;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @MessageMapping("/notification.read")
-    public void readMessage(@Payload List<MessageNotificationDto> dto,
+    public void readMessage(@Payload List<NotificationDto> dto,
                             Principal principal) {
         User user = CommonUtils.getAuthUser(principal);
 

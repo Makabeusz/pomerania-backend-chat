@@ -8,7 +8,8 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraRepository;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
+import com.sojka.pomeranian.chat.util.CommonUtils;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
@@ -49,6 +50,9 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             WHERE profile_id = ? \
             AND created_at = ? \
             AND type = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+    private static final String COUNT_BY_PROFILE_ID = """
+            SELECT COUNT(*) FROM %s.%s \
+            WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
 
 
     private final Connector connector;
@@ -139,11 +143,11 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
     }
 
     @Override
-    public void deleteAll(List<MessageNotificationDto> notifications) {
+    public void deleteAll(List<NotificationDto> notifications) {
         execute(() -> {
             List<SimpleStatement> deleteStatements = notifications.stream()
                     .map(n -> SimpleStatement.builder(DELETE_BY)
-                            .addPositionalValues(n.getProfileId(), n.getCreatedAt(), n.getType())
+                            .addPositionalValues(n.getProfileId(), CommonUtils.formatToInstant(n.getCreatedAt()), n.getType())
                             .build())
                     .toList();
 
@@ -154,7 +158,21 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             var session = connector.getSession();
             session.execute(statement);
 
-            return "done";
+            return true;
         }, "findAllBy", notifications);
+    }
+
+    @Override
+    public Optional<Long> countByIdProfileId(String profileId) {
+        return execute(() -> {
+            var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID)
+                    .addPositionalValues(profileId)
+                    .build();
+
+            var session = connector.getSession();
+            Row row = session.execute(statement).one();
+
+            return Optional.ofNullable(row).map(r -> r.getLong(0));
+        }, "countByIdProfileId", profileId);
     }
 }

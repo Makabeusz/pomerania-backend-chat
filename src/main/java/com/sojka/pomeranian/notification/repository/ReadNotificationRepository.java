@@ -2,7 +2,6 @@ package com.sojka.pomeranian.notification.repository;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
@@ -23,7 +22,7 @@ public interface ReadNotificationRepository {
      */
     ReadNotification save(ReadNotification notification, int ttl);
 
-    List<ReadNotification> saveAll(List<MessageNotificationDto> notifications, int ttl);
+    List<ReadNotification> saveAll(List<ReadNotification> notifications, int ttl);
 
     Optional<ReadNotification> findBy(String profileId, Instant createdAt, NotificationType type);
 
