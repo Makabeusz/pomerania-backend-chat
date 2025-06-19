@@ -2,7 +2,9 @@ package com.sojka.pomeranian.notification.repository;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
+import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.notification.model.NotificationType;
 
 import java.time.Instant;
 import java.util.List;
@@ -30,10 +32,12 @@ public interface NotificationRepository {
      */
     Notification save(Notification notification);
 
-    List<Notification> saveAll(List<Notification> notification, int ttl);
+//    List<Notification> saveAll(List<Notification> notification, int ttl);
 
-    Optional<Notification> findBy(String profileId, Instant createdAt, Notification.Type type);
+    Optional<Notification> findBy(String profileId, Instant createdAt, NotificationType type);
 
     ResultsPage<Notification> findAllBy(String profileId, String pageState, int pageSize);
+
+    void deleteAll(List<MessageNotificationDto> notifications);
 
 }

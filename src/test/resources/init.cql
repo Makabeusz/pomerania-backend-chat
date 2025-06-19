@@ -25,6 +25,17 @@ CREATE TABLE IF NOT EXISTS notifications.notifications (
     profile_id VARCHAR,
     created_at TIMESTAMP,
     type VARCHAR,
+    related_id VARCHAR,
+    content VARCHAR,
+    metadata MAP<VARCHAR, VARCHAR>,
+    PRIMARY KEY (profile_id, created_at, type)
+) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);
+
+-- Read Notifications
+CREATE TABLE IF NOT EXISTS notifications.read_notifications (
+    profile_id VARCHAR,
+    created_at TIMESTAMP,
+    type VARCHAR,
     read_at TIMESTAMP,
     related_id VARCHAR,
     content VARCHAR,

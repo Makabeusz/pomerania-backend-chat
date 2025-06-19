@@ -5,15 +5,16 @@ import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.astra.repository.AstraRepository;
+import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
@@ -21,21 +22,19 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class NotificationRepositoryImpl extends AstraRepository implements NotificationRepository {
+public class NotificationRepositoryImpl extends AstraRepository<Notification> implements NotificationRepository {
 
     private static final String NOTIFICATIONS_TABLE = "notifications";
     private static final String INSERT = """
             INSERT INTO %s.%s ( \
-            profile_id, created_at, type, read_at, related_id, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+            profile_id, created_at, type, related_id, content, metadata \
+            ) VALUES (?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
     private static final String SELECT_BY_PRIMARY_KEY = """
             SELECT * FROM %s.%s \
@@ -45,8 +44,19 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
     private static final String SELECT_BY_PROFILE_ID = """
             SELECT * FROM %s.%s \
             WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+    private static final String DELETE_BY = """
+            DELETE FROM %s.%s \
+            WHERE profile_id = ? \
+            AND created_at = ? \
+            AND type = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+
 
     private final Connector connector;
+
+    @Override
+    protected Logger getLogger() {
+        return log;
+    }
 
     @Override
     public Notification save(Notification notification, int ttl) {
@@ -54,14 +64,12 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
             String dml = INSERT + (ttl > 0 ? USING_TTL.formatted(ttl) : "");
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
-                            notification.getType().name(), notification.getReadAt(), notification.getRelatedId(),
+                            notification.getType().name(), notification.getRelatedId(),
                             notification.getContent(), notification.getMetadata())
                     .build();
 
             var session = connector.getSession();
-            ResultSet executed = session.execute(statement);
-
-            executed.all().forEach(r -> System.out.println(r.getFormattedContents()));
+            session.execute(statement);
 
             return notification;
         }, "save", notification);
@@ -72,34 +80,34 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
         return save(notification, -1);
     }
 
+//    @Override
+//    public List<Notification> saveAll(List<Notification> notifications, int ttl) {
+//        return execute(() -> {
+//            var list = notifications.stream()
+//                    .map(n -> QueryBuilder.insertInto(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE)
+//                            .value("profile_id", literal(n.getProfileId()))
+//                            .value("created_at", literal(n.getCreatedAt()))
+//                            .value("type", literal(n.getType().name()))
+//                            .value("read_at", literal(n.getReadAt()))
+//                            .usingTtl(ttl)
+//                            .build())
+//                    .toList();
+//
+//            var statement = BatchStatement.builder(BatchType.LOGGED)
+//                    .addStatements(new ArrayList<>(list))
+//                    .build();
+//
+//            var session = connector.getSession();
+//            session.execute(statement);
+//
+//            log.info("Saved {} notifications, usingTtl={}", notifications.size(), ttl);
+//
+//            return notifications;
+//        }, "saveAll", notifications.size() + " notifications");
+//    }
+
     @Override
-    public List<Notification> saveAll(List<Notification> notifications, int ttl) {
-        return execute(() -> {
-            var list = notifications.stream()
-                    .map(n -> QueryBuilder.insertInto(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE)
-                            .value("profile_id", literal(n.getProfileId()))
-                            .value("created_at", literal(n.getCreatedAt()))
-                            .value("type", literal(n.getType().name()))
-                            .value("read_at", literal(n.getReadAt()))
-                            .usingTtl(ttl)
-                            .build())
-                    .toList();
-
-            var statement = BatchStatement.builder(BatchType.LOGGED)
-                    .addStatements(new ArrayList<>(list))
-                    .build();
-
-            var session = connector.getSession();
-            session.execute(statement);
-
-            log.info("Saved {} notifications, usingTtl={}", notifications.size(), ttl);
-
-            return notifications;
-        }, "saveAll", notifications.size() + " notifications");
-    }
-
-    @Override
-    public Optional<Notification> findBy(String profileId, Instant createdAt, Notification.Type type) {
+    public Optional<Notification> findBy(String profileId, Instant createdAt, NotificationType type) {
         return execute(() -> {
             var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
                     .addPositionalValues(profileId, createdAt, type)
@@ -130,15 +138,23 @@ public class NotificationRepositoryImpl extends AstraRepository implements Notif
         }, "findAllBy", profileId);
     }
 
-    <T> T execute(Callable<T> callable, String methodName, Object id) {
-        try {
-            return callable.call();
-        } catch (IllegalStateException e) {
-            log.error("CqlSession not initialized for {}, error: {}", id, e.getMessage(), e);
-            throw new AstraException("Cassandra session not initialized, id=" + id, e);
-        } catch (Exception e) {
-            log.error("Failed to execute {}, for: {}", methodName, id);
-            throw new AstraException("Failed to execute %s, for: %s".formatted(methodName, id), e);
-        }
+    @Override
+    public void deleteAll(List<MessageNotificationDto> notifications) {
+        execute(() -> {
+            List<SimpleStatement> deleteStatements = notifications.stream()
+                    .map(n -> SimpleStatement.builder(DELETE_BY)
+                            .addPositionalValues(n.getProfileId(), n.getCreatedAt(), n.getType())
+                            .build())
+                    .toList();
+
+            var statement = BatchStatement.builder(BatchType.LOGGED)
+                    .addStatements(new ArrayList<>(deleteStatements))
+                    .build();
+
+            var session = connector.getSession();
+            session.execute(statement);
+
+            return "done";
+        }, "findAllBy", notifications);
     }
 }

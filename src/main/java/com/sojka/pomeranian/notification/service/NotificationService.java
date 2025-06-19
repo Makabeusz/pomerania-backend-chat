@@ -1,14 +1,16 @@
 package com.sojka.pomeranian.notification.service;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.chat.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
-import com.sojka.pomeranian.chat.dto.ReadNotificationDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.notification.model.NotificationType;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
+import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final ReadNotificationRepository readNotificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatCache cache;
 
@@ -46,24 +49,29 @@ public class NotificationService {
         return dto;
     }
 
-    public Instant markRead(String userId, List<ReadNotificationDto> dto) {
-        Instant now = CommonUtils.getCurrentInstant();
-        List<Notification> list = dto.stream()
-                .map(d -> Notification.builder()
-                        .profileId(userId)
-                        .createdAt(CommonUtils.formatToInstant(d.createdAt()))
-                        .type(Notification.Type.valueOf(d.type()))
-                        .readAt(now)
-                        .build())
-                .toList();
-        notificationRepository.saveAll(list, 3600); // TODO: parametrise read TTL
+    public String markRead(String userId, List<MessageNotificationDto> notifications) {
+        boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
+        if (!allAreUserNotifications) {
+            throw new SecurityException("User can mark as read only its own notifications");
+        }
+        String readAt = CommonUtils.formatToDateString(CommonUtils.getCurrentInstant());
 
-        log.info("Marked {} notifications as read", dto);
+        notificationRepository.deleteAll(notifications);
+        //noinspection SimplifyStreamApiCallChains - suppress 'can be replaced with peek'
+        readNotificationRepository.saveAll(notifications.stream()
+                        .map(n -> {
+                            n.setReadAt(readAt);
+                            return n;
+                        })
+                        .toList()
+                , 155520000); // 30 days TTL
 
-        return now;
+        log.info("Marked {} notifications as read", notifications);
+
+        return readAt;
     }
 
-    public NotificationDto get(String profileId, Instant createdAt, Notification.Type type) {
+    public NotificationDto get(String profileId, Instant createdAt, NotificationType type) {
         return notificationRepository.findBy(profileId, createdAt, type)
                 .map(NotificationMapper::toDto)
                 .orElse(null);

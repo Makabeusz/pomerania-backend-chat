@@ -4,7 +4,7 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
-import com.sojka.pomeranian.chat.dto.NotificationDto;
+import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
@@ -141,7 +141,7 @@ public class ChatService {
         return notificationRepository.countByIdProfileId(userId).orElseThrow();
     }
 
-    public ResultsPage<NotificationDto> getMessageNotifications(String userId, String pageState) {
+    public ResultsPage<MessageNotificationDto> getMessageNotifications(String userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         List<MessageNotification> notifications = notificationRepository.findByIdProfileId(userId, PageRequest.of(

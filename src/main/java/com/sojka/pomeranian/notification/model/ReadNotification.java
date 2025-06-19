@@ -1,26 +1,24 @@
-package com.sojka.pomeranian.chat.dto;
+package com.sojka.pomeranian.notification.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.Map;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class NotificationDto {
+@AllArgsConstructor
+public class ReadNotification {
 
     private String profileId;
-    private String createdAt;
-    private String type;
-    private String readAt;
+    private Instant createdAt;
+    private NotificationType type;
+    private Instant readAt;
     private String relatedId;
     private String content;
-    private String senderId;
-    private String senderUsername;
     private Map<String, String> metadata;
-
 }

@@ -4,15 +4,16 @@ import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.astra.connection.Connector;
+import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.astra.repository.AstraRepository;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
@@ -26,11 +27,16 @@ import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class MessageRepositoryImpl extends AstraRepository implements MessageRepository {
+public class MessageRepositoryImpl extends AstraRepository<Message> implements MessageRepository {
 
     private static final String MESSAGES_TABLE = "messages";
 
     private final Connector connector;
+
+    @Override
+    public Logger getLogger() {
+        return log;
+    }
 
     @Override
     public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {
