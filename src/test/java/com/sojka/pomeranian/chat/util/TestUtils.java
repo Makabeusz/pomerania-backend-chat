@@ -1,8 +1,13 @@
 package com.sojka.pomeranian.chat.util;
 
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.sojka.pomeranian.astra.connection.Connector;
+import com.sojka.pomeranian.chat.dto.NotificationType;
 import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.mapper.PaginationMapper;
+import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.notification.model.ReadNotification;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +44,36 @@ public class TestUtils {
 
     public static String paginationString(int pageNumber, int pageSize) {
         return PaginationMapper.toEncodedString(new Pagination(pageNumber, pageSize));
+    }
+
+    public static Notification getNotification(Connector connector, String profileId, Instant createdAt, String type) {
+        SimpleStatement selectNotification = SimpleStatement.newInstance(
+                "SELECT * FROM notifications.notifications WHERE profile_id = ? AND created_at = ? AND type = ?",
+                profileId, createdAt, type
+        );
+        var row = connector.getSession().execute(selectNotification).one();
+        System.out.println(row);
+        return Notification.builder()
+                .profileId(row.getString("profile_id"))
+                .createdAt(row.getInstant("created_at"))
+                .type(NotificationType.valueOf(row.getString("type")))
+                .content(row.getString("content"))
+                .build();
+    }
+
+    public static ReadNotification getReadNotification(Connector connector, String profileId, Instant createdAt, String type) {
+        SimpleStatement selectNotification = SimpleStatement.newInstance(
+                "SELECT * FROM notifications.read_notifications WHERE profile_id = ? AND created_at = ? AND type = ?",
+                profileId, createdAt, type
+        );
+        var row = connector.getSession().execute(selectNotification).one();
+        return ReadNotification.builder()
+                .profileId(row.getString("profile_id"))
+                .createdAt(row.getInstant("created_at"))
+                .type(NotificationType.valueOf(row.getString("type")))
+                .readAt(row.getInstant("read_at"))
+                .content(row.getString("content"))
+                .build();
     }
 
 }

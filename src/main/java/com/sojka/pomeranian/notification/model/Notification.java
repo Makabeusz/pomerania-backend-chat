@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.notification.model;
 
+import com.sojka.pomeranian.chat.dto.NotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
