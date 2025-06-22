@@ -8,9 +8,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public final class PaginationMapper {
+/**
+ * TODO: duplicated with main
+ */
+public final class PaginationUtils {
 
-    private PaginationMapper() {
+    private PaginationUtils() {
     }
 
     public static String toEncodedString(Pagination pagination) {
@@ -31,5 +34,21 @@ public final class PaginationMapper {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Pagination pageStateToPagination(String pageState, int pageSize) {
+        Pagination pagination;
+        if (pageState != null) {
+            pagination = toPagination(pageState);
+        } else {
+            pagination = new Pagination(0, pageSize);
+        }
+        return pagination;
+    }
+
+    public static String createPageState(int currentPageSize, int paginationSize, Pagination previous) {
+        return currentPageSize == paginationSize
+                ? toEncodedString(new Pagination(previous.pageNumber() + 1, previous.pageSize()))
+                : null;
     }
 }

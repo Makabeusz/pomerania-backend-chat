@@ -1,23 +1,22 @@
 package com.sojka.pomeranian.chat.service;
 
+import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
+import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.dto.Pagination;
-import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
-import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
+import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
-import com.sojka.pomeranian.chat.util.mapper.PaginationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +30,8 @@ import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.getCurrentInstant;
 import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
+import static com.sojka.pomeranian.chat.util.mapper.PaginationUtils.createPageState;
+import static com.sojka.pomeranian.chat.util.mapper.PaginationUtils.pageStateToPagination;
 
 @Slf4j
 @Service
@@ -173,20 +174,5 @@ public class ChatService {
         return new ResultsPage<>(results, pageState);
     }
 
-    Pagination pageStateToPagination(String pageState, int pageSize) {
-        Pagination pagination;
-        if (pageState != null) {
-            pagination = PaginationMapper.toPagination(pageState);
-        } else {
-            pagination = new Pagination(0, pageSize);
-        }
-        return pagination;
-    }
-
-    String createPageState(int currentPageSize, int paginationSize, Pagination previous) {
-        return currentPageSize == paginationSize
-                ? PaginationMapper.toEncodedString(new Pagination(previous.pageNumber() + 1, previous.pageSize()))
-                : null;
-    }
 
 }
