@@ -8,6 +8,6 @@ public record StompSubscription(
 
     public enum Type {
 
-        CHAT, CHAT_NOTIFICATIONS
+        CHAT, CHAT_NOTIFICATIONS, POST_COMMENTS
     }
 }

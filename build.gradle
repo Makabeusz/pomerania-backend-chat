@@ -54,12 +54,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
-	// Astra
-	implementation 'org.apache.cassandra:java-driver-core:4.19.0'
-	implementation 'org.apache.cassandra:java-driver-query-builder:4.19.0'
-
 	// Pomeranian
-	implementation 'com.sojka:Pomeranian-Security:0.0.5-SNAPSHOT'
+	implementation 'com.sojka:Pomeranian-Security:0.0.6-SNAPSHOT'
 	implementation 'com.sojka:pomeranian-astra:0.0.9-SNAPSHOT'
 
 	// GCP
@@ -67,14 +63,12 @@ dependencies {
 	implementation 'com.google.cloud:google-cloud-pubsub'
 
 	compileOnly 'org.projectlombok:lombok'
-//	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:cassandra:1.20.1'
 	testImplementation 'org.testcontainers:postgresql:1.21.0'
-//	testImplementation 'io.projectreactor:reactor-test'
 //	testImplementation 'org.testcontainers:cassandra'
 //	testImplementation 'org.testcontainers:junit-jupiter'
 //	testImplementation 'org.testcontainers:r2dbc'

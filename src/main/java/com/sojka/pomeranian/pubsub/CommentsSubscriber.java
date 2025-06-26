@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.notification.pubsub;
+package com.sojka.pomeranian.pubsub;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -6,9 +6,9 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.sojka.pomeranian.chat.util.JsonUtils;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
-import com.sojka.pomeranian.notification.pubsub.config.GcpConfig;
-import com.sojka.pomeranian.notification.service.NotificationService;
+import com.sojka.pomeranian.comment.CommentStompRequest;
+import com.sojka.pomeranian.comment.service.CommentService;
+import com.sojka.pomeranian.pubsub.config.GcpConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,24 +16,23 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NotificationSubscriber {
+public class CommentsSubscriber {
 
     private final GcpConfig gcpConfig;
-    private final NotificationService notificationService;
+    private final CommentService commentService;
 
     Subscriber subscriber;
 
     public Subscriber subscribeAsync() {
         ProjectSubscriptionName subscriptionName =
-                ProjectSubscriptionName.of(gcpConfig.getProjectId(), gcpConfig.getSubscriberConfig().getSubscriptionName());
+                ProjectSubscriptionName.of(gcpConfig.getProjectId(), gcpConfig.getCommentsConfig().getSubscriptionName());
 
         MessageReceiver receiver =
                 (PubsubMessage message, AckReplyConsumer consumer) -> {
-                    var notification = JsonUtils.readObject(message.getData().toByteArray(), NotificationDto.class);
+                    var notification = JsonUtils.readObject(message.getData().toByteArray(), CommentStompRequest.class);
 
-                    notificationService.publish(notification);
+                    commentService.publish(notification);
                     consumer.ack();
-
 
                     // todo
                     //  2025-06-16T12:06:55.733+02:00  INFO 7700 --- [pomeranian-chat] [          Gax-1] c.s.p.n.service.NotificationService      : Published notification: NotificationResponse(data=NotificationDto(profileId=b3d36d79-4307-4123-8be5-3cfe42f5d0a7, createdAt=2025-06-16T10:06:55.569, type=FOLLOW, readAt=null, relatedId=null, content=You have been followed by bbb, senderId=null, senderUsername=null, metadata={username=bbb, id=57bab9b4-6368-4014-88fa-18a0dbca4372}), type=FOLLOW)

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * An in-memory implementation of {@link ChatCache} for tracking active chat users.
@@ -154,7 +155,7 @@ public class InMemoryLocalChatCache implements ChatCache {
                     }
                     ids = ids.stream()
                             .filter(id -> !id.equals(subscription.id()))
-                            .toList();
+                            .collect(Collectors.toCollection(ArrayList::new));
                     activeUser.getSubscriptions().put(subscription.type().name(), ids);
 
                     if (ids.isEmpty()) {

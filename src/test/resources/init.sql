@@ -142,6 +142,17 @@ CREATE TABLE comments (
     CONSTRAINT fk_comments_username FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
 );
 
+-- Create likes table
+CREATE TABLE likes (
+    profile_id VARCHAR(255) NOT NULL,
+    related_id VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- e.g., 'post', 'photo', 'profile'
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (profile_id, related_id),
+    CONSTRAINT fk_likes_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
+    CONSTRAINT check_unique_like UNIQUE (profile_id, related_id)
+);
+
 -- messages backup START --
 CREATE TABLE IF NOT EXISTS conversations (
     user_id VARCHAR(255),
@@ -229,3 +240,5 @@ CREATE INDEX idx_comments_profile_id ON comments(profile_id);
 CREATE INDEX idx_comments_created_at ON comments(created_at);
 CREATE INDEX idx_conversations_last_message_at ON conversations(last_message_at);
 CREATE INDEX idx_message_notifications_created_at ON message_notifications(created_at);
+CREATE INDEX idx_likes_related_id ON likes(related_id);
+CREATE INDEX idx_likes_type ON likes(type);

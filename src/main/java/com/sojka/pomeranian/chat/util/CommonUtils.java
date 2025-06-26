@@ -54,6 +54,9 @@ public final class CommonUtils {
         return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
     }
 
+    /**
+     * TODO: Shared between main and chat projects
+     */
     public static Instant formatToInstant(String datetime) {
         if (datetime == null) {
             return null;

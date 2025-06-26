@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.notification.pubsub.config;
+package com.sojka.pomeranian.pubsub.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,24 +14,38 @@ public class GcpConfig {
 
     String projectId;
     String region;
-    SubscriberConfig subscriberConfig;
+    NotificationsConfig notificationsConfig;
+    CommentsConfig commentsConfig;
 
     public GcpConfig(
             @Value("${gcp.project-id}") String projectId,
             @Value("${gcp.region}") String region,
-            SubscriberConfig subscriberConfig) {
+            NotificationsConfig notificationsConfig,
+            CommentsConfig commentsConfig) {
         this.projectId = projectId;
         this.region = region;
-        this.subscriberConfig = subscriberConfig;
+        this.notificationsConfig = notificationsConfig;
+        this.commentsConfig = commentsConfig;
     }
 
     @Data
     @Builder
-    @Component
-    @NoArgsConstructor
     @AllArgsConstructor
-    @ConfigurationProperties("gcp.pubsub.subscriber")
-    public static class SubscriberConfig {
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.notifications.subscriber")
+    public static class NotificationsConfig {
+
+        String subscriptionName;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.comments.subscriber")
+    public static class CommentsConfig {
 
         String subscriptionName;
     }

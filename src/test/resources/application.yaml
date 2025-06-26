@@ -22,5 +22,9 @@ gcp:
   project-id: 'pomeranian-463011'
   region: 'europe-central2' # Warsaw
   pubsub:
-    subscriber:
-      subscription-name: 'notifications-dev'
+    notifications:
+      subscriber:
+        subscription-name: 'notifications-dev'
+    comments:
+      subscriber:
+        subscription-name: 'comments-dev'
