@@ -15,9 +15,12 @@ logging:
   level:
     org.springframework.security: INFO
 
-jwt:
-  secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
-  expiration: 86400000
+pomeranian:
+  security:
+    public-paths:
+    jwt:
+      secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
+      expiration: 86400000
 
 astra:
   connectionBundleFilePath: '/Users/msojka/IdeaProjects/pomeranian-chat/src/main/resources/db/secure-connect-pomeranian.zip'

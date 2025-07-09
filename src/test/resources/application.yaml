@@ -14,9 +14,12 @@ astra:
   clientSecret: ${ASTRA_SECRET}
   keyspace: 'messages'
 
-jwt:
-  secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
-  expiration: 86400000
+pomeranian:
+  security:
+    public-paths: /auth/login, /auth/register, /api/city/hint
+    jwt:
+      secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
+      expiration: 86400000
 
 gcp:
   project-id: 'pomeranian-463011'

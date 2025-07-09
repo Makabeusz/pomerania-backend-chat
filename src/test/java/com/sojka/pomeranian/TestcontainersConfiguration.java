@@ -30,7 +30,8 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     @SuppressWarnings("resource") // Spring container manages the resource lifecycle, no need for try-with-resources
     PostgreSQLContainer<?> postgresContainer() {
-        return new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
+        return new PostgreSQLContainer<>(DockerImageName.parse("postgis/postgis:17-3.5")
+                .asCompatibleSubstituteFor("postgres"))
                 .withDatabaseName("mydb")
                 .withUsername("myuser")
                 .withPassword("password")
