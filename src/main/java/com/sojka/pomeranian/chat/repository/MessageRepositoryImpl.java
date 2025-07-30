@@ -53,8 +53,7 @@ public class MessageRepositoryImpl extends AstraRepository<Message> implements M
                 .setPagingState(pagingStateBuffer);
 
         try {
-            var session = connector.getSession();
-            var resultSet = session.execute(statement);
+            var resultSet = connector.getSession().execute(statement);
 
             var result = resultsPage(resultSet, pageSize, MessageMapper::fromAstraRow);
 

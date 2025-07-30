@@ -43,6 +43,25 @@ CREATE TABLE IF NOT EXISTS notifications.read_notifications (
     PRIMARY KEY (profile_id, created_at, type)
 ) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);
 
+CREATE TABLE IF NOT EXISTS statistics.statistics (
+    profile_id UUID PRIMARY KEY,
+    visits COUNTER,
+    post_views COUNTER,
+    likes COUNTER
+);
+
+-- TODO: it will be in main pomeranian, implement there
+--CREATE TABLE IF NOT EXISTS statistics.statistics (
+--    profile_id VARCHAR,
+--    created_at TIMESTAMP,
+--    type VARCHAR,
+--    read_at TIMESTAMP,
+--    related_id VARCHAR,
+--    content VARCHAR,
+--    metadata MAP<VARCHAR, VARCHAR>,
+--    PRIMARY KEY (profile_id, created_at, type)
+--) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);
+
 -- Messages notifications
 --CREATE TABLE IF NOT EXISTS messages.notifications (
 --    profile_id VARCHAR,
