@@ -6,7 +6,7 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
-import com.sojka.pomeranian.astra.repository.AstraRepository;
+import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.CommonUtils;
@@ -27,7 +27,7 @@ import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class MessageRepositoryImpl extends AstraRepository<Message> implements MessageRepository {
+public class MessageRepositoryImpl extends AstraPageableRepository implements MessageRepository {
 
     private static final String MESSAGES_TABLE = "messages";
 

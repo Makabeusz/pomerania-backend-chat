@@ -7,7 +7,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
-import com.sojka.pomeranian.astra.repository.AstraRepository;
+import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class ReadNotificationRepositoryImpl extends AstraRepository<ReadNotification> implements ReadNotificationRepository {
+public class ReadNotificationRepositoryImpl extends AstraPageableRepository implements ReadNotificationRepository {
 
     private static final String READ_NOTIFICATIONS_TABLE = "read_notifications";
 

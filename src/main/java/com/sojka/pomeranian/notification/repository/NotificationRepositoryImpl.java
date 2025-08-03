@@ -7,7 +7,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.astra.repository.AstraRepository;
+import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.dto.NotificationType;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
@@ -29,7 +29,7 @@ import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class NotificationRepositoryImpl extends AstraRepository<Notification> implements NotificationRepository {
+public class NotificationRepositoryImpl extends AstraPageableRepository implements NotificationRepository {
 
     private static final String NOTIFICATIONS_TABLE = "notifications";
     private static final String INSERT = """

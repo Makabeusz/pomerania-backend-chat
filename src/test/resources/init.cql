@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     pinned BOOLEAN,
     read_at TIMESTAMP,
     metadata MAP<VARCHAR, VARCHAR>,
-    PRIMARY KEY (room_id, created_at, profile_id))
-WITH CLUSTERING ORDER BY (created_at DESC, profile_id ASC);
+    PRIMARY KEY (room_id, created_at, profile_id)
+) WITH CLUSTERING ORDER BY (created_at DESC, profile_id ASC);
 
 -- Notifications
 CREATE TABLE IF NOT EXISTS notifications.notifications (
