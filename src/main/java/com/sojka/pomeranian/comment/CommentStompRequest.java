@@ -12,6 +12,7 @@ public record CommentStompRequest(
         String createdAt,
         String updatedAt,
         String username,
-        String image192
+        String image192,
+        String authorFirstname
 ) {
 }
