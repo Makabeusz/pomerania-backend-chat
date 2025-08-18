@@ -23,7 +23,7 @@ pomeranian:
       expiration: 86400000
 
 astra:
-  connectionBundleFilePath: 'C:\Users\mateu\IdeaProjects\pomerania-backend\src\main\resources\db\secure-connect-pomeranian.zip'
+  connectionBundleFilePath: '/Users/shitty/IdeaProjects/pomerania-backend-chat/src/main/resources/db/secure-connect-pomeranian.zip'
   clientId: ${ASTRA_CLIENT_ID}
   clientSecret: ${ASTRA_SECRET}
 #  keyspace: 'messages' # using 2 keyspaces with a single connection, specifying keyspace for each query
