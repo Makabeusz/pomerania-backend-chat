@@ -27,7 +27,7 @@ public class PomeranianChatApplication {
 
     @EventListener(ApplicationReadyEvent.class)
     public void doSomethingAfterStartup() {
-        connector.initialize();
+        connector.connect();
         notificationSubscriber.subscribeAsync();
         commentsSubscriber.subscribeAsync();
     }
