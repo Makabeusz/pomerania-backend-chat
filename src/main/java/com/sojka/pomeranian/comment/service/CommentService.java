@@ -1,6 +1,6 @@
 package com.sojka.pomeranian.comment.service;
 
-import com.sojka.pomeranian.comment.CommentStompRequest;
+import com.sojka.pomeranian.lib.dto.CommentStompRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

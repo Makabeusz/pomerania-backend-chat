@@ -14,8 +14,8 @@ import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
-import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
+import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
-import static com.sojka.pomeranian.chat.util.TestUtils.paginationString;
+import static com.sojka.pomeranian.lib.util.PaginationUtils.toEncodedString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -177,7 +177,7 @@ class ChatServiceIntegrationTest {
 
     static Stream<Arguments> conversationHeadersSource() {
         return Stream.of(
-                Arguments.of(paginationString(0, 10)),
+                Arguments.of(toEncodedString(0, 10)),
                 Arguments.of((String) null)
         );
     }
@@ -215,7 +215,7 @@ class ChatServiceIntegrationTest {
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
-        ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders("user1", paginationString(0, 10));
+        ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders("user1", toEncodedString(0, 10));
 
         assertEquals(4, response.getResults().size());
         assertThat(response.getNextPageState()).isNull(); // Assuming pagination
@@ -254,7 +254,7 @@ class ChatServiceIntegrationTest {
             conversationsRepository.saveAll(List.of(senderConversation2, recipientConversation2));
         }
         List<ChatMessagePersisted> messages = new ArrayList<>();
-        ResultsPage<ChatMessagePersisted> response = new ResultsPage<>(Collections.emptyList(), paginationString(0, 10));
+        ResultsPage<ChatMessagePersisted> response = new ResultsPage<>(Collections.emptyList(), toEncodedString(0, 10));
 
         do {
             response = chatService.getConversationsHeaders("userA", response.getNextPageState());

@@ -3,9 +3,7 @@ package com.sojka.pomeranian.chat.util;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.chat.util.mapper.PaginationUtils;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
@@ -40,10 +38,6 @@ public class TestUtils {
         message.setRecipientUsername("User" + recipientId);
         message.setContent(content);
         return message;
-    }
-
-    public static String paginationString(int pageNumber, int pageSize) {
-        return PaginationUtils.toEncodedString(new Pagination(pageNumber, pageSize));
     }
 
     public static Notification getNotification(Connector connector, String profileId, Instant createdAt, String type) {

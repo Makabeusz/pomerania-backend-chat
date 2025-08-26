@@ -7,7 +7,6 @@ import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
-import com.sojka.pomeranian.chat.dto.Pagination;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
@@ -17,6 +16,7 @@ import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
+import com.sojka.pomeranian.lib.dto.Pagination;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -30,8 +30,8 @@ import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.getCurrentInstant;
 import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
-import static com.sojka.pomeranian.chat.util.mapper.PaginationUtils.createPageState;
-import static com.sojka.pomeranian.chat.util.mapper.PaginationUtils.pageStateToPagination;
+import static com.sojka.pomeranian.lib.util.PaginationUtils.createPageState;
+import static com.sojka.pomeranian.lib.util.PaginationUtils.pageStateToPagination;
 
 @Slf4j
 @Service
