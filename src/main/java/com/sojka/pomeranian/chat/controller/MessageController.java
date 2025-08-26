@@ -7,6 +7,7 @@ import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ public class MessageController {
     private final ChatService chatService;
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversation(
             @RequestParam String recipientId,
             @RequestParam(required = false) String nextPageState,
@@ -31,6 +33,7 @@ public class MessageController {
     }
 
     @GetMapping("/headers")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversationHeaders(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState
