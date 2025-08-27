@@ -17,16 +17,21 @@ import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.Pagination;
+import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.sojka.pomeranian.chat.util.CommonUtils.getCurrentInstant;
 import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
@@ -41,6 +46,10 @@ public class ChatService {
     // todo: make it a property or always read from frontend
     private static final int CONVERSATIONS_PAGE_SIZE = 10;
 
+    @Value("${pomeranian.chat.purge.batch-size}")
+    private int purgeBatchSize;
+
+    private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final ConversationsRepository conversationsRepository;
     private final MessageNotificationRepository messageNotificationRepository;
@@ -174,5 +183,37 @@ public class ChatService {
         return new ResultsPage<>(results, pageState);
     }
 
+    public Set<String> deleteUserInactiveRooms(String userId) {
+        Set<String> removedRoomIds = new HashSet<>();
+        String pageState = null;
+        Pagination pagination;
+        List<Conversation> conversations;
+        do {
+            pagination = pageStateToPagination(pageState, purgeBatchSize);
+            conversations = conversationsRepository.findByIdUserId(userId,
+                    PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
+                            Sort.by(Sort.Direction.DESC, "lastMessageAt"))
+            );
+            var deadConversations = conversations.stream()
+                    .map(Conversation::getId)
+                    .map(Conversation.Id::getRoomId)
+                    .filter(roomId -> !userRepository.existsById(getRecipientIdFromRoomId(roomId, userId)))
+                    .toList();
+
+            removedRoomIds.addAll(deadConversations);
+            deadConversations.forEach(messageRepository::deleteRoom);
+            pageState = createPageState(conversations.size(), pagination.pageSize(), pagination);
+        } while (conversations.size() == purgeBatchSize);
+        log.info("Removed {} conversation rooms of userID={}", removedRoomIds.size(), userId);
+        return removedRoomIds;
+    }
+
+    @Transactional
+    public long deleteUserConversations(String userId) {
+        long deletedUserConversations = conversationsRepository.countAllByIdUserId(userId);
+        conversationsRepository.deleteAllByIdUserId(userId);
+        log.info("Removed {} conversations of userID={}", deletedUserConversations, userId);
+        return deletedUserConversations;
+    }
 
 }

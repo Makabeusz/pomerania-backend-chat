@@ -47,4 +47,8 @@ public final class MessageMapper {
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
     }
+
+    public static String roomIdFromAstraRow(Row row) {
+        return row.getString("room_id");
+    }
 }

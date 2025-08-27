@@ -80,7 +80,7 @@ public final class CommonUtils {
         return Arrays.stream(roomId.split(":"))
                 .filter(i -> !i.equals(userId))
                 .findAny()
-                .orElseThrow(() -> new SecurityException("The user_id=%s is not part of the room_id=%s"
+                .orElseThrow(() -> new IllegalArgumentException("The user_id=%s is not part of the room_id=%s"
                         .formatted(userId, roomId)));
     }
 }

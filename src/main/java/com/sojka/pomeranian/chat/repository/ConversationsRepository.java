@@ -16,4 +16,8 @@ import java.util.List;
 public interface ConversationsRepository extends CrudRepository<Conversation, Conversation.Id> {
 
     List<Conversation> findByIdUserId(String userId, Pageable pageable);
+
+    void deleteAllByIdUserId(String userId);
+
+    long countAllByIdUserId(String userId);
 }

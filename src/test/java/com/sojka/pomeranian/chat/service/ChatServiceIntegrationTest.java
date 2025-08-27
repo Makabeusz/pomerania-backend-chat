@@ -17,6 +17,9 @@ import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
+import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import com.sojka.pomeranian.security.model.User;
+import com.sojka.pomeranian.security.repository.UserRepository;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
@@ -50,6 +54,8 @@ class ChatServiceIntegrationTest {
     @Autowired
     ChatService chatService;
     @Autowired
+    UserRepository userRepository;
+    @Autowired
     MessageRepository messageRepository;
     @Autowired
     AstraTestcontainersConnector connector;
@@ -64,8 +70,10 @@ class ChatServiceIntegrationTest {
     void setUp() {
         session = connector.connect();
         session.execute("TRUNCATE messages.messages");
+        userRepository.deleteAll();
         conversationsRepository.deleteAll();
         messageNotificationRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @Test
@@ -463,4 +471,72 @@ class ChatServiceIntegrationTest {
     public LocalDateTime fromInstant(Instant instant) {
         return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
     }
+
+    @Test
+    void deleteUserInactiveRooms_noRooms_emptySet() {
+        Set<String> removed = chatService.deleteUserInactiveRooms("user1");
+
+        assertThat(removed).isEmpty();
+    }
+
+    @Test
+    void deleteUserInactiveRooms_roomsWithActiveUsers_noDeletion() {
+        User user2 = User.builder().id("user2").build();
+        User user3 = User.builder().id("user3").build();
+        userRepository.save(user2);
+        userRepository.save(user3);
+
+        String room12 = CommonUtils.generateRoomId("user1", "user2");
+        String room13 = CommonUtils.generateRoomId("user1", "user3");
+
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi2", "user2", "user1", Instant.now())), room12, false);
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room13, "hi", "user1", "user3", Instant.now())), room13, false);
+
+        Set<String> removed = chatService.deleteUserInactiveRooms("user1");
+
+        assertThat(removed).isEmpty();
+
+        assertThat(messageRepository.findByRoomId(room12, null, 10).getResults()).isNotEmpty();
+        assertThat(messageRepository.findByRoomId(room13, null, 10).getResults()).isNotEmpty();
+    }
+
+    @Test
+    void deleteUserInactiveMessages_roomsWithInactiveUsers_roomsDeleted() {
+        String room12 = CommonUtils.generateRoomId("user1", "user2");
+        String room13 = CommonUtils.generateRoomId("user1", "user3");
+
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi1", "user1", "user2", Instant.now().minusSeconds(10))), room12, false);
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi2", "user2", "user1", Instant.now())), room12, false);
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room13, "hi", "user1", "user3", Instant.now())), room13, false);
+
+        Set<String> removed = chatService.deleteUserInactiveRooms("user1");
+
+        assertThat(removed).containsExactlyInAnyOrder(room12, room13);
+
+        assertThat(messageRepository.findByRoomId(room12, null, 10).getResults()).isEmpty();
+        assertThat(messageRepository.findByRoomId(room13, null, 10).getResults()).isEmpty();
+    }
+
+    @Test
+    void deleteUserInactiveMessages_mixedActiveInactive_selectiveDeletion() {
+        User user2 = User.builder().id("user2").build();
+        userRepository.save(user2);
+
+        String room12 = CommonUtils.generateRoomId("user1", "user2");
+        String room13 = CommonUtils.generateRoomId("user1", "user3");
+        String room14 = CommonUtils.generateRoomId("user1", "user4");
+
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi", "user1", "user2", Instant.now())), room12, false);
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room13, "hi", "user1", "user3", Instant.now())), room13, false);
+        chatService.saveMessage(MessageMapper.toDto(createChatMessage(room14, "hi", "user1", "user4", Instant.now())), room14, false);
+
+        Set<String> removed = chatService.deleteUserInactiveRooms("user1");
+
+        assertThat(removed).containsExactlyInAnyOrder(room13, room14);
+
+        assertThat(messageRepository.findByRoomId(room12, null, 10).getResults()).isNotEmpty();
+        assertThat(messageRepository.findByRoomId(room13, null, 10).getResults()).isEmpty();
+        assertThat(messageRepository.findByRoomId(room14, null, 10).getResults()).isEmpty();
+    }
+
 }

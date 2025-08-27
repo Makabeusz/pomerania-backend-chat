@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 class MessageRepositoryImplUnitTest {
 
     CqlSession mockedSection = mock(CqlSession.class);
-    MessageRepository repository = new MessageRepositoryImpl(new AstraDummyConnector(mockedSection));
+    MessageRepository repository = new MessageRepository(new AstraDummyConnector(mockedSection));
 
     @Test
     void findByRoomId_invalidPageState_throwIllegalArgumentException() {

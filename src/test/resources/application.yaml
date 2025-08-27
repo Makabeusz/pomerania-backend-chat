@@ -15,6 +15,9 @@ astra:
   keyspace: 'messages'
 
 pomeranian:
+  chat:
+    purge:
+      batch-size: 1000
   security:
     public-paths:
     jwt:
