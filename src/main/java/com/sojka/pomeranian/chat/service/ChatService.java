@@ -210,10 +210,18 @@ public class ChatService {
 
     @Transactional
     public long deleteUserConversations(String userId) {
-        long deletedUserConversations = conversationsRepository.countAllByIdUserId(userId);
+        var deletedUserConversations = conversationsRepository.countAllByIdUserId(userId).orElseThrow();
         conversationsRepository.deleteAllByIdUserId(userId);
         log.info("Removed {} conversations of userID={}", deletedUserConversations, userId);
         return deletedUserConversations;
+    }
+
+    @Transactional
+    public long deleteUserMessageNotifications(String userId) {
+        var deletedUserMessageNotifications = messageNotificationRepository.countByIdProfileId(userId).orElseThrow();
+        messageNotificationRepository.deleteAllByIdProfileId(userId);
+        log.info("Removed {} message notifications of userID={}", deletedUserMessageNotifications, userId);
+        return deletedUserMessageNotifications;
     }
 
 }

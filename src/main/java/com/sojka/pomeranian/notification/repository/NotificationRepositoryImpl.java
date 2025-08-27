@@ -50,8 +50,9 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
             AND created_at = ? \
             AND type = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String COUNT_BY_PROFILE_ID = """
-            SELECT COUNT(*) FROM %s.%s \
-            WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+            SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+    private static final String DELETE_BY_PROFILE_ID = """
+            DELETE FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
 
 
     private final Connector connector;
@@ -138,14 +139,25 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     @Override
     public Optional<Long> countByIdProfileId(String profileId) {
         return execute(() -> {
-            var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID)
-                    .addPositionalValues(profileId)
-                    .build();
+            var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
             var session = connector.getSession();
             Row row = session.execute(statement).one();
 
             return Optional.ofNullable(row).map(r -> r.getLong(0));
         }, "countByIdProfileId", profileId);
+    }
+
+    @Override
+    public void deleteAllByIdProfileId(String profileId) {
+        log.trace("deleteAllByIdProfileId input: profileId={}", profileId);
+        execute(() -> {
+            var statement = SimpleStatement.builder(DELETE_BY_PROFILE_ID).addPositionalValues(profileId).build();
+
+            var session = connector.getSession();
+            session.execute(statement);
+
+            return true;
+        }, "deleteAllByIdProfileId", profileId);
     }
 }

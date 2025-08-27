@@ -5,6 +5,7 @@ import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReadNotificationRepository {
 
@@ -23,4 +24,7 @@ public interface ReadNotificationRepository {
 
     ResultsPage<ReadNotification> findAllBy(String profileId, String pageState, int pageSize);
 
+    Optional<Long> countByIdProfileId(String profileId);
+
+    void deleteAllByIdProfileId(String profileId);
 }

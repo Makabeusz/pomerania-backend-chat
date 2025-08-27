@@ -41,4 +41,6 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
             """, nativeQuery = true)
     List<NotificationHeader> findNotificationsHeaders(@Param("profileId") String profileId, Pageable pageable);
 
+    void deleteAllByIdProfileId(String profileId);
+
 }

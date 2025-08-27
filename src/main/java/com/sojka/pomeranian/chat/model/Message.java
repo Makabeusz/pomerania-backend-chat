@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.Map;
@@ -17,9 +18,11 @@ public class Message {
     private String roomId;
     private Instant createdAt;
     private String profileId;
+    @NotBlank
     private String username;
     private String recipientProfileId;
     private String recipientUsername;
+    @NotBlank
     private String content;
     private String resourceId;
     private String threadId;

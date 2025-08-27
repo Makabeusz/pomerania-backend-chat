@@ -6,12 +6,12 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Objects;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
@@ -42,41 +41,37 @@ public class MessageRepository extends AstraPageableRepository {
     }
 
     public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {
-        var select = QueryBuilder.selectFrom(MESSAGES_KEYSPACE, MESSAGES_TABLE)
-                .all()
-                .whereColumn("room_id").isEqualTo(literal(roomId));
+        var id = new RoomIdState(roomId, pageState, pageSize);
+        log.trace("findByRoomId input: {}", id);
+        return execute(() -> {
+            var select = QueryBuilder.selectFrom(MESSAGES_KEYSPACE, MESSAGES_TABLE)
+                    .all()
+                    .whereColumn("room_id")
+                    .isEqualTo(literal(roomId));
 
-        log.info(String.format("Querying room_id=%s, pageState=%s", roomId, pageState));
+            ByteBuffer pagingStateBuffer = decodePageState(pageState);
+            var statement = select.build().setPageSize(pageSize).setPagingState(pagingStateBuffer);
 
-        ByteBuffer pagingStateBuffer = decodePageState(pageState);
-
-        var statement = select.build().setPageSize(pageSize).setPagingState(pagingStateBuffer);
-
-        try {
             var resultSet = connector.getSession().execute(statement);
 
             var result = resultsPage(resultSet, pageSize, MessageMapper::fromAstraRow);
 
-            log.info(String.format("Fetched %d messages for room_id=%s", result.getResults().size(), roomId));
+            log.trace(String.format("Fetched %d messages for room_id=%s", result.getResults().size(), roomId));
 
             return result;
-        } catch (IllegalStateException e) {
-            log.error(String.format("CqlSession not initialized for room_id %s: %s", roomId, e.getMessage()), e);
-            throw new AstraException("Cassandra session not initialized", e);
-        } catch (Exception e) {
-            log.error(String.format("Failed to find messages for room_id %s: %s", roomId, e.getMessage()), e);
-            throw new AstraException("Unexpected issue", e);
-        }
+        }, "findByRoomId", id);
+    }
+
+    public record RoomIdState(String roomId, String pageState, int pageSize) {
     }
 
     /**
      * Saves the message and updates conversation rows for both users.
      */
-    public Message save(Message message) {
-        try {
-            Objects.requireNonNull(message.getContent());
-            Objects.requireNonNull(message.getUsername());
+    public Message save(@Valid Message message) {
+        log.trace("save input: {}", message);
 
+        return execute(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageInsert = QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
@@ -96,16 +91,14 @@ public class MessageRepository extends AstraPageableRepository {
 
             var session = connector.getSession();
             session.execute(messageInsert.build());
-            log.info("Saved message and updated conversations: {}", new MessageKey(message));
+            log.trace("Saved message and updated conversations: {}", new MessageKey(message));
             return message;
-        } catch (Exception e) {
-            log.error("Failed to save message and conversations: {}", e.getMessage(), e);
-            throw new AstraException("Failed to save message for room_id=" + message.getRoomId(), e);
-        }
+        }, "save", message);
     }
 
     public Instant markRead(MessageKey key) {
-        try {
+        log.trace("markRead input: {}", key);
+        return execute(() -> {
             var readTime = CommonUtils.getCurrentInstant();
             var update = key.createdAt().stream()
                     // todo: to plain text query
@@ -124,13 +117,10 @@ public class MessageRepository extends AstraPageableRepository {
             var session = connector.getSession();
             session.execute(statement);
 
-            log.info("Marked message as read: {}, read_at={}", key, readTime);
+            log.trace("Marked message as read: {}, read_at={}", key, readTime);
 
             return readTime;
-        } catch (Exception e) {
-            log.error("Failed to mark message as read: {}", key, e);
-            throw new AstraException("Failed mark message as read: " + key, e);
-        }
+        }, "markRead", key);
     }
 
     public boolean deleteRoom(String roomId) {

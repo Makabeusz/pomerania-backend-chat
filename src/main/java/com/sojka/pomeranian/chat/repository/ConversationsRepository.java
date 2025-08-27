@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The Postgres repository exists to overcome Astra limitations. <br>
@@ -19,5 +20,5 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     void deleteAllByIdUserId(String userId);
 
-    long countAllByIdUserId(String userId);
+    Optional<Long> countAllByIdUserId(String userId);
 }

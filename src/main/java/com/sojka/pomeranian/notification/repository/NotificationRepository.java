@@ -40,4 +40,5 @@ public interface NotificationRepository {
 
     Optional<Long> countByIdProfileId(String profileId);
 
+    void deleteAllByIdProfileId(String profileId);
 }
