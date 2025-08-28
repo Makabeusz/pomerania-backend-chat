@@ -16,16 +16,19 @@ public class GcpConfig {
     String region;
     NotificationsConfig notificationsConfig;
     CommentsConfig commentsConfig;
+    DeleteAccountConfig deleteAccountConfig;
 
     public GcpConfig(
             @Value("${gcp.project-id}") String projectId,
             @Value("${gcp.region}") String region,
             NotificationsConfig notificationsConfig,
-            CommentsConfig commentsConfig) {
+            CommentsConfig commentsConfig,
+            DeleteAccountConfig deleteAccountConfig) {
         this.projectId = projectId;
         this.region = region;
         this.notificationsConfig = notificationsConfig;
         this.commentsConfig = commentsConfig;
+        this.deleteAccountConfig = deleteAccountConfig;
     }
 
     @Data
@@ -46,6 +49,17 @@ public class GcpConfig {
     @Component
     @ConfigurationProperties("gcp.pubsub.comments.subscriber")
     public static class CommentsConfig {
+
+        String subscriptionName;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.delete-account.subscriber")
+    public static class DeleteAccountConfig {
 
         String subscriptionName;
     }

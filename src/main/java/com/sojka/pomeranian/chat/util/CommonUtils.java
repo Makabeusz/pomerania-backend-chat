@@ -77,10 +77,15 @@ public final class CommonUtils {
     }
 
     public static String getRecipientIdFromRoomId(String roomId, String userId) {
-        return Arrays.stream(roomId.split(":"))
-                .filter(i -> !i.equals(userId))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("The user_id=%s is not part of the room_id=%s"
-                        .formatted(userId, roomId)));
+        String[] ids = roomId.split(":");
+        if (ids[0].equals(ids[1])) {
+            return ids[0];
+        } else {
+            return Arrays.stream(ids)
+                    .filter(i -> !i.equals(userId))
+                    .findAny()
+                    .orElseThrow(() -> new IllegalArgumentException("The user_id=%s is not part of the room_id=%s"
+                            .formatted(userId, roomId)));
+        }
     }
 }

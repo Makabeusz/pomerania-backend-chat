@@ -27,7 +27,7 @@ public class DeleteAccountSubscriber {
 
     public Subscriber subscribeAsync() {
         ProjectSubscriptionName subscriptionName =
-                ProjectSubscriptionName.of(gcpConfig.getProjectId(), gcpConfig.getNotificationsConfig().getSubscriptionName());
+                ProjectSubscriptionName.of(gcpConfig.getProjectId(), gcpConfig.getDeleteAccountConfig().getSubscriptionName());
 
         MessageReceiver receiver =
                 (PubsubMessage message, AckReplyConsumer consumer) -> {

@@ -2,6 +2,7 @@ package com.sojka.pomeranian;
 
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.pubsub.CommentsSubscriber;
+import com.sojka.pomeranian.pubsub.DeleteAccountSubscriber;
 import com.sojka.pomeranian.pubsub.NotificationSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
@@ -20,6 +21,7 @@ public class PomeranianChatApplication {
     private final Connector connector;
     private final NotificationSubscriber notificationSubscriber;
     private final CommentsSubscriber commentsSubscriber;
+    private final DeleteAccountSubscriber deleteAccountSubscriber;
 
     public static void main(String[] args) {
         SpringApplication.run(PomeranianChatApplication.class, args);
@@ -30,5 +32,6 @@ public class PomeranianChatApplication {
         connector.connect();
         notificationSubscriber.subscribeAsync();
         commentsSubscriber.subscribeAsync();
+        deleteAccountSubscriber.subscribeAsync();
     }
 }
