@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 @Slf4j
 @Repository
@@ -99,7 +100,7 @@ public class MessageRepository extends AstraPageableRepository {
     public Instant markRead(MessageKey key) {
         log.trace("markRead input: {}", key);
         return execute(() -> {
-            var readTime = CommonUtils.getCurrentInstant();
+            var readTime = getCurrentInstant();
             var update = key.createdAt().stream()
                     // todo: to plain text query
                     .map(k -> QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)

@@ -6,7 +6,6 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.TestUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -64,7 +64,7 @@ class NotificationServiceIntegrationTest {
                 .type("FOLLOW")
                 .content("New follow!")
                 .build();
-        Instant now = CommonUtils.getCurrentInstant();
+        Instant now = getCurrentInstant();
 
         NotificationResponse<NotificationDto> response = notificationService.publish(notification);
 

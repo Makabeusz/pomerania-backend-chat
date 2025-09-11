@@ -2,12 +2,14 @@ package com.sojka.pomeranian.notification.util;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
 import java.time.Instant;
 import java.util.Optional;
+
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 public final class ReadNotificationMapper {
 
@@ -20,9 +22,9 @@ public final class ReadNotificationMapper {
         }
         return NotificationDto.builder()
                 .profileId(notification.getProfileId())
-                .createdAt(CommonUtils.formatToDateString(notification.getCreatedAt()))
+                .createdAt(toDateString(notification.getCreatedAt()))
                 .type(Optional.ofNullable(notification.getType()).map(NotificationType::name).orElse(null))
-                .readAt(CommonUtils.formatToDateString(notification.getReadAt()))
+                .readAt(toDateString(notification.getReadAt()))
                 .relatedId(notification.getRelatedId())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
@@ -35,7 +37,7 @@ public final class ReadNotificationMapper {
         }
         return ReadNotification.builder()
                 .profileId(notification.getProfileId())
-                .createdAt(CommonUtils.formatToInstant(notification.getCreatedAt()))
+                .createdAt(toInstant(notification.getCreatedAt()))
                 .type(NotificationType.valueOf(notification.getType()))
                 .readAt(readAt)
                 .relatedId(notification.getRelatedId())

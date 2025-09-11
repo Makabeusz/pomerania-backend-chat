@@ -1,6 +1,5 @@
 package com.sojka.pomeranian.chat.service;
 
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +7,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+
+import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 
 @Slf4j
 @Component
@@ -19,14 +20,14 @@ public class SessionTracker {
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
         String simpSessionId = (String) event.getMessage().getHeaders().get("simpSessionId");
-        User user = CommonUtils.getAuthUser(event.getUser());
+        User user = getAuthUser(event.getUser());
         cache.create(user.getId(), simpSessionId);
         log.info("Online: user_id={}", user.getId());
     }
 
     @EventListener
     public void handleSessionDisconnected(SessionDisconnectEvent event) {
-        User user = CommonUtils.getAuthUser(event.getUser());
+        User user = getAuthUser(event.getUser());
         cache.remove(user.getId());
         log.info("Offline: user_id={}", user.getId());
     }

@@ -13,7 +13,6 @@ import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.Pagination;
@@ -33,8 +32,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.sojka.pomeranian.chat.util.CommonUtils.getCurrentInstant;
-import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
+import static com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toLocalDateTime;
 import static com.sojka.pomeranian.lib.util.PaginationUtils.createPageState;
 import static com.sojka.pomeranian.lib.util.PaginationUtils.pageStateToPagination;
 
@@ -89,7 +90,7 @@ public class ChatService {
                     ? chatMessage.getContent().substring(0, 97) + " ..."
                     : chatMessage.getContent();
             notification = messageNotificationRepository.save(
-                    new MessageNotification(new MessageNotification.Id(chatMessage.getRecipient().id(), CommonUtils.formatToLocalDateTime(now), chatMessage.getSender().id()),
+                    new MessageNotification(new MessageNotification.Id(chatMessage.getRecipient().id(), toLocalDateTime(now), chatMessage.getSender().id()),
                             chatMessage.getSender().username(), contentSlice)
             );
         }
@@ -105,7 +106,7 @@ public class ChatService {
 
         var ids = keys.createdAt().stream()
                 .map(createdAt -> new MessageNotification.Id(
-                        senderId, CommonUtils.formatToLocalDateTime(createdAt), keys.profileId())
+                        senderId, toLocalDateTime(createdAt), keys.profileId())
                 )
                 .toList();
 
@@ -115,7 +116,7 @@ public class ChatService {
     }
 
     public ResultsPage<ChatMessagePersisted> getConversation(String userId1, String userId2, String pageState) {
-        String roomId = CommonUtils.generateRoomId(userId1, userId2);
+        String roomId = generateRoomId(userId1, userId2);
         var page = messageRepository.findByRoomId(roomId, pageState, 10);
         return new ResultsPage<>(
                 page.getResults().stream()

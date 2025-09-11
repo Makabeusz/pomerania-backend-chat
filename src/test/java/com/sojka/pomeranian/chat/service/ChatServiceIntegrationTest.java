@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
+import static com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId;
 import static com.sojka.pomeranian.lib.util.PaginationUtils.toEncodedString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -446,7 +447,7 @@ class ChatServiceIntegrationTest {
     void getConversation_manyMessages_twoPagedResults() {
         String userId1 = "user1";
         String userId2 = "user2";
-        String roomId = CommonUtils.generateRoomId(userId1, userId2);
+        String roomId = generateRoomId(userId1, userId2);
         List<Message> messages = new ArrayList<>();
         for (int i = 1; i <= 15; i++) {
             messages.add(createChatMessage(roomId, "Message " + i, userId1, userId2, Instant.now().minusSeconds(15 - i)));
@@ -486,8 +487,8 @@ class ChatServiceIntegrationTest {
         userRepository.save(user2);
         userRepository.save(user3);
 
-        String room12 = CommonUtils.generateRoomId("user1", "user2");
-        String room13 = CommonUtils.generateRoomId("user1", "user3");
+        String room12 = generateRoomId("user1", "user2");
+        String room13 = generateRoomId("user1", "user3");
 
         chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi2", "user2", "user1", Instant.now())), room12, false);
         chatService.saveMessage(MessageMapper.toDto(createChatMessage(room13, "hi", "user1", "user3", Instant.now())), room13, false);
@@ -502,8 +503,8 @@ class ChatServiceIntegrationTest {
 
     @Test
     void deleteUserInactiveMessages_roomsWithInactiveUsers_roomsDeleted() {
-        String room12 = CommonUtils.generateRoomId("user1", "user2");
-        String room13 = CommonUtils.generateRoomId("user1", "user3");
+        String room12 = generateRoomId("user1", "user2");
+        String room13 = generateRoomId("user1", "user3");
 
         chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi1", "user1", "user2", Instant.now().minusSeconds(10))), room12, false);
         chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi2", "user2", "user1", Instant.now())), room12, false);
@@ -522,9 +523,9 @@ class ChatServiceIntegrationTest {
         User user2 = User.builder().id("user2").build();
         userRepository.save(user2);
 
-        String room12 = CommonUtils.generateRoomId("user1", "user2");
-        String room13 = CommonUtils.generateRoomId("user1", "user3");
-        String room14 = CommonUtils.generateRoomId("user1", "user4");
+        String room12 = generateRoomId("user1", "user2");
+        String room13 = generateRoomId("user1", "user3");
+        String room14 = generateRoomId("user1", "user4");
 
         chatService.saveMessage(MessageMapper.toDto(createChatMessage(room12, "hi", "user1", "user2", Instant.now())), room12, false);
         chatService.saveMessage(MessageMapper.toDto(createChatMessage(room13, "hi", "user1", "user3", Instant.now())), room13, false);

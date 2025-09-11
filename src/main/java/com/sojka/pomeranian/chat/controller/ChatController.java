@@ -23,9 +23,11 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 
-import static com.sojka.pomeranian.chat.util.CommonUtils.getRecipientIdFromRoomId;
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
 @Slf4j
 @Controller
@@ -40,7 +42,7 @@ public class ChatController {
     public void sendMessage(@Payload ChatMessage chatMessage,
                             Principal principal) {
         // todo: don't send sender ID from frontend, fetch it with auth
-        User user = CommonUtils.getAuthUser(principal);
+        User user = getAuthUser(principal);
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
         boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));
@@ -61,17 +63,17 @@ public class ChatController {
     @MessageMapping("/chat.read")
     public void readMessage(@Payload ReadMessageDto dto,
                             Principal principal) {
-        User user = CommonUtils.getAuthUser(principal);
+        User user = getAuthUser(principal);
         var recipientId = getRecipientIdFromRoomId(dto.roomId(), user.getId());
 
         var readAt = chatService.markRead(
                 new MessageKey(dto.roomId(), dto.createdAt().stream()
-                        .map(CommonUtils::formatToInstant)
+                        .map(com.sojka.pomeranian.lib.util.DateTimeUtils::toInstant)
                         .toList(), recipientId));
 
         log.info("Marked as read: {}", dto);
         messagingTemplate.convertAndSendToUser(dto.roomId(), DM_DESTINATION,
-                new ChatResponse<>(new ChatRead(dto.createdAt(), CommonUtils.formatToDateString(readAt))));
+                new ChatResponse<>(new ChatRead(dto.createdAt(), toDateString(readAt))));
 
     }
 }

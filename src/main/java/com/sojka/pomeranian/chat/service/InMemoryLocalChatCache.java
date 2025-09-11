@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
+
 /**
  * An in-memory implementation of {@link ChatCache} for tracking active chat users.
  * Uses a thread-safe {@link ConcurrentHashMap.KeySetView} to store user IDs.
@@ -121,7 +123,7 @@ public class InMemoryLocalChatCache implements ChatCache {
 
     @Override
     public boolean create(String userId, String simpSessionId) {
-        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, CommonUtils.getCurrentInstant()));
+        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()));
         if (previousEntry != null) {
             log.error("User already online: {}", previousEntry);
             return false;

@@ -9,7 +9,6 @@ import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 @Slf4j
 @Repository
@@ -121,7 +121,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
         execute(() -> {
             List<SimpleStatement> deleteStatements = notifications.stream()
                     .map(n -> SimpleStatement.builder(DELETE_BY)
-                            .addPositionalValues(n.getProfileId(), CommonUtils.formatToInstant(n.getCreatedAt()), n.getType())
+                            .addPositionalValues(n.getProfileId(), toInstant(n.getCreatedAt()), n.getType())
                             .build())
                     .toList();
 

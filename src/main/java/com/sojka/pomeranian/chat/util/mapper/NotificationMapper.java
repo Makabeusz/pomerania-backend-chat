@@ -4,7 +4,8 @@ import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.NotificationHeader;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.model.MessageNotification;
-import com.sojka.pomeranian.chat.util.CommonUtils;
+
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
 public final class NotificationMapper {
 
@@ -14,7 +15,7 @@ public final class NotificationMapper {
     public static MessageNotificationDto toDto(MessageNotification notification) {
         return MessageNotificationDto.builder()
                 .profileId(notification.getId().getProfileId())
-                .createdAt(CommonUtils.formatToDateString(notification.getId().getCreatedAt()))
+                .createdAt(toDateString(notification.getId().getCreatedAt()))
                 .senderId(notification.getId().getSenderId())
                 .senderUsername(notification.getSenderUsername())
                 .content(notification.getContent())
@@ -24,7 +25,7 @@ public final class NotificationMapper {
     public static NotificationHeaderDto toDto(NotificationHeader notification) {
         return NotificationHeaderDto.builder()
                 .profileId(notification.getProfileId())
-                .createdAt(CommonUtils.formatToDateString(notification.getCreatedAt().toLocalDateTime()))
+                .createdAt(toDateString(notification.getCreatedAt().toLocalDateTime()))
                 .senderId(notification.getSenderId())
                 .senderUsername(notification.getSenderUsername())
                 .content(notification.getContent())

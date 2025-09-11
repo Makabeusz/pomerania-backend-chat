@@ -29,6 +29,7 @@ public class MessageController {
             @RequestParam(required = false) String nextPageState,
             @AuthenticationPrincipal User user
     ) {
+        log.trace("getConversation input: recipientId={}, nextPageState={}", recipientId, nextPageState);
         return ResponseEntity.ok(chatService.getConversation(user.getId(), recipientId, nextPageState));
     }
 

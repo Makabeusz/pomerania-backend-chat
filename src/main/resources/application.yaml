@@ -13,7 +13,20 @@ spring:
 
 logging:
   level:
-    org.springframework.security: INFO
+    org:
+      springframework:
+        security: INFO
+    com:
+      sojka:
+        pomeranian:
+          chat:
+            controller:
+              MessageController: TRACE
+          pubsub:
+            CommentsSubscriber: TRACE
+          comment:
+            service:
+              CommentService: TRACE
 
 pomeranian:
   chat:

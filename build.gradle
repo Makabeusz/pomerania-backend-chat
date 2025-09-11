@@ -56,7 +56,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// Pomeranian
-	implementation 'com.sojka:Pomeranian-Security:0.4.2'
+	implementation 'com.sojka:Pomeranian-Security:0.4.4'
 	implementation 'com.sojka:pomeranian-astra:0.2.15'
 
 	// GCP

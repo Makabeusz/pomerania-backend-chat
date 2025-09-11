@@ -16,6 +16,7 @@ public class CommentService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void publish(CommentStompRequest dto) {
+        log.trace("publish input: {}", dto);
         messagingTemplate.convertAndSendToUser(dto.relatedId(), MESSAGE_DESTINATION, dto);
     }
 }

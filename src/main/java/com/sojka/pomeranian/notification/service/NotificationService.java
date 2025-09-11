@@ -4,7 +4,6 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatCache;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
@@ -21,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 @Slf4j
 @Service
@@ -34,7 +34,7 @@ public class NotificationService {
 
     public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
         Notification domain = NotificationMapper.toDomain(notification);
-        domain.setCreatedAt(CommonUtils.getCurrentInstant());
+        domain.setCreatedAt(getCurrentInstant());
 
         var saved = notificationRepository.save(domain);
         var dto = new NotificationResponse<>(NotificationMapper.toDto(saved), saved.getType().name());
@@ -54,7 +54,7 @@ public class NotificationService {
         if (!allAreUserNotifications) {
             throw new SecurityException("User can mark as read only its own notifications");
         }
-        var readAt = CommonUtils.getCurrentInstant();
+        var readAt = getCurrentInstant();
 
         notificationRepository.deleteAll(notifications);
         readNotificationRepository.saveAll(notifications.stream()
