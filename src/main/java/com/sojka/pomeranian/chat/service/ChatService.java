@@ -16,12 +16,14 @@ import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.Pagination;
+import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +56,7 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final ConversationsRepository conversationsRepository;
     private final MessageNotificationRepository messageNotificationRepository;
+    private final ObjectProvider<Integer, Conversation> unreadMessageSupplier;
 
     /**
      * Saves message to AstraDB.<br>
@@ -145,6 +148,12 @@ public class ChatService {
 
         pageState = createPageState(conversations.size(), pagination.pageSize(), pagination);
 
+        // provide with unread messages count
+        List<Pair<Conversation, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
+        for (int i = 0; i < unreadNotificationsCount.size(); i++) {
+            headers.get(i).getMetadata().put("unread", unreadNotificationsCount.get(i).getSecond() + "");
+        }
+
         return new ResultsPage<>(headers, pageState);
     }
 
@@ -223,6 +232,16 @@ public class ChatService {
         messageNotificationRepository.deleteAllByIdProfileId(userId);
         log.info("Removed {} message notifications of userID={}", deletedUserMessageNotifications, userId);
         return deletedUserMessageNotifications;
+    }
+
+    public int getUnreadMessagesCount(String userId, String roomId) {
+        if (roomId == null || roomId.length() != 73) {
+            throw new IllegalArgumentException(roomId);
+        }
+        String senderId = getRecipientIdFromRoomId(roomId, userId);
+        return messageNotificationRepository.countByIdProfileIdAndIdSenderId(userId, senderId)
+                .map(Long::intValue)
+                .orElse(0);
     }
 
 }

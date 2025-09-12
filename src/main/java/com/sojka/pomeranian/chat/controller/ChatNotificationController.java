@@ -31,6 +31,13 @@ public class ChatNotificationController {
         return ResponseEntity.ok(chatService.countNotifications(user.getId()));
     }
 
+    @GetMapping("/roomCount")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Integer> roomCount(@AuthenticationPrincipal User user,
+                                             @RequestParam String roomId) {
+        return ResponseEntity.ok(chatService.getUnreadMessagesCount(user.getId(), roomId));
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<MessageNotificationDto>> getNotifications(

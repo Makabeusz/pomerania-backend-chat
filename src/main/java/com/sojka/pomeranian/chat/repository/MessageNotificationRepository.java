@@ -16,6 +16,8 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
 
     Optional<Long> countByIdProfileId(String profileId);
 
+    Optional<Long> countByIdProfileIdAndIdSenderId(String profileId, String senderId);
+
     List<MessageNotification> findByIdProfileId(String profileId, Pageable pageable);
 
     @Query(value = """
