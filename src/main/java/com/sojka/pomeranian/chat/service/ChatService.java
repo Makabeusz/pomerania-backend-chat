@@ -3,10 +3,13 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
+import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
+import com.sojka.pomeranian.chat.dto.MessageType;
 import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
+import com.sojka.pomeranian.chat.dto.R2BucketDeleteRequest;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
@@ -17,6 +20,7 @@ import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
+import com.sojka.pomeranian.pubsub.R2BucketDeletePublisher;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,9 +39,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId;
 import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
+import static com.sojka.pomeranian.lib.util.CommonUtils.noSuchElementException;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstantString;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toLocalDateTime;
 import static com.sojka.pomeranian.lib.util.PaginationUtils.createPageState;
 import static com.sojka.pomeranian.lib.util.PaginationUtils.pageStateToPagination;
@@ -57,6 +65,8 @@ public class ChatService {
     private final ConversationsRepository conversationsRepository;
     private final MessageNotificationRepository messageNotificationRepository;
     private final ObjectProvider<Integer, Conversation> unreadMessageSupplier;
+    private final R2BucketDeletePublisher deletePublisher;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * Saves message to AstraDB.<br>
@@ -67,6 +77,7 @@ public class ChatService {
      * @return {@link MessageSaveResult} with saved message and notification if recipient is not online
      */
     public MessageSaveResult saveMessage(ChatMessage chatMessage, String roomId, boolean isOnline) {
+        log.trace("saveMessage input: message={}, roomId={}, isOnline={}", chatMessage, roomId, isOnline);
         Instant now = getCurrentInstant();
         var message = Message.builder()
                 .roomId(roomId)
@@ -74,6 +85,8 @@ public class ChatService {
                 .profileId(chatMessage.getSender().id())
                 .username(chatMessage.getSender().username())
                 .recipientProfileId(chatMessage.getRecipient().id())
+                .resourceId(chatMessage.getResource() != null ? chatMessage.getResource().getId() : null)
+                .resourceType(chatMessage.getResource() != null ? chatMessage.getResource().getType() : null)
                 .recipientUsername(chatMessage.getRecipient().username())
                 .content(chatMessage.getContent())
                 .readAt(isOnline ? now : null)
@@ -242,6 +255,32 @@ public class ChatService {
         return messageNotificationRepository.countByIdProfileIdAndIdSenderId(userId, senderId)
                 .map(Long::intValue)
                 .orElse(0);
+    }
+
+    public boolean deleteMessageResource(String roomId, String createdAt, String profileId, String userId) {
+        var message = messageRepository.findById(roomId, createdAt, profileId)
+                .orElseThrow(noSuchElementException(
+                        "Message", new MessageRepository.IdState(roomId, createdAt, profileId).toString())
+                );
+        if (message.getResourceId() == null) {
+            throw noSuchElementException("ResourceId", new MessageRepository.IdState(roomId, createdAt, profileId).toString()).get();
+        }
+        deletePublisher.publish(new R2BucketDeleteRequest(message.getResourceId(), userId));
+
+        var now = getCurrentInstantString();
+        message.setEditedAt(now);
+        message.setResourceId(null);
+        message.setResourceType(null);
+        message.getMetadata().put("resource-deleted", now);
+
+        var saved = MessageMapper.toDto(messageRepository.update(message));
+
+
+        // Update both users chat
+        messagingTemplate.convertAndSendToUser(
+                saved.getRoomId(), DM_DESTINATION, new ChatResponse<>(saved, MessageType.UPDATE)
+        );
+        return true;
     }
 
 }

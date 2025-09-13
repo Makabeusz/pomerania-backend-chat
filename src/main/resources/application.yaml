@@ -2,7 +2,7 @@ server:
   port: 8081
 
 spring:
-# required for security - change to some custom stuff and leave spring configuration alone
+  # required for security - change to some custom stuff and leave spring configuration alone
   datasource:
     url: jdbc:postgresql://localhost:5432/mydb
     username: myuser
@@ -20,6 +20,10 @@ logging:
       sojka:
         pomeranian:
           chat:
+            repository:
+              MessageRepository: TRACE
+            service:
+              ChatService: TRACE
             controller:
               MessageController: TRACE
           pubsub:
@@ -32,8 +36,8 @@ pomeranian:
   chat:
     purge:
       batch-size: 1000
-#  security:
-#    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
+  #  security:
+  #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
     public-paths:
     jwt:
@@ -55,6 +59,9 @@ gcp:
   project-id: 'pomeranian-463011'
   region: 'europe-central2' # Warsaw
   pubsub:
+    chat-resources:
+      publisher:
+        topic-name: 'r2-dev'
     notifications:
       subscriber:
         subscription-name: 'notifications-dev'

@@ -9,21 +9,24 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 @Slf4j
 @Repository
@@ -31,10 +34,14 @@ import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 public class MessageRepository extends AstraPageableRepository {
 
     private static final String MESSAGES_TABLE = "messages";
-    private static final String deleteAllRoomMessages = "DELETE FROM messages WHERE ROOM_ID = ?";
+    private static final String deleteAllRoomMessages = "DELETE FROM %s.%s WHERE room_id = ?"
+            .formatted(MESSAGES_KEYSPACE, MESSAGES_TABLE);
+    private static final String DELETE_MESSAGE = "DELETE FROM %s.%s WHERE room_id = ? and created_at = ? and profile_id = ?"
+            .formatted(MESSAGES_KEYSPACE, MESSAGES_TABLE);
+    private static final String FIND_MESSAGE = "SELECT * FROM %s.%s WHERE room_id = ? and created_at = ? and profile_id = ?"
+            .formatted(MESSAGES_KEYSPACE, MESSAGES_TABLE);
 
     private final Connector connector;
-
 
     @Override
     public Logger getLogger() {
@@ -72,6 +79,10 @@ public class MessageRepository extends AstraPageableRepository {
     public Message save(@Valid Message message) {
         log.trace("save input: {}", message);
 
+        if (!StringUtils.hasText(message.getContent()) && !StringUtils.hasText(message.getResourceId())) {
+            throw new IllegalArgumentException("No content or resource in the message: " + message);
+        }
+
         return execute(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageInsert = QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
@@ -83,6 +94,7 @@ public class MessageRepository extends AstraPageableRepository {
                     .value("recipient_username", literal(message.getRecipientUsername()))
                     .value("content", literal(message.getContent()))
                     .value("resource_id", literal(message.getResourceId()))
+                    .value("resource_type", literal(message.getResourceType()))
                     .value("thread_id", literal(message.getThreadId()))
                     .value("edited_at", literal(message.getEditedAt()))
                     .value("deleted_at", literal(message.getDeletedAt()))
@@ -92,7 +104,7 @@ public class MessageRepository extends AstraPageableRepository {
 
             var session = connector.getSession();
             session.execute(messageInsert.build());
-            log.trace("Saved message and updated conversations: {}", new MessageKey(message));
+            log.trace("Saved message: {}", new MessageKey(message));
             return message;
         }, "save", message);
     }
@@ -131,6 +143,70 @@ public class MessageRepository extends AstraPageableRepository {
             connector.getSession().execute(statement);
             return true;
         }, "purgeMessages", roomId);
+    }
+
+    public void delete(String roomId, String createdAt, String profileId) {
+        log.trace("delete input: roomId={}, createdAt={}, profileId={}", roomId, createdAt, profileId);
+        execute(() -> {
+            var statement = new SimpleStatementBuilder(DELETE_MESSAGE)
+                    .addPositionalValue(roomId)
+                    .addPositionalValue(toInstant(createdAt))
+                    .addPositionalValue(profileId)
+                    .build();
+            connector.getSession().execute(statement);
+            return true;
+        }, "delete", List.of(roomId, createdAt, profileId));
+    }
+
+    public Optional<Message> findById(String roomId, String createdAt, String profileId) {
+        var id = new IdState(roomId, createdAt, profileId);
+        log.trace("findById input: {}", id);
+        return execute(() -> {
+            var statement = new SimpleStatementBuilder(FIND_MESSAGE)
+                    .addPositionalValue(roomId)
+                    .addPositionalValue(toInstant(createdAt))
+                    .addPositionalValue(profileId)
+                    .build();
+
+            var resultSet = connector.getSession().execute(statement);
+
+            return Optional.ofNullable(resultSet.one()).map(MessageMapper::fromAstraRow);
+        }, "findById", id);
+    }
+
+    public record IdState(String roomId, String createdAt, String profileId) {
+    }
+
+    /**
+     * Saves the message and updates conversation rows for both users.
+     */
+    public Message update(@Valid Message message) {
+        log.trace("update input: {}", message);
+
+        return execute(() -> {
+            // Insert into messages.messages todo: refactor to plain text query
+            var messageUpdate = QueryBuilder.update(MESSAGES_KEYSPACE, MESSAGES_TABLE)
+                    .setColumn("username", literal(message.getUsername()))
+                    .setColumn("recipient_profile_id", literal(message.getRecipientProfileId()))
+                    .setColumn("recipient_username", literal(message.getRecipientUsername()))
+                    .setColumn("content", literal(message.getContent()))
+                    .setColumn("resource_id", literal(message.getResourceId()))
+                    .setColumn("resource_type", literal(message.getResourceType()))
+                    .setColumn("thread_id", literal(message.getThreadId()))
+                    .setColumn("edited_at", literal(message.getEditedAt()))
+                    .setColumn("deleted_at", literal(message.getDeletedAt()))
+                    .setColumn("pinned", literal(message.getPinned()))
+                    //.setColumn("read_at", literal(message.getReadAt()))
+                    .setColumn("metadata", literal(message.getMetadata()))
+                    .whereColumn("room_id").isEqualTo(literal(message.getRoomId()))
+                    .whereColumn("created_at").isEqualTo(literal(message.getCreatedAt()))
+                    .whereColumn("profile_id").isEqualTo(literal(message.getProfileId()));
+
+            var session = connector.getSession();
+            session.execute(messageUpdate.build());
+            log.trace("Updated message: {}", new MessageKey(message));
+            return message;
+        }, "update", message);
     }
 
 }

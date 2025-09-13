@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     recipient_username VARCHAR,
     content TEXT,
     resource_id VARCHAR,
+    resource_type VARCHAR,
     thread_id VARCHAR,
     edited_at VARCHAR,
     deleted_at VARCHAR,

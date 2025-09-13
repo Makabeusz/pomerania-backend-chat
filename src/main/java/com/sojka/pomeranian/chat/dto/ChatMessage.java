@@ -10,11 +10,21 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @Builder(builderMethodName = "basicBuilder")
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ChatMessage {
 
     private String content;
+    private Resource resource;
     private ChatUser sender;
     private ChatUser recipient;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Resource {
+        private String id;
+        private String type;
+    }
 }

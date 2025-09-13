@@ -23,7 +23,6 @@ public class ChatResponse<T> {
         if (data.isEmpty()) {
             throw new IllegalArgumentException("Response list cannot be empty");
         }
-
         this.data = data;
 
         this.type = switch (data.getFirst().getClass().getSimpleName()) {
@@ -31,7 +30,11 @@ public class ChatResponse<T> {
             case "ChatRead" -> MessageType.READ;
             default -> throw new RuntimeException("Unrecognized chat response type: " + data.get(0).getClass());
         };
+    }
 
+    public ChatResponse(@NonNull T data, MessageType type) {
+        this.data = List.of(data);
+        this.type = type;
     }
 
     public ChatResponse(@NonNull T data) {

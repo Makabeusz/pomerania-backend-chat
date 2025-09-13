@@ -275,7 +275,8 @@ class ChatServiceIntegrationTest {
         var messagesWithoutFirst = new ArrayList<>(messages);
         messagesWithoutFirst.remove(first);
         // first message is the latest
-        assertThat(messagesWithoutFirst).allMatch(m -> m.getCreatedAt().compareTo(first.getCreatedAt()) < 0);
+        assertThat(messagesWithoutFirst).allMatch(m -> Instant.parse(m.getCreatedAt())
+                .compareTo(Instant.parse(first.getCreatedAt())) < 0);
         // last page
         assertNull(response.getNextPageState());
     }

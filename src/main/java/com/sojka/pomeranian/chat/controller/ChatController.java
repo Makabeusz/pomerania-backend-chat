@@ -3,6 +3,7 @@ package com.sojka.pomeranian.chat.controller;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
+import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.NotificationType;
@@ -41,8 +42,8 @@ public class ChatController {
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,
                             Principal principal) {
-        // todo: don't send sender ID from frontend, fetch it with auth
         User user = getAuthUser(principal);
+        chatMessage.setSender(new ChatUser(user.getId(), user.getUsername()));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
         boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));

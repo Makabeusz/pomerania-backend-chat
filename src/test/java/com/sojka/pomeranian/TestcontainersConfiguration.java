@@ -1,13 +1,19 @@
 package com.sojka.pomeranian;
 
+import com.sojka.pomeranian.pubsub.CommentsSubscriber;
+import com.sojka.pomeranian.pubsub.DeleteAccountSubscriber;
+import com.sojka.pomeranian.pubsub.NotificationSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+
+import static org.mockito.Mockito.mock;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -36,6 +42,24 @@ public class TestcontainersConfiguration {
                 .withUsername("myuser")
                 .withPassword("password")
                 .withInitScript("init.sql");
+    }
+
+    @Bean
+    @Primary
+    NotificationSubscriber notificationSubscriber() {
+        return mock(NotificationSubscriber.class);
+    }
+
+    @Bean
+    @Primary
+    CommentsSubscriber commentsSubscriber() {
+        return mock(CommentsSubscriber.class);
+    }
+
+    @Bean
+    @Primary
+    DeleteAccountSubscriber deleteAccountSubscriber() {
+        return mock(DeleteAccountSubscriber.class);
     }
 
 }

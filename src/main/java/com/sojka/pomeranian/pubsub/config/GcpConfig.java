@@ -17,18 +17,32 @@ public class GcpConfig {
     NotificationsConfig notificationsConfig;
     CommentsConfig commentsConfig;
     DeleteAccountConfig deleteAccountConfig;
+    ChatResourcesConfig chatResourcesConfig;
 
     public GcpConfig(
             @Value("${gcp.project-id}") String projectId,
             @Value("${gcp.region}") String region,
             NotificationsConfig notificationsConfig,
             CommentsConfig commentsConfig,
-            DeleteAccountConfig deleteAccountConfig) {
+            DeleteAccountConfig deleteAccountConfig,
+            ChatResourcesConfig chatResourcesConfig) {
         this.projectId = projectId;
         this.region = region;
         this.notificationsConfig = notificationsConfig;
         this.commentsConfig = commentsConfig;
         this.deleteAccountConfig = deleteAccountConfig;
+        this.chatResourcesConfig = chatResourcesConfig;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.chat-resources.publisher")
+    public static class ChatResourcesConfig {
+
+        String topicName;
     }
 
     @Data

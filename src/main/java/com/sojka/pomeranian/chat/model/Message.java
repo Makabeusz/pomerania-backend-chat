@@ -22,9 +22,10 @@ public class Message {
     private String username;
     private String recipientProfileId;
     private String recipientUsername;
-    @NotBlank
+//    @NotBlank
     private String content;
     private String resourceId;
+    private String resourceType;
     private String threadId;
     private String editedAt;
     private String deletedAt;

@@ -57,7 +57,7 @@ dependencies {
 
 	// Pomeranian
 	implementation 'com.sojka:Pomeranian-Security:0.4.5'
-	implementation 'com.sojka:pomeranian-astra:0.2.15'
+	implementation 'com.sojka:pomeranian-astra:0.2.17'
 
 	// GCP
 	implementation platform('com.google.cloud:libraries-bom:26.61.0')

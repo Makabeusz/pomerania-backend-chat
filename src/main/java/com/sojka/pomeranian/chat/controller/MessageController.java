@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,6 +41,17 @@ public class MessageController {
             @RequestParam(required = false) String nextPageState
     ) {
         return ResponseEntity.ok(chatService.getConversationsHeaders(user.getId(), nextPageState));
+    }
+
+    @DeleteMapping("/resource")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Boolean> deleteResource(
+            @AuthenticationPrincipal User user,
+            @RequestParam String roomId,
+            @RequestParam String createdAt,
+            @RequestParam String profileId
+    ) {
+        return ResponseEntity.ok(chatService.deleteMessageResource(roomId, createdAt, profileId, user.getId()));
     }
 
 }
