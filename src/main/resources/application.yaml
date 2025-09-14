@@ -10,6 +10,11 @@ spring:
     driver-class-name: org.postgresql.Driver
   application:
     name: pomeranian-chat
+  redis:
+    host: ${REDIS_HOST:localhost}  # Default local, override in GCP env vars
+    port: ${REDIS_PORT:6379}
+#    username: ${REDIS_USERNAME:}   # Optional, if auth enabled
+#    password: ${REDIS_PASSWORD:}   # Optional
 
 logging:
   level:

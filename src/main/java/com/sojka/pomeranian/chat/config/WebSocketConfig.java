@@ -12,10 +12,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-//        /wss secured
         registry
                 .addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:3000")
+                .setAllowedOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:3002") // Add prod origins
                 .withSockJS();
     }
 
@@ -24,7 +23,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry
                 .setUserDestinationPrefix("/user")
                 .setApplicationDestinationPrefixes("/app")
-
                 .enableSimpleBroker("/user", "/queue");
     }
 }
