@@ -35,6 +35,11 @@ public class NotificationService {
     private final ChatCache cache;
 
     public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
+        if (notification.getMetadata() != null && !notification.getMetadata().containsKey("image192")) {
+            messageNotificationRepository.findImage192(notification.getProfileId()).ifPresent(
+                    image192 -> notification.addMetadata("image192", image192)
+            );
+        }
         Notification domain = NotificationMapper.toDomain(notification);
         domain.setCreatedAt(getCurrentInstant());
 
@@ -43,12 +48,9 @@ public class NotificationService {
 
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
         if (online) {
-            if (!notification.getMetadata().containsKey("image192")) {
-                messageNotificationRepository.findImage192(notification.getProfileId()).ifPresent(
-                        image192 -> notification.addMetadata("image192", image192)
-                );
-            }
-            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);
+            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION,
+                    // TODO: It's only +1 in the frontend, probably I don't need this payload at all, only a type
+                    new NotificationResponse<>("dummy", saved.getType().name()));
         }
 
         log.info("Published notification: {}, isOnline={}", dto, online);
@@ -110,7 +112,7 @@ public class NotificationService {
     public long deleteUserReadNotifications(String userId) {
         var deletedUserNotifications = notificationRepository.countByIdProfileId(userId).orElseThrow();
         notificationRepository.deleteAllByIdProfileId(userId);
-        log.info("Removed {} notifications of userID={}", deletedUserNotifications, userId);
+        log.info("Removed {} read notifications of userID={}", deletedUserNotifications, userId);
         return deletedUserNotifications;
     }
 

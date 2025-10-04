@@ -66,6 +66,7 @@ public class ChatService {
     private final ObjectProvider<Integer, Conversation> unreadMessageSupplier;
     private final R2BucketDeletePublisher deletePublisher;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MessageNotificationRepository notificationRepository;
 
     /**
      * Saves message to AstraDB.<br>
@@ -93,8 +94,17 @@ public class ChatService {
 
         var savedMessage = messageRepository.save(message);
 
-        var senderConversation = new Conversation(new Conversation.Id(chatMessage.getSender().id(), roomId), now);
-        var recipientConversation = new Conversation(new Conversation.Id(chatMessage.getRecipient().id(), roomId), now);
+
+        // TODO: currently it's useless, verify
+        // after adding sender/recipient image192 it will be useless
+        var recipientImage = notificationRepository.findImage192(chatMessage.getRecipient().image192()).orElse(null);
+
+        var senderConversation = new Conversation(
+                new Conversation.Id(chatMessage.getSender().id(), roomId), recipientImage, now
+        );
+        var recipientConversation = new Conversation(
+                new Conversation.Id(chatMessage.getRecipient().id(), roomId), recipientImage, now
+        );
 
         MessageNotification notification = null;
 

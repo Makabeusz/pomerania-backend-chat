@@ -17,8 +17,9 @@ public final class MessageMapper {
         return ChatMessagePersisted.builder()
                 .roomId(message.getRoomId())
                 .createdAt(toDateString(message.getCreatedAt()))
-                .sender(new ChatUser(message.getProfileId(), message.getUsername()))
-                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername()))
+                // TODO: check if valid - hardcoded null image192
+                .sender(new ChatUser(message.getProfileId(), message.getUsername(), null))
+                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername(), null))
                 .content(message.getContent())
                 .resourceId(message.getResourceId())
                 .resourceType(message.getResourceType())

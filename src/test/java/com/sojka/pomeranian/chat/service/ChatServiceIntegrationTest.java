@@ -81,8 +81,8 @@ class ChatServiceIntegrationTest {
     void saveMessage_message_savedWithBothConversations() {
         ChatMessage chatMessage = ChatMessage.basicBuilder()
                 .content("Hello, World!")
-                .sender(new ChatUser("user1", "User1"))
-                .recipient(new ChatUser("user2", "User2"))
+                .sender(new ChatUser("user1", "User1", null))
+                .recipient(new ChatUser("user2", "User2", null))
                 .build();
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
@@ -125,8 +125,8 @@ class ChatServiceIntegrationTest {
                         .build());
 
         assertThat(conversationsRepository.findAll()).containsExactly(
-                new Conversation(new Conversation.Id("user1", "user1:user2"), saveResult.getCreatedAt()),
-                new Conversation(new Conversation.Id("user2", "user1:user2"), saveResult.getCreatedAt())
+                new Conversation(new Conversation.Id("user1", "user1:user2"), null, saveResult.getCreatedAt()),
+                new Conversation(new Conversation.Id("user2", "user1:user2"), null, saveResult.getCreatedAt())
         );
     }
 
@@ -169,11 +169,11 @@ class ChatServiceIntegrationTest {
         messageRepository.save(message2);
         messageRepository.save(message3);
         // user conversations
-        conversationsRepository.save(new Conversation(new Conversation.Id(userId, roomIdXY), message3.getCreatedAt()));
-        conversationsRepository.save(new Conversation(new Conversation.Id(userId, roomIdXZ), message0.getCreatedAt()));
+        conversationsRepository.save(new Conversation(new Conversation.Id(userId, roomIdXY), null, message3.getCreatedAt()));
+        conversationsRepository.save(new Conversation(new Conversation.Id(userId, roomIdXZ), null, message0.getCreatedAt()));
         // other party conversations
-        conversationsRepository.save(new Conversation(new Conversation.Id("userY", roomIdXY), message3.getCreatedAt()));
-        conversationsRepository.save(new Conversation(new Conversation.Id("userZ", roomIdXZ), message0.getCreatedAt()));
+        conversationsRepository.save(new Conversation(new Conversation.Id("userY", roomIdXY), null, message3.getCreatedAt()));
+        conversationsRepository.save(new Conversation(new Conversation.Id("userZ", roomIdXZ), null, message0.getCreatedAt()));
 
 
         ResultsPage<ChatMessagePersisted> response = chatService.getConversationsHeaders(userId, pagination);
@@ -219,8 +219,8 @@ class ChatServiceIntegrationTest {
             Instant now = Instant.now();
             messageRepository.save(createChatMessage(roomId, "Message " + (i + 1), senderId, recipientId, now));
 
-            var senderConversation = new Conversation(new Conversation.Id(senderId, roomId), now);
-            var recipientConversation = new Conversation(new Conversation.Id(recipientId, roomId), now);
+            var senderConversation = new Conversation(new Conversation.Id(senderId, roomId), null, now);
+            var recipientConversation = new Conversation(new Conversation.Id(recipientId, roomId), null, now);
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
@@ -252,14 +252,14 @@ class ChatServiceIntegrationTest {
             Instant now = Instant.now();
 
             messageRepository.save(createChatMessage(roomId, "Message 1", senderId, recipientId, now));
-            var senderConversation1 = new Conversation(new Conversation.Id(senderId, roomId), now);
-            var recipientConversation1 = new Conversation(new Conversation.Id(recipientId, roomId), now);
+            var senderConversation1 = new Conversation(new Conversation.Id(senderId, roomId), null, now);
+            var recipientConversation1 = new Conversation(new Conversation.Id(recipientId, roomId), null, now);
             conversationsRepository.saveAll(List.of(senderConversation1, recipientConversation1));
 
             Instant secondAhead = now.plusSeconds(1L);
             messageRepository.save(createChatMessage(roomId, "Message 2", recipientId, senderId, secondAhead));
-            var senderConversation2 = new Conversation(new Conversation.Id(senderId, roomId), now);
-            var recipientConversation2 = new Conversation(new Conversation.Id(recipientId, roomId), now);
+            var senderConversation2 = new Conversation(new Conversation.Id(senderId, roomId), null, now);
+            var recipientConversation2 = new Conversation(new Conversation.Id(recipientId, roomId), null, now);
             conversationsRepository.saveAll(List.of(senderConversation2, recipientConversation2));
         }
         List<ChatMessagePersisted> messages = new ArrayList<>();
@@ -285,8 +285,8 @@ class ChatServiceIntegrationTest {
     void saveMessage_offlineRecipient_savedWithNotification() {
         ChatMessage chatMessage = ChatMessage.basicBuilder()
                 .content("Hey, you there?")
-                .sender(new ChatUser("user1", "User1"))
-                .recipient(new ChatUser("user2", "User2"))
+                .sender(new ChatUser("user1", "User1", null))
+                .recipient(new ChatUser("user2", "User2", null))
                 .build();
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
@@ -344,8 +344,8 @@ class ChatServiceIntegrationTest {
 
         // Verify conversations
         assertThat(conversationsRepository.findAll()).containsExactlyInAnyOrder(
-                new Conversation(new Conversation.Id("user1", roomId), saved.message().getCreatedAt()),
-                new Conversation(new Conversation.Id("user2", roomId), saved.message().getCreatedAt())
+                new Conversation(new Conversation.Id("user1", roomId), null, saved.message().getCreatedAt()),
+                new Conversation(new Conversation.Id("user2", roomId), null, saved.message().getCreatedAt())
         );
     }
 

@@ -48,8 +48,10 @@ public class ChatController {
     public void sendMessage(@Payload ChatMessage chatMessage,
                             Principal principal) {
         User user = getAuthUser(principal);
-        // add sender image192 only, the rest append here as is
-        chatMessage.setSender(new ChatUser(user.getId(), user.getUsername()));
+        // ??? add sender image192 only, the rest append here as is
+        // TODO: DB schema is missing image192 field, review how it all looks in front and decide what to do
+        String image192 = null;// notificationRepository.findImage192(user.getId()).orElse(null);
+        chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), image192));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
         boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));
@@ -61,15 +63,10 @@ public class ChatController {
                 new ChatResponse<>(messageResponse));
         // Publish unread message notification
         if (!isOnline) {
-            async.execute(() -> {
-                var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
-                // after adding sender image192 it will be useless
-                notificationRepository.findImage192(user.getId()).ifPresent(
-                        image192 -> notificationDto.addMetadata("image192", image192)
-                );
-                messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
-                        new NotificationResponse<>(notificationDto, NotificationType.MESSAGE));
-            });
+            var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
+
+            messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
+                    new NotificationResponse<>(notificationDto, NotificationType.MESSAGE));
         }
     }
 

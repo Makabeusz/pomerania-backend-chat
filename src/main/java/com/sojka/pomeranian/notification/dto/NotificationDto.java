@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
 
 // TODO: duplicated with main
@@ -24,6 +25,9 @@ public class NotificationDto {
 
     // TODO: this is missing from main, add it!
     public String addMetadata(String key, String value) {
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
         return metadata.put(key, value);
     }
 }

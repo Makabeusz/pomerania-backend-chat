@@ -157,6 +157,7 @@ CREATE TABLE IF NOT EXISTS likes (
 CREATE TABLE IF NOT EXISTS conversations (
     user_id VARCHAR(255),
     room_id VARCHAR(255),
+    image_192 VARCHAR(36),
     last_message_at TIMESTAMP, -- indexed
     PRIMARY KEY (user_id, room_id)
 );

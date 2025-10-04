@@ -1,4 +1,6 @@
 package com.sojka.pomeranian.chat.dto;
 
-public record ChatUser(String id, String username) {
+// TODO: move to shared api
+
+public record ChatUser(String id, String username, String image192) {
 }

@@ -20,7 +20,10 @@ import java.time.Instant;
 public class Conversation {
 
     @EmbeddedId
-    Id id;
+    private Id id;
+
+    @Column(name = "image_192")
+    private String image192;
 
     @Column(name = "last_message_at", nullable = false)
     private Instant lastMessageAt;
