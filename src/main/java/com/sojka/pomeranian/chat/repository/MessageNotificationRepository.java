@@ -45,4 +45,8 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
 
     void deleteAllByIdProfileId(String profileId);
 
+    // TODO: Move image192 to User. Until then it will be here. OR if not move to user it will be sent via messages each time
+    @Query(value = "SELECT image_192 from profiles WHERE id = :profileId", nativeQuery = true)
+    Optional<String> findImage192(String profileId);
+
 }

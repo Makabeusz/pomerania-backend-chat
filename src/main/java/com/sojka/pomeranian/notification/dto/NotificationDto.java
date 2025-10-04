@@ -21,4 +21,9 @@ public class NotificationDto {
     private String relatedId;
     private String content;
     private Map<String, String> metadata;
+
+    // TODO: this is missing from main, add it!
+    public String addMetadata(String key, String value) {
+        return metadata.put(key, value);
+    }
 }

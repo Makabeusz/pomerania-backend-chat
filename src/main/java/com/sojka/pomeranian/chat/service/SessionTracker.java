@@ -22,14 +22,14 @@ public class SessionTracker {
         String simpSessionId = (String) event.getMessage().getHeaders().get("simpSessionId");
         User user = getAuthUser(event.getUser());
         cache.create(user.getId(), simpSessionId);
-        log.info("Online: user_id={}", user.getId());
+        log.debug("Online: user_id={}", user.getId());
     }
 
     @EventListener
     public void handleSessionDisconnected(SessionDisconnectEvent event) {
         User user = getAuthUser(event.getUser());
         cache.remove(user.getId());
-        log.info("Offline: user_id={}", user.getId());
+        log.debug("Offline: user_id={}", user.getId());
     }
 
 //    String getConnectorHeaderValue(SessionConnectedEvent event) {

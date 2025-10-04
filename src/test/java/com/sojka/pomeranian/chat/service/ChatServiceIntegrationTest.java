@@ -9,7 +9,6 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.model.MessageNotification;
@@ -18,6 +17,7 @@ import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.security.model.User;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
@@ -436,7 +436,7 @@ class ChatServiceIntegrationTest {
         messageNotificationRepository.save(notification1);
         messageNotificationRepository.save(notification2);
 
-        ResultsPage<MessageNotificationDto> response = chatService.getMessageNotifications(userId, null);
+        ResultsPage<NotificationDto> response = chatService.getMessageNotifications(userId, null);
 
         assertEquals(2, response.getResults().size());
         assertEquals("New message", response.getResults().get(0).getContent());

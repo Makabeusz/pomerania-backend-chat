@@ -9,6 +9,7 @@ import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.NotificationType;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
+import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.RedisWebSocketService;
@@ -23,6 +24,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
@@ -38,11 +41,14 @@ public class ChatController {
     private final RedisWebSocketService messagingTemplate;
     private final ChatService chatService;
     private final ChatCache cache;
+    private final MessageNotificationRepository notificationRepository;
+    private final ExecutorService async = Executors.newVirtualThreadPerTaskExecutor();
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,
                             Principal principal) {
         User user = getAuthUser(principal);
+        // add sender image192 only, the rest append here as is
         chatMessage.setSender(new ChatUser(user.getId(), user.getUsername()));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
@@ -55,9 +61,15 @@ public class ChatController {
                 new ChatResponse<>(messageResponse));
         // Publish unread message notification
         if (!isOnline) {
-            var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
-            messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
-                    new NotificationResponse<>(notificationDto, NotificationType.MESSAGE));
+            async.execute(() -> {
+                var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
+                // after adding sender image192 it will be useless
+                notificationRepository.findImage192(user.getId()).ifPresent(
+                        image192 -> notificationDto.addMetadata("image192", image192)
+                );
+                messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
+                        new NotificationResponse<>(notificationDto, NotificationType.MESSAGE));
+            });
         }
     }
 

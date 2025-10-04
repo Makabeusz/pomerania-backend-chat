@@ -3,6 +3,7 @@ package com.sojka.pomeranian.notification.service;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
+import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
@@ -29,6 +30,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final ReadNotificationRepository readNotificationRepository;
+    private final MessageNotificationRepository messageNotificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatCache cache;
 
@@ -41,6 +43,11 @@ public class NotificationService {
 
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
         if (online) {
+            if (!notification.getMetadata().containsKey("image192")) {
+                messageNotificationRepository.findImage192(notification.getProfileId()).ifPresent(
+                        image192 -> notification.addMetadata("image192", image192)
+                );
+            }
             messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);
         }
 

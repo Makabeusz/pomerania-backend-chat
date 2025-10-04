@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -23,7 +22,6 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @MessageMapping("/notification.read")
-    @PreAuthorize("hasRole('USER')")
     public void readMessage(@Payload List<NotificationDto> dto,
                             Principal principal) {
         User user = getAuthUser(principal);

@@ -5,10 +5,8 @@ import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessageNotificationDto;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.MessageType;
-import com.sojka.pomeranian.chat.dto.NotificationHeaderDto;
 import com.sojka.pomeranian.chat.dto.R2BucketDeleteRequest;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
@@ -20,6 +18,7 @@ import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
+import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.pubsub.R2BucketDeletePublisher;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -172,11 +171,11 @@ public class ChatService {
 
     public Long countNotifications(String userId) {
         var count = messageNotificationRepository.countByIdProfileId(userId).orElseThrow();
-        log.info("Fetched {} unread message count", count);
+        log.trace("Fetched {} unread message count", count);
         return count;
     }
 
-    public ResultsPage<MessageNotificationDto> getMessageNotifications(String userId, String pageState) {
+    public ResultsPage<NotificationDto> getMessageNotifications(String userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         List<MessageNotification> notifications = messageNotificationRepository.findByIdProfileId(userId, PageRequest.of(
@@ -191,7 +190,7 @@ public class ChatService {
         return new ResultsPage<>(notificationsDto, pageState);
     }
 
-    public ResultsPage<NotificationHeaderDto> getMessageNotificationHeaders(String userId, String pageState) {
+    public ResultsPage<NotificationDto> getMessageNotificationHeaders(String userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         var headers = messageNotificationRepository.findNotificationsHeaders(userId, PageRequest.of(

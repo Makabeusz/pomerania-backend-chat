@@ -37,12 +37,12 @@ public class StompSubscriptionController {
         User user = getAuthUser(principal);
         if (user.getRole() != Role.PomeranianRole.DEACTIVATED) {
             cache.put(user.getId(), subscription);
-            log.info("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
+            log.debug("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
         }
     }
 
     void removeFromCache(String userId, List<StompSubscription> connectors) {
         cache.remove(userId, connectors);
-        log.info("Unsubscribed: user={}, subscription={}", userId, connectors);
+        log.debug("Unsubscribed: user={}, subscription={}", userId, connectors);
     }
 }

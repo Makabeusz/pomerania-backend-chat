@@ -31,11 +31,14 @@ logging:
               ChatService: TRACE
             controller:
               MessageController: TRACE
+              StompSubscriptionController: TRACE
           pubsub:
             CommentsSubscriber: TRACE
+            NotificationSubscriber: TRACE
           comment:
             service:
               CommentService: TRACE
+              SessionTracker: TRACE
 
 pomeranian:
   chat:
@@ -44,6 +47,7 @@ pomeranian:
   #  security:
   #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
+    roles: ADMIN, USER, DEACTIVATED
     public-paths:
     jwt:
       secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
