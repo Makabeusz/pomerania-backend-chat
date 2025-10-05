@@ -2,8 +2,8 @@ package com.sojka.pomeranian.chat.util;
 
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
-import com.sojka.pomeranian.chat.dto.NotificationType;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
@@ -50,7 +50,7 @@ public class TestUtils {
         return Notification.builder()
                 .profileId(row.getString("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(NotificationType.valueOf(row.getString("type")))
+                .type(NotificationDto.Type.valueOf(row.getString("type")))
                 .content(row.getString("content"))
                 .build();
     }
@@ -64,7 +64,7 @@ public class TestUtils {
         return ReadNotification.builder()
                 .profileId(row.getString("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(NotificationType.valueOf(row.getString("type")))
+                .type(NotificationDto.Type.valueOf(row.getString("type")))
                 .readAt(row.getInstant("read_at"))
                 .content(row.getString("content"))
                 .build();

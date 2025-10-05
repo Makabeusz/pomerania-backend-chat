@@ -5,9 +5,8 @@ import com.sojka.pomeranian.TestcontainersConfiguration;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
-import com.sojka.pomeranian.chat.dto.NotificationType;
 import com.sojka.pomeranian.chat.util.TestUtils;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
@@ -28,6 +27,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.sojka.pomeranian.lib.dto.NotificationDto.Type.FOLLOW;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,7 +62,7 @@ class NotificationServiceIntegrationTest {
     void publish_notification_savedAndSentIfOnline() {
         NotificationDto notification = NotificationDto.builder()
                 .profileId("user1")
-                .type("FOLLOW")
+                .type(FOLLOW)
                 .content("New follow!")
                 .build();
         Instant now = getCurrentInstant();
@@ -69,19 +70,19 @@ class NotificationServiceIntegrationTest {
         NotificationResponse<NotificationDto> response = notificationService.publish(notification);
 
         // Verify notification in notifications table
-        Notification saved = TestUtils.getNotification(connector, notification.getProfileId(), now, notification.getType());
+        Notification saved = TestUtils.getNotification(connector, notification.getProfileId(), now, getNameOrNull(notification.getType()));
         assertThat(saved).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("createdAt")
                 .isEqualTo(Notification.builder()
                         .profileId("user1")
-                        .type(NotificationType.FOLLOW)
+                        .type(FOLLOW)
                         .content("New follow!")
                         .build());
 
         assertThat(saved).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("createdAt", "type")
                 .isEqualTo(notification);
-        assertThat(response.getType()).isEqualTo(NotificationType.FOLLOW);
+        assertThat(response.getType()).isEqualTo(FOLLOW);
     }
 
     @Test
@@ -89,7 +90,7 @@ class NotificationServiceIntegrationTest {
         String userId = "user1";
         Notification notification = Notification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("Followed!")
                 .createdAt(Instant.now())
                 .build();
@@ -112,7 +113,7 @@ class NotificationServiceIntegrationTest {
                 .ignoringFields("createdAt", "readAt")
                 .isEqualTo(ReadNotification.builder()
                         .profileId(userId)
-                        .type(NotificationType.FOLLOW)
+                        .type(FOLLOW)
                         .content("Followed!")
                         .build());
         assertThat(readNotification.getReadAt()).isEqualTo(readAt);
@@ -123,7 +124,7 @@ class NotificationServiceIntegrationTest {
         String userId = "user1";
         NotificationDto otherUserNotification = NotificationDto.builder()
                 .profileId("user2")
-                .type("FOLLOW")
+                .type(FOLLOW)
                 .content("Followed!")
                 .build();
         List<NotificationDto> notifications = List.of(otherUserNotification);
@@ -136,13 +137,13 @@ class NotificationServiceIntegrationTest {
         String userId = "user1";
         Notification notification1 = Notification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("Old follow")
                 .createdAt(Instant.now().minusSeconds(10))
                 .build();
         Notification notification2 = Notification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("New follow")
                 .createdAt(Instant.now())
                 .build();
@@ -164,7 +165,7 @@ class NotificationServiceIntegrationTest {
         for (int i = 1; i <= 15; i++) {
             Notification notification = Notification.builder()
                     .profileId(userId)
-                    .type(NotificationType.FOLLOW)
+                    .type(FOLLOW)
                     .content("Notification " + i)
                     .createdAt(Instant.now().minusSeconds(15 - i))
                     .build();
@@ -198,19 +199,19 @@ class NotificationServiceIntegrationTest {
         Instant now = Instant.now();
         Notification notification1 = Notification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("You have been followed by X")
                 .createdAt(now)
                 .build();
         Notification notification2 = Notification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("You have been followed by Y")
                 .createdAt(now.plusMillis(1L))
                 .build();
         Notification otherUserNotification = Notification.builder()
                 .profileId("user2")
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("Message 3")
                 .createdAt(now)
                 .build();
@@ -228,14 +229,14 @@ class NotificationServiceIntegrationTest {
         String userId = "user1";
         ReadNotification read1 = ReadNotification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("Old read")
                 .createdAt(Instant.now().minusSeconds(10))
                 .readAt(Instant.now())
                 .build();
         ReadNotification read2 = ReadNotification.builder()
                 .profileId(userId)
-                .type(NotificationType.FOLLOW)
+                .type(FOLLOW)
                 .content("New read")
                 .createdAt(Instant.now())
                 .readAt(Instant.now())

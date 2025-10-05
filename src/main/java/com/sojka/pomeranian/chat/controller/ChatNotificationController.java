@@ -2,7 +2,7 @@ package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.service.ChatService;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -5,7 +5,7 @@ import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.service.ChatCache;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
 import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;

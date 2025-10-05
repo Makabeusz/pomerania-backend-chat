@@ -1,6 +1,6 @@
 package com.sojka.pomeranian.notification.model;
 
-import com.sojka.pomeranian.chat.dto.NotificationType;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +17,7 @@ public class ReadNotification {
 
     private String profileId;
     private Instant createdAt;
-    private NotificationType type;
+    private NotificationDto.Type type;
     private Instant readAt;
     private String relatedId;
     private String content;

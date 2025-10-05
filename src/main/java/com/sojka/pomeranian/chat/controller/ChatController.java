@@ -6,7 +6,7 @@ import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
-import com.sojka.pomeranian.chat.dto.NotificationType;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
@@ -66,7 +66,7 @@ public class ChatController {
             var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
 
             messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
-                    new NotificationResponse<>(notificationDto, NotificationType.MESSAGE));
+                    new NotificationResponse<>(notificationDto, NotificationDto.Type.MESSAGE));
         }
     }
 

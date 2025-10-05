@@ -8,8 +8,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
-import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 @Slf4j
@@ -85,7 +85,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public Optional<Notification> findById(String profileId, Instant createdAt, NotificationType type) {
+    public Optional<Notification> findById(String profileId, Instant createdAt, NotificationDto.Type type) {
         return execute(() -> {
             var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
                     .addPositionalValues(profileId, createdAt, type.name())
@@ -95,7 +95,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
             Row row = session.execute(statement).one();
 
             return Optional.ofNullable(NotificationMapper.fromAstraRow(row));
-        }, "findBy", List.of(profileId, createdAt, type));
+        }, "findById", List.of(profileId, createdAt, type));
     }
 
     @Override
@@ -121,7 +121,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
         execute(() -> {
             List<SimpleStatement> deleteStatements = notifications.stream()
                     .map(n -> SimpleStatement.builder(DELETE_BY)
-                            .addPositionalValues(n.getProfileId(), toInstant(n.getCreatedAt()), n.getType())
+                            .addPositionalValues(n.getProfileId(), toInstant(n.getCreatedAt()), getNameOrNull(n.getType()))
                             .build())
                     .toList();
 
@@ -133,7 +133,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
             session.execute(statement);
 
             return true;
-        }, "findAllBy", notifications);
+        }, "deleteAll", notifications);
     }
 
     @Override

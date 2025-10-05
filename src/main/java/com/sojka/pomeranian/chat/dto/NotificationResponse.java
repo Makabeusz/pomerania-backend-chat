@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.dto;
 
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -15,15 +16,15 @@ import lombok.NonNull;
 public class NotificationResponse<T> {
 
     private T data;
-    private NotificationType type;
+    private NotificationDto.Type type;
 
-    public NotificationResponse(@NonNull T data, NotificationType type) {
+    public NotificationResponse(@NonNull T data, NotificationDto.Type type) {
         this.data = data;
         this.type = type;
     }
 
     public NotificationResponse(@NonNull T data, String type) {
         this.data = data;
-        this.type = NotificationType.valueOf(type);
+        this.type = NotificationDto.Type.valueOf(type);
     }
 }

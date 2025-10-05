@@ -2,7 +2,8 @@ package com.sojka.pomeranian.chat.util.mapper;
 
 import com.sojka.pomeranian.chat.dto.NotificationHeader;
 import com.sojka.pomeranian.chat.model.MessageNotification;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.CommentStompRequest;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,19 @@ public final class NotificationMapper {
                         "count", notification.getCount() >= Integer.MAX_VALUE
                                 ? Integer.MAX_VALUE + ""
                                 : notification.getCount().toString()
+                )))
+                .build();
+    }
+
+    public static NotificationDto toDto(CommentStompRequest request) {
+        return NotificationDto.builder()
+                .profileId(request.getRelatedProfileId())
+                .createdAt(request.getCreatedAt())
+                .type(NotificationDto.Type.COMMENT)
+                .content(request.getContent())
+                .metadata(new HashMap<>(Map.of(
+                        "senderId", request.getProfileId(),
+                        "senderUsername", request.getUsername()
                 )))
                 .build();
     }

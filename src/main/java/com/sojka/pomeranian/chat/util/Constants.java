@@ -12,5 +12,5 @@ public final class Constants {
     public static final String NOTIFICATIONS_KEYSPACE = "notifications";
     public static final String DM_DESTINATION = "/queue/private";
     public static final String NOTIFY_DESTINATION = "/queue/notification";
-    public static final String MESSAGE_DESTINATION = "/queue/comments";
+    public static final String COMMENTS_DESTINATION = "/queue/comments";
 }

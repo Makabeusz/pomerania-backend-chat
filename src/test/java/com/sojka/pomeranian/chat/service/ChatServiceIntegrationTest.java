@@ -17,7 +17,7 @@ import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.security.model.User;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;

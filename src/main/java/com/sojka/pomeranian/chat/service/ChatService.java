@@ -16,9 +16,9 @@ import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
 import com.sojka.pomeranian.pubsub.R2BucketDeletePublisher;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -168,7 +168,7 @@ public class ChatService {
                 .map(MessageMapper::toDto)
                 .toList();
 
-        pageState = createPageState(conversations.size(), pagination.pageSize(), pagination);
+        pageState = createPageState(conversations.size(), pagination);
 
         // provide with unread messages count
         List<Pair<Conversation, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
@@ -192,7 +192,7 @@ public class ChatService {
                 pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "id.createdAt")
         ));
 
-        pageState = createPageState(notifications.size(), pagination.pageSize(), pagination);
+        pageState = createPageState(notifications.size(), pagination);
         var notificationsDto = notifications.stream()
                 .map(NotificationMapper::toDto)
                 .toList();
@@ -207,7 +207,7 @@ public class ChatService {
                 pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "created_at")
         ));
 
-        pageState = createPageState(headers.size(), pagination.pageSize(), pagination);
+        pageState = createPageState(headers.size(), pagination);
         var results = headers.stream()
                 .map(NotificationMapper::toDto)
                 .toList();
@@ -234,7 +234,7 @@ public class ChatService {
 
             removedRoomIds.addAll(deadConversations);
             deadConversations.forEach(messageRepository::deleteRoom);
-            pageState = createPageState(conversations.size(), pagination.pageSize(), pagination);
+            pageState = createPageState(conversations.size(), pagination);
         } while (conversations.size() == purgeBatchSize);
         log.info("Removed {} conversation rooms of userID={}", removedRoomIds.size(), userId);
         return removedRoomIds;

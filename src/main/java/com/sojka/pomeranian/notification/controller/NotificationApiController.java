@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.notification.controller;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;

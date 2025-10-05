@@ -1,11 +1,8 @@
 package com.sojka.pomeranian.notification.util;
 
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
-
-import java.util.Optional;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
@@ -22,7 +19,7 @@ public final class NotificationMapper {
         return NotificationDto.builder()
                 .profileId(notification.getProfileId())
                 .createdAt(toDateString(notification.getCreatedAt()))
-                .type(Optional.ofNullable(notification.getType()).map(NotificationType::name).orElse(null))
+                .type(notification.getType())
                 .relatedId(notification.getRelatedId())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
@@ -36,7 +33,7 @@ public final class NotificationMapper {
         return Notification.builder()
                 .profileId(notification.getProfileId())
                 .createdAt(toInstant(notification.getCreatedAt()))
-                .type(NotificationType.valueOf(notification.getType()))
+                .type(notification.getType())
                 .relatedId(notification.getRelatedId())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
@@ -48,11 +45,10 @@ public final class NotificationMapper {
             return null;
         }
         String typeValue = row.getString("type");
-        NotificationType type = typeValue != null ? NotificationType.valueOf(typeValue) : null;
         return Notification.builder()
                 .profileId(row.getString("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(type)
+                .type(typeValue != null ? NotificationDto.Type.valueOf(typeValue) : null)
                 .relatedId(row.getString("related_id"))
                 .content(row.getString("content"))
                 .metadata(row.getMap("metadata", String.class, String.class))

@@ -1,12 +1,14 @@
 package com.sojka.pomeranian.comment.service;
 
+import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.CommentStompRequest;
+import com.sojka.pomeranian.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import static com.sojka.pomeranian.chat.util.Constants.MESSAGE_DESTINATION;
+import static com.sojka.pomeranian.chat.util.Constants.COMMENTS_DESTINATION;
 
 @Slf4j
 @Service
@@ -14,9 +16,13 @@ import static com.sojka.pomeranian.chat.util.Constants.MESSAGE_DESTINATION;
 public class CommentService {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
 
     public void publish(CommentStompRequest dto) {
         log.trace("publish input: {}", dto);
-        messagingTemplate.convertAndSendToUser(dto.relatedId(), MESSAGE_DESTINATION, dto);
+
+        // comments section update
+        messagingTemplate.convertAndSendToUser(dto.getRelatedId(), COMMENTS_DESTINATION, dto);
+        notificationService.publish(NotificationMapper.toDto(dto));
     }
 }
