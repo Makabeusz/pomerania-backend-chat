@@ -21,6 +21,7 @@ public final class NotificationMapper {
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
                 .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
                 .build();
@@ -35,6 +36,7 @@ public final class NotificationMapper {
                 .createdAt(toInstant(notification.getCreatedAt()))
                 .type(notification.getType())
                 .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
                 .build();
@@ -50,6 +52,7 @@ public final class NotificationMapper {
                 .createdAt(row.getInstant("created_at"))
                 .type(typeValue != null ? NotificationDto.Type.valueOf(typeValue) : null)
                 .relatedId(row.getString("related_id"))
+                .relatedType(row.getString("related_type"))
                 .content(row.getString("content"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();

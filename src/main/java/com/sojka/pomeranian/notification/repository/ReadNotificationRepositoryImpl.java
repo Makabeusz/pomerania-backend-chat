@@ -32,8 +32,8 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
 
     private static final String INSERT = """
             INSERT INTO %s.%s ( \
-            profile_id, created_at, type, read_at, related_id, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
+            profile_id, created_at, type, read_at, related_id, related_type, content, metadata \
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
     private static final String SELECT_ALL = QueryConstants.SELECT_ALL_BY_PROFILE_ID
             .formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
@@ -57,7 +57,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
                             notification.getType().name(), notification.getReadAt(), notification.getRelatedId(),
-                            notification.getContent(), notification.getMetadata())
+                            notification.getRelatedType(), notification.getContent(), notification.getMetadata())
                     .build();
 
             var session = connector.getSession();
@@ -75,7 +75,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
                     .map(n -> SimpleStatement.builder(INSERT + USING_TTL.formatted(ttl))
                             .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
                                     n.getType().name(), n.getReadAt(), n.getRelatedId(),
-                                    n.getContent(), n.getMetadata())
+                                    n.getRelatedType(), n.getContent(), n.getMetadata())
                             .build())
                     .toList();
 

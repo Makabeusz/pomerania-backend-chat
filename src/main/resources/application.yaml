@@ -24,6 +24,9 @@ logging:
     com:
       sojka:
         pomeranian:
+          notification:
+            service:
+              NotificationService: TRACE
           chat:
             repository:
               MessageRepository: TRACE

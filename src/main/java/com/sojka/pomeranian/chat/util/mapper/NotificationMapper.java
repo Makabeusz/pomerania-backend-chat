@@ -7,7 +7,9 @@ import com.sojka.pomeranian.lib.dto.NotificationDto;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
 public final class NotificationMapper {
@@ -43,15 +45,20 @@ public final class NotificationMapper {
     }
 
     public static NotificationDto toDto(CommentStompRequest request) {
+        var metadata = new HashMap<String, String>();
+        Optional.ofNullable(request.getProfileId()).ifPresent(id -> metadata.put("senderId", id));
+        Optional.ofNullable(request.getUsername()).ifPresent(username -> metadata.put("senderUsername", username));
+        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(id -> metadata.put("relatedLocationId", id));
+
         return NotificationDto.builder()
                 .profileId(request.getRelatedProfileId())
                 .createdAt(request.getCreatedAt())
                 .type(NotificationDto.Type.COMMENT)
+//                .readAt()
                 .content(request.getContent())
-                .metadata(new HashMap<>(Map.of(
-                        "senderId", request.getProfileId(),
-                        "senderUsername", request.getUsername()
-                )))
+                .relatedId(request.getRelatedId())
+                .relatedType(getNameOrNull(request.getRelatedType()))
+                .metadata(metadata)
                 .build();
     }
 

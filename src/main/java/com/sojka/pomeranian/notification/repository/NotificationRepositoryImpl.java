@@ -34,8 +34,8 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     private static final String NOTIFICATIONS_TABLE = "notifications";
     private static final String INSERT = """
             INSERT INTO %s.%s ( \
-            profile_id, created_at, type, related_id, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+            profile_id, created_at, type, related_id, related_type, content, metadata \
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
     private static final String SELECT_BY_PRIMARY_KEY = """
             SELECT * FROM %s.%s \
@@ -69,7 +69,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
                             notification.getType().name(), notification.getRelatedId(),
-                            notification.getContent(), notification.getMetadata())
+                            notification.getRelatedType(), notification.getContent(), notification.getMetadata())
                     .build();
 
             var session = connector.getSession();

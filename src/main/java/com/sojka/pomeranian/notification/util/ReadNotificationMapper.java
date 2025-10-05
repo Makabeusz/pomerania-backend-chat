@@ -24,6 +24,7 @@ public final class ReadNotificationMapper {
                 .type(notification.getType())
                 .readAt(toDateString(notification.getReadAt()))
                 .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
                 .build();
@@ -39,6 +40,7 @@ public final class ReadNotificationMapper {
                 .type(notification.getType())
                 .readAt(readAt)
                 .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
                 .build();
@@ -55,6 +57,7 @@ public final class ReadNotificationMapper {
                 .type(typeValue != null ? NotificationDto.Type.valueOf(typeValue) : null)
                 .readAt(row.getInstant("read_at"))
                 .relatedId(row.getString("related_id"))
+                .relatedType(row.getString("related_type"))
                 .content(row.getString("content"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();

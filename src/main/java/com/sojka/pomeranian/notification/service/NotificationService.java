@@ -47,10 +47,11 @@ public class NotificationService {
         var dto = new NotificationResponse<>(NotificationMapper.toDto(saved), saved.getType().name());
 
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
+        log.trace("Is user with username={} and userID={} online? {}",
+                notification.getMetadata().get("senderId"), notification.getProfileId(), online);
         if (online) {
-            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION,
-                    // TODO: It's only +1 in the frontend, probably I don't need this payload at all, only a type
-                    new NotificationResponse<>("dummy", saved.getType().name()));
+            log.trace("Publishing: {}", dto);
+            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);
         }
 
         log.info("Published notification: {}, isOnline={}", dto, online);
@@ -61,7 +62,8 @@ public class NotificationService {
     public Instant markRead(String userId, List<NotificationDto> notifications) {
         boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
         if (!allAreUserNotifications) {
-            throw new SecurityException("User can mark as read only its own notifications");
+            throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"
+                    .formatted(userId, notifications));
         }
         var readAt = getCurrentInstant();
 

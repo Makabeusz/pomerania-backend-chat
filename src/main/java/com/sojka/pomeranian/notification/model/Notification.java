@@ -19,6 +19,7 @@ public class Notification {
     private Instant createdAt;
     private NotificationDto.Type type;
     private String relatedId;
+    private String relatedType;
     private String content;
     private Map<String, String> metadata;
 

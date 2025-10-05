@@ -20,6 +20,7 @@ public class ReadNotification {
     private NotificationDto.Type type;
     private Instant readAt;
     private String relatedId;
+    private String relatedType;
     private String content;
     private Map<String, String> metadata;
 }
