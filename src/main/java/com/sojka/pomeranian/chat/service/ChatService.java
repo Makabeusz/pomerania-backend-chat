@@ -19,6 +19,7 @@ import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
+import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.pubsub.R2BucketDeletePublisher;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -152,9 +153,8 @@ public class ChatService {
         );
     }
 
-    public ResultsPage<ChatMessagePersisted> getConversationsHeaders(String userId, String pageState) {
-        log.info("Getting conversation headers for user_id={} pageState={}", userId, pageState);
-        Pagination pagination = pageStateToPagination(pageState, CONVERSATIONS_PAGE_SIZE);
+    public ResultsPage<ChatMessagePersisted> getConversationsHeaders(String userId, Pagination pagination) {
+        log.trace("getConversationsHeaders input: userId={}, pagination={}", userId, pagination);
 
         List<Conversation> conversations = conversationsRepository.findByIdUserId(
                 userId, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
@@ -168,15 +168,18 @@ public class ChatService {
                 .map(MessageMapper::toDto)
                 .toList();
 
-        pageState = createPageState(conversations.size(), pagination);
-
         // provide with unread messages count
         List<Pair<Conversation, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
         for (int i = 0; i < unreadNotificationsCount.size(); i++) {
             headers.get(i).getMetadata().put("unread", unreadNotificationsCount.get(i).getSecond() + "");
         }
 
-        return new ResultsPage<>(headers, pageState);
+        return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));
+    }
+
+    public long getConversationsHeadersCount(String userId) {
+        log.trace("getConversationsHeadersCount for userID={}", userId);
+        return conversationsRepository.countAllByIdUserId(userId).orElseThrow();
     }
 
     public Long countNotifications(String userId) {

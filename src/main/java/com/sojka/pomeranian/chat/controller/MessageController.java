@@ -3,6 +3,7 @@ package com.sojka.pomeranian.chat.controller;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.service.ChatService;
+import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +39,16 @@ public class MessageController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversationHeaders(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState
+            @RequestParam int pageNumber,
+            @RequestParam int pageSize
     ) {
-        return ResponseEntity.ok(chatService.getConversationsHeaders(user.getId(), nextPageState));
+        return ResponseEntity.ok(chatService.getConversationsHeaders(user.getId(), new Pagination(pageNumber, pageSize)));
+    }
+
+    @GetMapping("/headers/count")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Long> getConversationHeadersCount(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(chatService.getConversationsHeadersCount(user.getId()));
     }
 
     @DeleteMapping("/resource")
