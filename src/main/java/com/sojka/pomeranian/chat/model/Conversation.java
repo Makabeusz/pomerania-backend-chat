@@ -22,8 +22,12 @@ public class Conversation {
     @EmbeddedId
     private Id id;
 
+    // TODO: unused, it's not efficient enough. Better to pull those images each time than keep updating for each message
     @Column(name = "image_192")
     private String image192;
+
+    @Column(name = "starred")
+    private Boolean starred;
 
     @Column(name = "last_message_at", nullable = false)
     private Instant lastMessageAt;
@@ -37,7 +41,7 @@ public class Conversation {
         @Column(name = "user_id", nullable = false, updatable = false)
         private String userId;
 
-        @Column(name = "room_id", nullable = false, updatable = false)
-        private String roomId;
+        @Column(name = "recipient_id", nullable = false, updatable = false)
+        private String recipientId;
     }
 }

@@ -42,8 +42,7 @@ public class UnreadMessageSupplier extends ObjectProvider<Integer, Conversation>
 
         @Override
         protected Pair<Conversation, Integer> supplyObject(Conversation conversation) {
-            String senderId = getRecipientIdFromRoomId(conversation.getId().getRoomId(), conversation.getId().getUserId());
-            int count = repository.countByIdProfileIdAndIdSenderId(conversation.getId().getUserId(), senderId)
+            int count = repository.countByIdProfileIdAndIdSenderId(conversation.getId().getUserId(), conversation.getId().getRecipientId())
                     .map(Long::intValue)
                     .orElse(0);
             return Pair.of(conversation, count);

@@ -24,6 +24,8 @@ logging:
     com:
       sojka:
         pomeranian:
+          lib:
+            BaseExceptionHandler: DEBUG
           notification:
             service:
               NotificationService: TRACE
@@ -35,6 +37,7 @@ logging:
             controller:
               MessageController: TRACE
               StompSubscriptionController: TRACE
+              GlobalExceptionHandler: DEBUG
           pubsub:
             CommentsSubscriber: TRACE
             NotificationSubscriber: TRACE

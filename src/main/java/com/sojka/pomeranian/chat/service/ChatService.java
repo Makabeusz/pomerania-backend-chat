@@ -14,6 +14,7 @@ import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
+import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
@@ -37,6 +38,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
@@ -67,7 +69,6 @@ public class ChatService {
     private final ObjectProvider<Integer, Conversation> unreadMessageSupplier;
     private final R2BucketDeletePublisher deletePublisher;
     private final SimpMessagingTemplate messagingTemplate;
-    private final MessageNotificationRepository notificationRepository;
 
     /**
      * Saves message to AstraDB.<br>
@@ -79,13 +80,15 @@ public class ChatService {
      */
     public MessageSaveResult saveMessage(ChatMessage chatMessage, String roomId, boolean isOnline) {
         log.trace("saveMessage input: message={}, roomId={}, isOnline={}", chatMessage, roomId, isOnline);
-        Instant now = getCurrentInstant();
+        var now = getCurrentInstant();
+        var recipientId = chatMessage.getRecipient().id();
+        var senderId = chatMessage.getSender().id();
         var message = Message.builder()
                 .roomId(roomId)
                 .createdAt(now)
-                .profileId(chatMessage.getSender().id())
+                .profileId(senderId)
                 .username(chatMessage.getSender().username())
-                .recipientProfileId(chatMessage.getRecipient().id())
+                .recipientProfileId(recipientId)
                 .resourceId(chatMessage.getResource() != null ? chatMessage.getResource().getId() : null)
                 .resourceType(chatMessage.getResource() != null ? chatMessage.getResource().getType() : null)
                 .recipientUsername(chatMessage.getRecipient().username())
@@ -94,18 +97,6 @@ public class ChatService {
                 .build();
 
         var savedMessage = messageRepository.save(message);
-
-
-        // TODO: currently it's useless, verify
-        // after adding sender/recipient image192 it will be useless
-        var recipientImage = notificationRepository.findImage192(chatMessage.getRecipient().image192()).orElse(null);
-
-        var senderConversation = new Conversation(
-                new Conversation.Id(chatMessage.getSender().id(), roomId), recipientImage, now
-        );
-        var recipientConversation = new Conversation(
-                new Conversation.Id(chatMessage.getRecipient().id(), roomId), recipientImage, now
-        );
 
         MessageNotification notification = null;
 
@@ -116,12 +107,15 @@ public class ChatService {
                     ? chatMessage.getContent().substring(0, 97) + " ..."
                     : chatMessage.getContent();
             notification = messageNotificationRepository.save(
-                    new MessageNotification(new MessageNotification.Id(chatMessage.getRecipient().id(), toLocalDateTime(now), chatMessage.getSender().id()),
+                    new MessageNotification(new MessageNotification.Id(recipientId, toLocalDateTime(now), senderId),
                             chatMessage.getSender().username(), contentSlice)
             );
         }
 
-        conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
+        // TODO: PS.2. It should pull images together with conversation headers or else. It might replace it when users are changing their image192, simply by recipientId column.
+        // after adding sender/recipient image192 it will be useless
+//        var recipientImage = notificationRepository.findImage192(chatMessage.getRecipient().image192()).orElse(null);
+        conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
 
         return new MessageSaveResult(savedMessage, notification);
     }
@@ -153,7 +147,7 @@ public class ChatService {
         );
     }
 
-    public ResultsPage<ChatMessagePersisted> getConversationsHeaders(String userId, Pagination pagination) {
+    public ResultsPage<ChatMessagePersisted> getConversationHeaders(String userId, Pagination pagination) {
         log.trace("getConversationsHeaders input: userId={}, pagination={}", userId, pagination);
 
         List<Conversation> conversations = conversationsRepository.findByIdUserId(
@@ -162,7 +156,7 @@ public class ChatService {
         );
 
         var headers = conversations.stream()
-                .map(c -> messageRepository.findByRoomId(c.getId().getRoomId(), null, 1))
+                .map(c -> messageRepository.findByRoomId(CommonUtils.generateRoomId(c), null, 1))
                 .map(ResultsPage::getResults)
                 .flatMap(Collection::stream)
                 .map(MessageMapper::toDto)
@@ -171,7 +165,11 @@ public class ChatService {
         // provide with unread messages count
         List<Pair<Conversation, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
         for (int i = 0; i < unreadNotificationsCount.size(); i++) {
-            headers.get(i).getMetadata().put("unread", unreadNotificationsCount.get(i).getSecond() + "");
+            var pair = unreadNotificationsCount.get(i);
+            var metadata = headers.get(i).getMetadata();
+            metadata.put("unread", pair.getSecond() + "");
+            Optional.ofNullable(pair.getFirst().getStarred())
+                    .ifPresent(starred -> metadata.put("starred", starred + ""));
         }
 
         return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));
@@ -180,6 +178,17 @@ public class ChatService {
     public long getConversationsHeadersCount(String userId) {
         log.trace("getConversationsHeadersCount for userID={}", userId);
         return conversationsRepository.countAllByIdUserId(userId).orElseThrow();
+    }
+
+    public boolean updateConversationFlag(String userId, String recipientId, Boolean star) {
+        Conversation.Id id = new Conversation.Id(userId, recipientId);
+        var conversation = conversationsRepository.findById(id).orElseThrow(noSuchElementException("conversation", id.toString()));
+        if (conversation.getStarred() == star) {
+            return false;
+        }
+        conversation.setStarred(star);
+        conversationsRepository.save(conversation);
+        return true;
     }
 
     public Long countNotifications(String userId) {
@@ -231,8 +240,8 @@ public class ChatService {
             );
             var deadConversations = conversations.stream()
                     .map(Conversation::getId)
-                    .map(Conversation.Id::getRoomId)
-                    .filter(roomId -> !userRepository.existsById(getRecipientIdFromRoomId(roomId, userId)))
+                    .map(Conversation.Id::getRecipientId)
+                    .filter(recipientId -> !userRepository.existsById(recipientId))
                     .toList();
 
             removedRoomIds.addAll(deadConversations);

@@ -34,4 +34,8 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
         return super.handleAuthorizationDeniedException(e);
     }
 
+    @Override
+    protected void logInput(Exception e) {
+        super.logInput(e);
+    }
 }

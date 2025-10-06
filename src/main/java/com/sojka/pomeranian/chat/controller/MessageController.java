@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,7 +43,18 @@ public class MessageController {
             @RequestParam int pageNumber,
             @RequestParam int pageSize
     ) {
-        return ResponseEntity.ok(chatService.getConversationsHeaders(user.getId(), new Pagination(pageNumber, pageSize)));
+        return ResponseEntity.ok(chatService.getConversationHeaders(user.getId(), new Pagination(pageNumber, pageSize)));
+    }
+
+    @PostMapping("/headers")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Boolean> updateConversationFlag(
+            @AuthenticationPrincipal User user,
+            @RequestParam String recipientId,
+            @RequestParam Boolean flag) {
+        log.trace("updateConversationFlag input: userID={}, recipientId={}, flag={}",
+                user.getId(), recipientId, flag);
+        return ResponseEntity.ok(chatService.updateConversationFlag(user.getId(), recipientId, flag));
     }
 
     @GetMapping("/headers/count")
