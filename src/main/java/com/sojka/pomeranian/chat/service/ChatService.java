@@ -4,6 +4,7 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
+import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.MessageType;
@@ -66,7 +67,7 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final ConversationsRepository conversationsRepository;
     private final MessageNotificationRepository messageNotificationRepository;
-    private final ObjectProvider<Integer, Conversation> unreadMessageSupplier;
+    private final ObjectProvider<Integer, ConversationDto> unreadMessageSupplier;
     private final R2BucketDeletePublisher deletePublisher;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -115,7 +116,12 @@ public class ChatService {
         // TODO: PS.2. It should pull images together with conversation headers or else. It might replace it when users are changing their image192, simply by recipientId column.
         // after adding sender/recipient image192 it will be useless
 //        var recipientImage = notificationRepository.findImage192(chatMessage.getRecipient().image192()).orElse(null);
-        conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
+        var rowsUpdated = conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
+        if (rowsUpdated == 0) {
+            var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), false, now);
+            var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), false, now);
+            conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
+        }
 
         return new MessageSaveResult(savedMessage, notification);
     }
@@ -150,9 +156,9 @@ public class ChatService {
     public ResultsPage<ChatMessagePersisted> getConversationHeaders(String userId, Pagination pagination) {
         log.trace("getConversationsHeaders input: userId={}, pagination={}", userId, pagination);
 
-        List<Conversation> conversations = conversationsRepository.findByIdUserId(
+        List<ConversationDto> conversations = conversationsRepository.findByUserIdWithRecipientImage(
                 userId, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
-                        Sort.by(Sort.Direction.DESC, "lastMessageAt"))
+                        Sort.by(Sort.Direction.DESC, "last_message_at"))
         );
 
         var headers = conversations.stream()
@@ -163,13 +169,15 @@ public class ChatService {
                 .toList();
 
         // provide with unread messages count
-        List<Pair<Conversation, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
+        List<Pair<ConversationDto, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
         for (int i = 0; i < unreadNotificationsCount.size(); i++) {
             var pair = unreadNotificationsCount.get(i);
             var metadata = headers.get(i).getMetadata();
             metadata.put("unread", pair.getSecond() + "");
             Optional.ofNullable(pair.getFirst().getStarred())
                     .ifPresent(starred -> metadata.put("starred", starred + ""));
+            Optional.ofNullable(pair.getFirst().getImage192())
+                    .ifPresent(image192 -> metadata.put("image192", image192));
         }
 
         return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));

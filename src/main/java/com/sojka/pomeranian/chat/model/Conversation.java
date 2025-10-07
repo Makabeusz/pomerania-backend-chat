@@ -22,10 +22,6 @@ public class Conversation {
     @EmbeddedId
     private Id id;
 
-    // TODO: unused, it's not efficient enough. Better to pull those images each time than keep updating for each message
-    @Column(name = "image_192")
-    private String image192;
-
     @Column(name = "starred")
     private Boolean starred;
 

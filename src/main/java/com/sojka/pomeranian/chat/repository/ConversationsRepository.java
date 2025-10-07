@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.repository;
 
+import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.model.Conversation;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
@@ -35,4 +36,10 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
             OR (user_id = :recipientId AND recipient_id = :userId)""", nativeQuery = true)
     int updateLastMessageAt(String userId, String recipientId, Instant timestamp);
 
+    @Query(value = """
+            SELECT c.user_id, c.recipient_id, c.starred, c.last_message_at, p.image_192
+            FROM conversations c
+            JOIN profiles p ON c.recipient_id = p.id
+            WHERE c.user_id = :userId""", nativeQuery = true)
+    List<ConversationDto> findByUserIdWithRecipientImage(String userId, Pageable pageable);
 }

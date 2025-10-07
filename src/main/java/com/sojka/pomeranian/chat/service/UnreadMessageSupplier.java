@@ -1,6 +1,6 @@
 package com.sojka.pomeranian.chat.service;
 
-import com.sojka.pomeranian.chat.model.Conversation;
+import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectSupplier;
@@ -15,34 +15,32 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
-
 @Slf4j
 @Component
 @Qualifier("unreadMessageSupplier")
 @RequiredArgsConstructor
-public class UnreadMessageSupplier extends ObjectProvider<Integer, Conversation> {
+public class UnreadMessageSupplier extends ObjectProvider<Integer, ConversationDto> {
 
     private final MessageNotificationRepository repository;
 
     @Override
-    protected ObjectSupplier<Integer, Conversation> getSupplier(
-            SupplierQueue<Conversation> queue,
-            ConcurrentSkipListMap<Integer, Pair<Conversation, Integer>> result) {
+    protected ObjectSupplier<Integer, ConversationDto> getSupplier(
+            SupplierQueue<ConversationDto> queue,
+            ConcurrentSkipListMap<Integer, Pair<ConversationDto, Integer>> result) {
         return new UnreadMessageCountSupplier(queue, result, log);
     }
 
-    private class UnreadMessageCountSupplier extends ObjectSupplier<Integer, Conversation> {
+    private class UnreadMessageCountSupplier extends ObjectSupplier<Integer, ConversationDto> {
 
-        public UnreadMessageCountSupplier(SupplierQueue<Conversation> queue,
-                                          ConcurrentMap<Integer, Pair<Conversation, Integer>> result,
+        public UnreadMessageCountSupplier(SupplierQueue<ConversationDto> queue,
+                                          ConcurrentMap<Integer, Pair<ConversationDto, Integer>> result,
                                           Logger log) {
             super(queue, result, log);
         }
 
         @Override
-        protected Pair<Conversation, Integer> supplyObject(Conversation conversation) {
-            int count = repository.countByIdProfileIdAndIdSenderId(conversation.getId().getUserId(), conversation.getId().getRecipientId())
+        protected Pair<ConversationDto, Integer> supplyObject(ConversationDto conversation) {
+            int count = repository.countByIdProfileIdAndIdSenderId(conversation.getUserId(), conversation.getRecipientId())
                     .map(Long::intValue)
                     .orElse(0);
             return Pair.of(conversation, count);

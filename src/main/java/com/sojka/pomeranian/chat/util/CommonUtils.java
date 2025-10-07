@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.chat.util;
 
 import com.sojka.pomeranian.chat.dto.ChatMessage;
-import com.sojka.pomeranian.chat.model.Conversation;
+import com.sojka.pomeranian.chat.dto.ConversationDto;
 
 public final class CommonUtils {
 
@@ -15,9 +15,9 @@ public final class CommonUtils {
     /**
      * @see com.sojka.pomeranian.lib.util.CommonUtils#generateRoomId(String, String)
      */
-    public static String generateRoomId(Conversation conversation) {
+    public static String generateRoomId(ConversationDto conversation) {
         return com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId(
-                conversation.getId().getUserId(), conversation.getId().getRecipientId()
+                conversation.getUserId(), conversation.getRecipientId()
         );
     }
 
