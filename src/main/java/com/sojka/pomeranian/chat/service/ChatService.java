@@ -153,14 +153,42 @@ public class ChatService {
         );
     }
 
-    public ResultsPage<ChatMessagePersisted> getConversationHeaders(String userId, Pagination pagination) {
+    public ResultsPage<ChatMessagePersisted> getConversations(
+            String userId, Boolean starred, Pagination pagination
+    ) {
+        if (starred == null) {
+            return getConversationHeaders(userId, pagination);
+        } else {
+            return getConversationHeaders(userId, starred, pagination);
+        }
+    }
+
+    private ResultsPage<ChatMessagePersisted> getConversationHeaders(
+            String userId, boolean starred, Pagination pagination
+    ) {
+        log.trace("getConversationsHeaders input: userId={}, starred={}, pagination={}", userId, starred, pagination);
+
+        List<ConversationDto> conversations = conversationsRepository.findByUserIdAndStarredWithRecipientImage(
+                userId, starred, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
+                        Sort.by(Sort.Direction.DESC, "last_message_at"))
+        );
+
+        return provideConversationsWithUnreadCount(conversations, pagination);
+    }
+
+    private ResultsPage<ChatMessagePersisted> getConversationHeaders(String userId, Pagination pagination) {
         log.trace("getConversationsHeaders input: userId={}, pagination={}", userId, pagination);
 
         List<ConversationDto> conversations = conversationsRepository.findByUserIdWithRecipientImage(
                 userId, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
                         Sort.by(Sort.Direction.DESC, "last_message_at"))
         );
+        return provideConversationsWithUnreadCount(conversations, pagination);
+    }
 
+    private ResultsPage<ChatMessagePersisted> provideConversationsWithUnreadCount(
+            List<ConversationDto> conversations, Pagination pagination
+    ) {
         var headers = conversations.stream()
                 .map(c -> messageRepository.findByRoomId(CommonUtils.generateRoomId(c), null, 1))
                 .map(ResultsPage::getResults)
@@ -183,9 +211,22 @@ public class ChatService {
         return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));
     }
 
+    public long getConversationsCount(String userId, Boolean starred) {
+        if (starred == null) {
+            return getConversationsHeadersCount(userId);
+        } else  {
+            return getConversationsHeadersCount(userId, starred);
+        }
+    }
+
     public long getConversationsHeadersCount(String userId) {
         log.trace("getConversationsHeadersCount for userID={}", userId);
         return conversationsRepository.countAllByIdUserId(userId).orElseThrow();
+    }
+
+    public long getConversationsHeadersCount(String userId, boolean starred) {
+        log.trace("getConversationsHeadersCount for userID={}, starred={}", userId, starred);
+        return conversationsRepository.countAllByIdUserIdAndStarred(userId, starred).orElseThrow();
     }
 
     public boolean updateConversationFlag(String userId, String recipientId, Boolean star) {

@@ -38,12 +38,13 @@ public class MessageController {
 
     @GetMapping("/headers")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversationHeaders(
+    public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversations(
             @AuthenticationPrincipal User user,
             @RequestParam int pageNumber,
-            @RequestParam int pageSize
+            @RequestParam int pageSize,
+            @RequestParam(required = false) Boolean starred
     ) {
-        return ResponseEntity.ok(chatService.getConversationHeaders(user.getId(), new Pagination(pageNumber, pageSize)));
+        return ResponseEntity.ok(chatService.getConversations(user.getId(), starred, new Pagination(pageNumber, pageSize)));
     }
 
     @PostMapping("/headers")
@@ -59,8 +60,12 @@ public class MessageController {
 
     @GetMapping("/headers/count")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Long> getConversationHeadersCount(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(chatService.getConversationsHeadersCount(user.getId()));
+    public ResponseEntity<Long> getConversationCount(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) Boolean starred
+    ) {
+        log.trace("updateConversationFlag input: userID={}, starred={}", user.getId(), starred);
+        return ResponseEntity.ok(chatService.getConversationsCount(user.getId(), starred));
     }
 
     @DeleteMapping("/resource")

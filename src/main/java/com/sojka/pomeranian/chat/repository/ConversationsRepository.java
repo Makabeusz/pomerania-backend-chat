@@ -27,6 +27,8 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     Optional<Long> countAllByIdUserId(String userId);
 
+    Optional<Long> countAllByIdUserIdAndStarred(String userId, boolean starred);
+
     @Modifying
     @Transactional
     @Query(value = """
@@ -42,4 +44,12 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
             JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId""", nativeQuery = true)
     List<ConversationDto> findByUserIdWithRecipientImage(String userId, Pageable pageable);
+
+    @Query(value = """
+            SELECT c.user_id, c.recipient_id, c.starred, c.last_message_at, p.image_192
+            FROM conversations c
+            JOIN profiles p ON c.recipient_id = p.id
+            WHERE c.user_id = :userId
+            AND c.starred = :starred""", nativeQuery = true)
+    List<ConversationDto> findByUserIdAndStarredWithRecipientImage(String userId, boolean starred, Pageable pageable);
 }
