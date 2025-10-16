@@ -48,7 +48,7 @@ public class NotificationService {
 
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
         log.trace("Is user with username={} and userID={} online? {}",
-                notification.getMetadata().get("senderId"), notification.getProfileId(), online);
+                notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);
         if (online) {
             log.trace("Publishing: {}", dto);
             messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);

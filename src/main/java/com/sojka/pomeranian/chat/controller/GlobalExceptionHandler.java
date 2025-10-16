@@ -18,7 +18,7 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
 
     @Override
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
+    public ResponseEntity<ProblemDetail> handleException(Exception e) {
         return super.handleException(e);
     }
 
