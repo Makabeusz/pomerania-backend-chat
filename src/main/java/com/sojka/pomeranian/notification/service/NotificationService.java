@@ -45,7 +45,6 @@ public class NotificationService {
 
         var saved = notificationRepository.save(domain);
         var dto = new NotificationResponse<>(NotificationMapper.toDto(saved), saved.getType().name());
-
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
         log.trace("Is user with username={} and userID={} online? {}",
                 notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);

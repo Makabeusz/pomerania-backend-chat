@@ -53,6 +53,7 @@ pomeranian:
   #  security:
   #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
+    allowed-origins: http://localhost:3000
     roles: ADMIN, USER, DEACTIVATED
     public-paths:
     jwt:
