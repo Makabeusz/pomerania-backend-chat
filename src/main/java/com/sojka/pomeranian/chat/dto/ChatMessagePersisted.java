@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,5 +44,13 @@ public class ChatMessagePersisted extends ChatMessage {
         this.pinned = pinned;
         this.readAt = readAt;
         this.metadata = metadata;
+    }
+
+    public String addMetadata(String key, String value) {
+        if (this.metadata == null) {
+            this.metadata = new HashMap<>();
+        }
+
+        return this.metadata.put(key, value);
     }
 }

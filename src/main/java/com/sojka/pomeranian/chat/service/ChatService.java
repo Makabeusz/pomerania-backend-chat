@@ -15,7 +15,6 @@ import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
@@ -35,11 +34,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
@@ -57,9 +54,6 @@ import static com.sojka.pomeranian.lib.util.PaginationUtils.pageStateToPaginatio
 @RequiredArgsConstructor
 public class ChatService {
 
-    // todo: make it a property or always read from frontend
-    private static final int CONVERSATIONS_PAGE_SIZE = 10;
-
     @Value("${pomeranian.chat.purge.batch-size}")
     private int purgeBatchSize;
 
@@ -67,9 +61,9 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final ConversationsRepository conversationsRepository;
     private final MessageNotificationRepository messageNotificationRepository;
-    private final ObjectProvider<Integer, ConversationDto> unreadMessageSupplier;
     private final R2BucketDeletePublisher deletePublisher;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectProvider<ChatMessagePersisted, ConversationDto> conversationHeadersSupplier;
 
     /**
      * Saves message to AstraDB.<br>
@@ -113,11 +107,8 @@ public class ChatService {
             );
         }
 
-        // TODO: PS.2. It should pull images together with conversation headers or else. It might replace it when users are changing their image192, simply by recipientId column.
-        // after adding sender/recipient image192 it will be useless
-//        var recipientImage = notificationRepository.findImage192(chatMessage.getRecipient().image192()).orElse(null);
         var rowsUpdated = conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
-        if (rowsUpdated == 0) {
+        if (rowsUpdated >= 1) {
             var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), false, now);
             var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), false, now);
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
@@ -189,24 +180,9 @@ public class ChatService {
     private ResultsPage<ChatMessagePersisted> provideConversationsWithUnreadCount(
             List<ConversationDto> conversations, Pagination pagination
     ) {
-        var headers = conversations.stream()
-                .map(c -> messageRepository.findByRoomId(CommonUtils.generateRoomId(c), null, 1))
-                .map(ResultsPage::getResults)
-                .flatMap(Collection::stream)
-                .map(MessageMapper::toDto)
-                .toList();
+        log.info("conversations, count: {}\n{}", conversations.size(), JsonUtils.writeToString(conversations));
 
-        // provide with unread messages count
-        List<Pair<ConversationDto, Integer>> unreadNotificationsCount = unreadMessageSupplier.provide(conversations);
-        for (int i = 0; i < unreadNotificationsCount.size(); i++) {
-            var pair = unreadNotificationsCount.get(i);
-            var metadata = headers.get(i).getMetadata();
-            metadata.put("unread", pair.getSecond() + "");
-            Optional.ofNullable(pair.getFirst().getStarred())
-                    .ifPresent(starred -> metadata.put("starred", starred + ""));
-            Optional.ofNullable(pair.getFirst().getImage192())
-                    .ifPresent(image192 -> metadata.put("image192", image192));
-        }
+        var headers = conversationHeadersSupplier.provide(conversations).stream().map(Pair::getSecond).toList();
 
         return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));
     }

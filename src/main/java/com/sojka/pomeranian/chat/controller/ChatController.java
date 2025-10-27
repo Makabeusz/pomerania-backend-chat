@@ -6,16 +6,15 @@ import com.sojka.pomeranian.chat.dto.ChatResponse;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.service.ChatCache;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.RedisWebSocketService;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +23,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
@@ -41,8 +38,7 @@ public class ChatController {
     private final RedisWebSocketService messagingTemplate;
     private final ChatService chatService;
     private final ChatCache cache;
-    private final MessageNotificationRepository notificationRepository;
-    private final ExecutorService async = Executors.newVirtualThreadPerTaskExecutor();
+//    private final MessageNotificationRepository notificationRepository;
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,
@@ -84,6 +80,5 @@ public class ChatController {
         log.info("Marked as read: {}", dto);
         messagingTemplate.convertAndSendToUser(dto.roomId(), DM_DESTINATION,
                 new ChatResponse<>(new ChatRead(dto.createdAt(), toDateString(readAt))));
-
     }
 }
