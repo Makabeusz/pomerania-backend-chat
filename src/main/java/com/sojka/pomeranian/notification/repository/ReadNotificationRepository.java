@@ -6,6 +6,7 @@ import com.sojka.pomeranian.notification.model.ReadNotification;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ReadNotificationRepository {
 
@@ -22,9 +23,9 @@ public interface ReadNotificationRepository {
 
     List<ReadNotification> saveAll(List<ReadNotification> notifications, int ttl);
 
-    ResultsPage<ReadNotification> findAllBy(String profileId, String pageState, int pageSize);
+    ResultsPage<ReadNotification> findAllBy(UUID profileId, String pageState, int pageSize);
 
-    Optional<Long> countByIdProfileId(String profileId);
+    Optional<Long> countByIdProfileId(UUID profileId);
 
-    void deleteAllByIdProfileId(String profileId);
+    void deleteAllByIdProfileId(UUID profileId);
 }

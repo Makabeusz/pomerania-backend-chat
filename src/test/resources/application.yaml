@@ -19,6 +19,7 @@ pomeranian:
     purge:
       batch-size: 1000
   security:
+    allowed-origins: http://localhost:3000
     public-paths:
     jwt:
       secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"

@@ -1,13 +1,14 @@
 package com.sojka.pomeranian.chat.model;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -17,16 +18,16 @@ public class Message {
 
     private String roomId;
     private Instant createdAt;
-    private String profileId;
+    private UUID profileId;
     @NotBlank
     private String username;
-    private String recipientProfileId;
+    private UUID recipientProfileId;
     private String recipientUsername;
-//    @NotBlank
+    // @NotBlank
     private String content;
-    private String resourceId;
+    private UUID resourceId;
     private String resourceType;
-    private String threadId;
+    private UUID threadId;
     private String editedAt;
     private String deletedAt;
     private Boolean pinned;

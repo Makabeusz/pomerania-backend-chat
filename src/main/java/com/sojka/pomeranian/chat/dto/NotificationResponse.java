@@ -7,7 +7,7 @@ import lombok.NonNull;
 
 /**
  * The general notification response DTO.<br>
- * The frontend will map a response objects based on assigned {@link NotificationType}.
+ * The frontend will map a response objects based on assigned {@link NotificationDto.Type}.
  *
  * @param <T> The type of the response data.
  */

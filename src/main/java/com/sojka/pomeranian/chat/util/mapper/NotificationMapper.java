@@ -23,7 +23,7 @@ public final class NotificationMapper {
                 .createdAt(toDateString(notification.getId().getCreatedAt()))
                 .content(notification.getContent())
                 .metadata(new HashMap<>(Map.of(
-                        "senderId", notification.getId().getSenderId(),
+                        "senderId", notification.getId().getSenderId() + "",
                         "senderUsername", notification.getSenderUsername()
                 )))
                 .build();
@@ -35,7 +35,7 @@ public final class NotificationMapper {
                 .createdAt(toDateString(notification.getCreatedAt().toLocalDateTime()))
                 .content(notification.getContent())
                 .metadata(new HashMap<>(Map.of(
-                        "senderId", notification.getSenderId(),
+                        "senderId", notification.getSenderId() + "",
                         "senderUsername", notification.getSenderUsername(),
                         "count", notification.getCount() >= Integer.MAX_VALUE
                                 ? Integer.MAX_VALUE + ""
@@ -46,9 +46,9 @@ public final class NotificationMapper {
 
     public static NotificationDto toDto(CommentStompRequest request) {
         var metadata = new HashMap<String, String>();
-        Optional.ofNullable(request.getProfileId()).ifPresent(id -> metadata.put("senderId", id));
+        Optional.ofNullable(request.getProfileId()).ifPresent(id -> metadata.put("senderId", id + ""));
         Optional.ofNullable(request.getUsername()).ifPresent(username -> metadata.put("senderUsername", username));
-        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(id -> metadata.put("relatedLocationId", id));
+        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(id -> metadata.put("relatedLocationId", id + ""));
 
         return NotificationDto.builder()
                 .profileId(request.getRelatedProfileId())

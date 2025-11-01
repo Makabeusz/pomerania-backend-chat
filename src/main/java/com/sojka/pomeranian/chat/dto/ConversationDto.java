@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -13,8 +14,8 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class ConversationDto {
 
-    private String userId;
-    private String recipientId;
+    private UUID userId;
+    private UUID recipientId;
     private Boolean starred;
     private Timestamp lastMessageAt;
     private String image192;

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -15,10 +16,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class Notification {
 
-    private String profileId;
+    private UUID profileId;
     private Instant createdAt;
     private NotificationDto.Type type;
-    private String relatedId;
+    private UUID relatedId;
     private String relatedType;
     private String content;
     private Map<String, String> metadata;

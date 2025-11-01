@@ -1,8 +1,10 @@
 package com.sojka.pomeranian.chat.dto;
 
+import java.util.UUID;
+
 // TODO: move to lib
 public record R2BucketDeleteRequest(
-        String id,
-        String userId
+        UUID id,
+        UUID userId
 ) {
 }

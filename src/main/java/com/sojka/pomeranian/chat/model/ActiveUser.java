@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * The online-status cache model.
@@ -18,7 +19,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class ActiveUser {
 
-    private String userId;
+    private UUID userId;
     private Map<String, List<String>> subscriptions;
     private String simpSessionId;
     private Instant createdAt;

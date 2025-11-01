@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.UUID;
 
 public class TestUtils {
 
@@ -28,7 +29,7 @@ public class TestUtils {
         };
     }
 
-    public static Message createChatMessage(String roomId, String content, String senderId, String recipientId, Instant createdAt) {
+    public static Message createChatMessage(String roomId, String content, UUID senderId, UUID recipientId, Instant createdAt) {
         Message message = new Message();
         message.setRoomId(roomId);
         message.setCreatedAt(createdAt);
@@ -40,29 +41,32 @@ public class TestUtils {
         return message;
     }
 
-    public static Notification getNotification(Connector connector, String profileId, Instant createdAt, String type) {
+    public static Notification getNotification(Connector connector, UUID profileId, Instant createdAt, String type) {
         SimpleStatement selectNotification = SimpleStatement.newInstance(
                 "SELECT * FROM notifications.notifications WHERE profile_id = ? AND created_at = ? AND type = ?",
                 profileId, createdAt, type
         );
         var row = connector.getSession().execute(selectNotification).one();
-        System.out.println(row);
+        if (row == null) {
+            System.out.println("null result set");
+            return null;
+        }
         return Notification.builder()
-                .profileId(row.getString("profile_id"))
+                .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
                 .type(NotificationDto.Type.valueOf(row.getString("type")))
                 .content(row.getString("content"))
                 .build();
     }
 
-    public static ReadNotification getReadNotification(Connector connector, String profileId, Instant createdAt, String type) {
+    public static ReadNotification getReadNotification(Connector connector, UUID profileId, Instant createdAt, String type) {
         SimpleStatement selectNotification = SimpleStatement.newInstance(
                 "SELECT * FROM notifications.read_notifications WHERE profile_id = ? AND created_at = ? AND type = ?",
                 profileId, createdAt, type
         );
         var row = connector.getSession().execute(selectNotification).one();
         return ReadNotification.builder()
-                .profileId(row.getString("profile_id"))
+                .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
                 .type(NotificationDto.Type.valueOf(row.getString("type")))
                 .readAt(row.getInstant("read_at"))

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The Postgres repository exists to overcome Astra limitations. <br>
@@ -21,13 +22,13 @@ import java.util.Optional;
 @Repository
 public interface ConversationsRepository extends CrudRepository<Conversation, Conversation.Id> {
 
-    List<Conversation> findByIdUserId(String userId, Pageable pageable);
+    List<Conversation> findByIdUserId(UUID userId, Pageable pageable);
 
-    void deleteAllByIdUserId(String userId);
+    void deleteAllByIdUserId(UUID userId);
 
-    Optional<Long> countAllByIdUserId(String userId);
+    Optional<Long> countAllByIdUserId(UUID userId);
 
-    Optional<Long> countAllByIdUserIdAndStarred(String userId, boolean starred);
+    Optional<Long> countAllByIdUserIdAndStarred(UUID userId, boolean starred);
 
     @Modifying
     @Transactional
@@ -36,14 +37,14 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
             SET last_message_at = :timestamp
             WHERE (user_id = :userId AND recipient_id = :recipientId)
             OR (user_id = :recipientId AND recipient_id = :userId)""", nativeQuery = true)
-    int updateLastMessageAt(String userId, String recipientId, Instant timestamp);
+    int updateLastMessageAt(UUID userId, UUID recipientId, Instant timestamp);
 
     @Query(value = """
             SELECT c.user_id, c.recipient_id, c.starred, c.last_message_at, p.image_192
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId""", nativeQuery = true)
-    List<ConversationDto> findByUserIdWithRecipientImage(String userId, Pageable pageable);
+    List<ConversationDto> findByUserIdWithRecipientImage(UUID userId, Pageable pageable);
 
     @Query(value = """
             SELECT c.user_id, c.recipient_id, c.starred, c.last_message_at, p.image_192
@@ -51,5 +52,5 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
             JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId
             AND c.starred = :starred""", nativeQuery = true)
-    List<ConversationDto> findByUserIdAndStarredWithRecipientImage(String userId, boolean starred, Pageable pageable);
+    List<ConversationDto> findByUserIdAndStarredWithRecipientImage(UUID userId, boolean starred, Pageable pageable);
 }

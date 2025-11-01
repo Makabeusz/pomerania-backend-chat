@@ -5,14 +5,14 @@ CREATE KEYSPACE IF NOT EXISTS notifications WITH replication = {'class': 'Simple
 CREATE TABLE IF NOT EXISTS messages.messages (
     room_id VARCHAR,
     created_at TIMESTAMP,
-    profile_id VARCHAR,
+    profile_id UUID,
     username VARCHAR,
-    recipient_profile_id VARCHAR,
+    recipient_profile_id UUID,
     recipient_username VARCHAR,
     content TEXT,
-    resource_id VARCHAR,
+    resource_id UUID,
     resource_type VARCHAR,
-    thread_id VARCHAR,
+    thread_id UUID,
     edited_at VARCHAR,
     deleted_at VARCHAR,
     pinned BOOLEAN,
@@ -23,10 +23,10 @@ CREATE TABLE IF NOT EXISTS messages.messages (
 
 -- Notifications
 CREATE TABLE IF NOT EXISTS notifications.notifications (
-    profile_id VARCHAR,
+    profile_id UUID,
     created_at TIMESTAMP,
     type VARCHAR,
-    related_id VARCHAR,
+    related_id UUID,
     related_type VARCHAR,
     content VARCHAR,
     metadata MAP<VARCHAR, VARCHAR>,
@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS notifications.notifications (
 
 -- Read Notifications
 CREATE TABLE IF NOT EXISTS notifications.read_notifications (
-    profile_id VARCHAR,
+    profile_id UUID,
     created_at TIMESTAMP,
     type VARCHAR,
     read_at TIMESTAMP,
-    related_id VARCHAR,
+    related_id UUID,
     related_type VARCHAR,
     content VARCHAR,
     metadata MAP<VARCHAR, VARCHAR>,

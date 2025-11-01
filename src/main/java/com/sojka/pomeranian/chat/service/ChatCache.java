@@ -5,6 +5,7 @@ import com.sojka.pomeranian.chat.model.ActiveUser;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 /**
@@ -12,8 +13,9 @@ import java.util.Optional;
  */
 public interface ChatCache {
 
-    boolean isOnline(String userId, StompSubscription subscription);
-    boolean isOnline(String userId, StompSubscription.Type type);
+    boolean isOnline(UUID userId, StompSubscription subscription);
+
+    boolean isOnline(UUID userId, StompSubscription.Type type);
 
     /**
      * Get cache entry
@@ -21,17 +23,17 @@ public interface ChatCache {
      * @param userId The ID of the user to check.
      * @return Cached {@link ActiveUser} data or null if user is offline
      */
-    Optional<ActiveUser> get(String userId);
+    Optional<ActiveUser> get(UUID userId);
 
     List<ActiveUser> getAll();
 
-    boolean put(String userId, StompSubscription subscription);
+    boolean put(UUID userId, StompSubscription subscription);
 
-    boolean create(String userId, String simpSessionId);
+    boolean create(UUID userId, String simpSessionId);
 
-    boolean remove(String userId);
+    boolean remove(UUID userId);
 
-    boolean remove(String userId, List<StompSubscription> subscription);
+    boolean remove(UUID userId, List<StompSubscription> subscription);
 
     void purge();
 }

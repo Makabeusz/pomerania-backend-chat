@@ -22,7 +22,9 @@ public class CommentService {
         log.trace("publish input: {}", dto);
 
         // comments section update
-        messagingTemplate.convertAndSendToUser(dto.getRelatedId(), COMMENTS_DESTINATION, dto);
-        notificationService.publish(NotificationMapper.toDto(dto));
+        messagingTemplate.convertAndSendToUser(dto.getRelatedId() + "", COMMENTS_DESTINATION, dto);
+        if (dto.isPublishNotification()) {
+            notificationService.publish(NotificationMapper.toDto(dto));
+        }
     }
 }

@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
@@ -85,7 +86,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public Optional<Notification> findById(String profileId, Instant createdAt, NotificationDto.Type type) {
+    public Optional<Notification> findById(UUID profileId, Instant createdAt, NotificationDto.Type type) {
         return execute(() -> {
             var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
                     .addPositionalValues(profileId, createdAt, type.name())
@@ -99,7 +100,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public ResultsPage<Notification> findAllBy(String profileId, String pageState, int pageSize) {
+    public ResultsPage<Notification> findAllBy(UUID profileId, String pageState, int pageSize) {
         return execute(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
@@ -137,7 +138,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public Optional<Long> countByIdProfileId(String profileId) {
+    public Optional<Long> countByIdProfileId(UUID profileId) {
         return execute(() -> {
             var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
@@ -149,7 +150,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public void deleteAllByIdProfileId(String profileId) {
+    public void deleteAllByIdProfileId(UUID profileId) {
         log.trace("deleteAllByIdProfileId input: profileId={}", profileId);
         execute(() -> {
             var statement = SimpleStatement.builder(DELETE_BY_PROFILE_ID).addPositionalValues(profileId).build();

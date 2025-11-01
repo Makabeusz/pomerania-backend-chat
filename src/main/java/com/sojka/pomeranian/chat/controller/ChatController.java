@@ -23,6 +23,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
@@ -46,7 +47,7 @@ public class ChatController {
         User user = getAuthUser(principal);
         // ??? add sender image192 only, the rest append here as is
         // TODO: DB schema is missing image192 field, review how it all looks in front and decide what to do
-        String image192 = null;// notificationRepository.findImage192(user.getId()).orElse(null);
+        UUID image192 = null;// notificationRepository.findImage192(user.getId()).orElse(null);
         chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), image192));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
@@ -61,7 +62,7 @@ public class ChatController {
         if (!isOnline) {
             var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
 
-            messagingTemplate.convertAndSendToUser(notificationDto.getProfileId(), NOTIFY_DESTINATION,
+            messagingTemplate.convertAndSendToUser(notificationDto.getProfileId() + "", NOTIFY_DESTINATION,
                     new NotificationResponse<>(notificationDto, NotificationDto.Type.MESSAGE));
         }
     }

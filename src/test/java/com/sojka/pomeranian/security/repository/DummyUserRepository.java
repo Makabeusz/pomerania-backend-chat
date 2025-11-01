@@ -8,12 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Primary
 @Repository
 public class DummyUserRepository implements UserRepository {
 
-    private final static Map<String, User> db = new HashMap<>();
+    private final static Map<UUID, User> db = new HashMap<>();
 
     @Override
     public boolean existsByUsername(String username) {
@@ -41,7 +42,7 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> findAllById(Iterable<String> strings) {
+    public List<User> findAllById(Iterable<UUID> ids) {
         throw new UnsupportedOperationException();
     }
 
@@ -51,12 +52,12 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> findById(String s) {
+    public Optional<User> findById(UUID s) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean existsById(String s) {
+    public boolean existsById(UUID s) {
         return db.containsKey(s);
     }
 
@@ -66,7 +67,7 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
-    public void deleteById(String s) {
+    public void deleteById(UUID s) {
         throw new UnsupportedOperationException();
     }
 
@@ -76,7 +77,7 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
-    public void deleteAllById(Iterable<? extends String> strings) {
+    public void deleteAllById(Iterable<? extends UUID> strings) {
         throw new UnsupportedOperationException();
     }
 

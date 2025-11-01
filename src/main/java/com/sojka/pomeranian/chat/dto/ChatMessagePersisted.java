@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * The extended message to supplement {@link ChatMessage} with database details and share with frontend.
@@ -18,9 +19,9 @@ public class ChatMessagePersisted extends ChatMessage {
 
     private String roomId;
     private String createdAt;
-    private String resourceId;
+    private UUID resourceId;
     private String resourceType;
-    private String threadId;
+    private UUID threadId;
     private String editedAt;
     private String deletedAt;
     private Boolean pinned;
@@ -29,7 +30,7 @@ public class ChatMessagePersisted extends ChatMessage {
 
     @Builder
     public ChatMessagePersisted(String content, ChatUser sender, ChatUser recipient,
-                                String roomId, String createdAt, String resourceId, String resourceType, String threadId, String editedAt,
+                                String roomId, String createdAt, UUID resourceId, String resourceType, UUID threadId, String editedAt,
                                 String deletedAt, Boolean pinned, Map<String, String> metadata, String readAt) {
         super(
                 content, (resourceId != null && resourceType != null) ? new Resource(resourceId, resourceType) : null,

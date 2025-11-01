@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 /**
  * The message with minimum informations received from frontend.
  */
@@ -24,7 +26,7 @@ public class ChatMessage {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Resource {
-        private String id;
+        private UUID id;
         private String type;
     }
 }

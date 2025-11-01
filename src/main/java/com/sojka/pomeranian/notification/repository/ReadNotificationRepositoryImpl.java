@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
 
@@ -93,7 +94,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
-    public ResultsPage<ReadNotification> findAllBy(String profileId, String pageState, int pageSize) {
+    public ResultsPage<ReadNotification> findAllBy(UUID profileId, String pageState, int pageSize) {
         return execute(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
@@ -117,7 +118,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
-    public Optional<Long> countByIdProfileId(String profileId) {
+    public Optional<Long> countByIdProfileId(UUID profileId) {
         return execute(() -> {
             var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
@@ -129,7 +130,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
-    public void deleteAllByIdProfileId(String profileId) {
+    public void deleteAllByIdProfileId(UUID profileId) {
         log.trace("deleteAllByIdProfileId input: profileId={}", profileId);
         execute(() -> {
             var statement = SimpleStatement.builder(DELETE_BY_PROFILE_ID).addPositionalValues(profileId).build();

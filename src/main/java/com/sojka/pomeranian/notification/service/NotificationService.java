@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
@@ -34,6 +35,7 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatCache cache;
 
+    // TODO: check comment preference, currently it's skipping prefs and publishing all
     public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
         if (notification.getMetadata() != null && !notification.getMetadata().containsKey("image192")) {
             messageNotificationRepository.findImage192(notification.getProfileId()).ifPresent(
@@ -50,7 +52,7 @@ public class NotificationService {
                 notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);
         if (online) {
             log.trace("Publishing: {}", dto);
-            messagingTemplate.convertAndSendToUser(notification.getProfileId(), NOTIFY_DESTINATION, dto);
+            messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, dto);
         }
 
         log.info("Published notification: {}, isOnline={}", dto, online);
@@ -58,7 +60,7 @@ public class NotificationService {
         return dto;
     }
 
-    public Instant markRead(String userId, List<NotificationDto> notifications) {
+    public Instant markRead(UUID userId, List<NotificationDto> notifications) {
         boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
         if (!allAreUserNotifications) {
             throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"
@@ -76,7 +78,7 @@ public class NotificationService {
         return readAt;
     }
 
-    public ResultsPage<NotificationDto> getUnread(String profileId, String pageState, int pageSize) {
+    public ResultsPage<NotificationDto> getUnread(UUID profileId, String pageState, int pageSize) {
         var resultsPage = notificationRepository.findAllBy(profileId, pageState, pageSize);
         var notifications = resultsPage.getResults().stream()
                 .map(NotificationMapper::toDto)
@@ -85,14 +87,14 @@ public class NotificationService {
         return new ResultsPage<>(notifications, resultsPage.getNextPageState());
     }
 
-    public Long countUnreadNotifications(String userId) {
+    public Long countUnreadNotifications(UUID userId) {
         var count = notificationRepository.countByIdProfileId(userId).orElseThrow();
 
         log.info("Fetched {} unread notifications count", count);
         return count;
     }
 
-    public ResultsPage<NotificationDto> getRead(String profileId, String pageState, int pageSize) {
+    public ResultsPage<NotificationDto> getRead(UUID profileId, String pageState, int pageSize) {
         var resultsPage = readNotificationRepository.findAllBy(profileId, pageState, pageSize);
         var notifications = resultsPage.getResults().stream()
                 .map(ReadNotificationMapper::toDto)
@@ -102,7 +104,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public long deleteUserNotifications(String userId) {
+    public long deleteUserNotifications(UUID userId) {
         var deletedUserNotifications = notificationRepository.countByIdProfileId(userId).orElseThrow();
         notificationRepository.deleteAllByIdProfileId(userId);
         log.info("Removed {} notifications of userID={}", deletedUserNotifications, userId);
@@ -110,7 +112,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public long deleteUserReadNotifications(String userId) {
+    public long deleteUserReadNotifications(UUID userId) {
         var deletedUserNotifications = notificationRepository.countByIdProfileId(userId).orElseThrow();
         notificationRepository.deleteAllByIdProfileId(userId);
         log.info("Removed {} read notifications of userID={}", deletedUserNotifications, userId);

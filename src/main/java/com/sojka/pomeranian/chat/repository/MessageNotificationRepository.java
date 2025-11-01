@@ -5,20 +5,20 @@ import com.sojka.pomeranian.chat.model.MessageNotification;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface MessageNotificationRepository extends JpaRepository<MessageNotification, MessageNotification.Id> {
 
-    Optional<Long> countByIdProfileId(String profileId);
+    Optional<Long> countByIdProfileId(UUID profileId);
 
-    Optional<Long> countByIdProfileIdAndIdSenderId(String profileId, String senderId);
+    Optional<Long> countByIdProfileIdAndIdSenderId(UUID profileId, UUID senderId);
 
-    List<MessageNotification> findByIdProfileId(String profileId, Pageable pageable);
+    List<MessageNotification> findByIdProfileId(UUID profileId, Pageable pageable);
 
     @Query(value = """
             SELECT
@@ -41,12 +41,12 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
             )
             ORDER BY m.created_at DESC
             """, nativeQuery = true)
-    List<NotificationHeader> findNotificationsHeaders(@Param("profileId") String profileId, Pageable pageable);
+    List<NotificationHeader> findNotificationsHeaders(UUID profileId, Pageable pageable);
 
-    void deleteAllByIdProfileId(String profileId);
+    void deleteAllByIdProfileId(UUID profileId);
 
     // TODO: Move image192 to User. Until then it will be here. OR if not move to user it will be sent via messages each time
     @Query(value = "SELECT image_192 from profiles WHERE id = :profileId", nativeQuery = true)
-    Optional<String> findImage192(String profileId);
+    Optional<String> findImage192(UUID profileId);
 
 }

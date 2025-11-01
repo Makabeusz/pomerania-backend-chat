@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -23,7 +24,7 @@ public class CacheController {
 
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ActiveUser> get(@PathVariable("userId") String userId) {
+    public ResponseEntity<ActiveUser> get(@PathVariable("userId") UUID userId) {
         var activeUser = cache.get(userId);
         return activeUser.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }

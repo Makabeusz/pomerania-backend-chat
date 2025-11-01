@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.sojka.pomeranian.chat.util.Constants.MESSAGES_KEYSPACE;
@@ -79,7 +80,7 @@ public class MessageRepository extends AstraPageableRepository {
     public Message save(@Valid Message message) {
         log.trace("save input: {}", message);
 
-        if (!StringUtils.hasText(message.getContent()) && !StringUtils.hasText(message.getResourceId())) {
+        if (!StringUtils.hasText(message.getContent()) && message.getResourceId() == null) {
             throw new IllegalArgumentException("No content or resource in the message: " + message);
         }
 
@@ -145,7 +146,7 @@ public class MessageRepository extends AstraPageableRepository {
         }, "purgeMessages", roomId);
     }
 
-    public void delete(String roomId, String createdAt, String profileId) {
+    public void delete(String roomId, String createdAt, UUID profileId) {
         log.trace("delete input: roomId={}, createdAt={}, profileId={}", roomId, createdAt, profileId);
         execute(() -> {
             var statement = new SimpleStatementBuilder(DELETE_MESSAGE)
@@ -158,7 +159,7 @@ public class MessageRepository extends AstraPageableRepository {
         }, "delete", List.of(roomId, createdAt, profileId));
     }
 
-    public Optional<Message> findById(String roomId, String createdAt, String profileId) {
+    public Optional<Message> findById(String roomId, String createdAt, UUID profileId) {
         var id = new IdState(roomId, createdAt, profileId);
         log.trace("findById input: {}", id);
         return execute(() -> {
@@ -174,7 +175,7 @@ public class MessageRepository extends AstraPageableRepository {
         }, "findById", id);
     }
 
-    public record IdState(String roomId, String createdAt, String profileId) {
+    public record IdState(String roomId, String createdAt, UUID profileId) {
     }
 
     /**

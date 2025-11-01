@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 
@@ -41,7 +42,7 @@ public class StompSubscriptionController {
         }
     }
 
-    void removeFromCache(String userId, List<StompSubscription> connectors) {
+    void removeFromCache(UUID userId, List<StompSubscription> connectors) {
         cache.remove(userId, connectors);
         log.debug("Unsubscribed: user={}, subscription={}", userId, connectors);
     }

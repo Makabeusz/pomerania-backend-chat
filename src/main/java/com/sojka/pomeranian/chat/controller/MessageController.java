@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/messages")
@@ -28,7 +30,7 @@ public class MessageController {
     @GetMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversation(
-            @RequestParam String recipientId,
+            @RequestParam UUID recipientId,
             @RequestParam(required = false) String nextPageState,
             @AuthenticationPrincipal User user
     ) {
@@ -51,7 +53,7 @@ public class MessageController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Boolean> updateConversationFlag(
             @AuthenticationPrincipal User user,
-            @RequestParam String recipientId,
+            @RequestParam UUID recipientId,
             @RequestParam Boolean flag) {
         log.trace("updateConversationFlag input: userID={}, recipientId={}, flag={}",
                 user.getId(), recipientId, flag);
@@ -74,7 +76,7 @@ public class MessageController {
             @AuthenticationPrincipal User user,
             @RequestParam String roomId,
             @RequestParam String createdAt,
-            @RequestParam String profileId
+            @RequestParam UUID profileId
     ) {
         return ResponseEntity.ok(chatService.deleteMessageResource(roomId, createdAt, profileId, user.getId()));
     }

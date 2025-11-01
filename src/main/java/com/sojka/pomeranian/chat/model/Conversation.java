@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "conversations")
@@ -35,9 +36,9 @@ public class Conversation {
     public static class Id implements Serializable {
 
         @Column(name = "user_id", nullable = false, updatable = false)
-        private String userId;
+        private UUID userId;
 
         @Column(name = "recipient_id", nullable = false, updatable = false)
-        private String recipientId;
+        private UUID recipientId;
     }
 }

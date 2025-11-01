@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -13,9 +14,9 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 public class NotificationHeader {
 
-    private String profileId;
+    private UUID profileId;
     private Timestamp createdAt;
-    private String senderId;
+    private UUID senderId;
     private String senderUsername;
     private String content;
     private Long count;

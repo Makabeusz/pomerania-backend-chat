@@ -52,11 +52,11 @@ public final class ReadNotificationMapper {
         }
         String typeValue = row.getString("type");
         return ReadNotification.builder()
-                .profileId(row.getString("profile_id"))
+                .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
                 .type(typeValue != null ? NotificationDto.Type.valueOf(typeValue) : null)
                 .readAt(row.getInstant("read_at"))
-                .relatedId(row.getString("related_id"))
+                .relatedId(row.getUuid("related_id"))
                 .relatedType(row.getString("related_type"))
                 .content(row.getString("content"))
                 .metadata(row.getMap("metadata", String.class, String.class))
