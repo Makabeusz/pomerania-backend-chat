@@ -18,5 +18,5 @@ public class ConversationDto {
     private UUID recipientId;
     private Boolean starred;
     private Timestamp lastMessageAt;
-    private String image192;
+    private UUID image192;
 }

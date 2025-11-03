@@ -66,7 +66,7 @@ public class MessageController {
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) Boolean starred
     ) {
-        log.trace("updateConversationFlag input: userID={}, starred={}", user.getId(), starred);
+        log.trace("getConversationCount input: userID={}, starred={}", user.getId(), starred);
         return ResponseEntity.ok(chatService.getConversationsCount(user.getId(), starred));
     }
 

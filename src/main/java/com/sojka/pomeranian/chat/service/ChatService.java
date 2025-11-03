@@ -109,7 +109,7 @@ public class ChatService {
         }
 
         var rowsUpdated = conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
-        if (rowsUpdated >= 1) {
+        if (rowsUpdated != 2) {
             var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), false, now);
             var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), false, now);
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
@@ -148,33 +148,16 @@ public class ChatService {
     public ResultsPage<ChatMessagePersisted> getConversations(
             UUID userId, Boolean starred, Pagination pagination
     ) {
-        if (starred == null) {
-            return getConversationHeaders(userId, pagination);
-        } else {
-            return getConversationHeaders(userId, starred, pagination);
-        }
-    }
-
-    private ResultsPage<ChatMessagePersisted> getConversationHeaders(
-            UUID userId, boolean starred, Pagination pagination
-    ) {
         log.trace("getConversationsHeaders input: userId={}, starred={}, pagination={}", userId, starred, pagination);
-
-        List<ConversationDto> conversations = conversationsRepository.findByUserIdAndStarredWithRecipientImage(
-                userId, starred, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
-                        Sort.by(Sort.Direction.DESC, "last_message_at"))
-        );
-
-        return provideConversationsWithUnreadCount(conversations, pagination);
-    }
-
-    private ResultsPage<ChatMessagePersisted> getConversationHeaders(UUID userId, Pagination pagination) {
-        log.trace("getConversationsHeaders input: userId={}, pagination={}", userId, pagination);
-
-        List<ConversationDto> conversations = conversationsRepository.findByUserIdWithRecipientImage(
-                userId, PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
-                        Sort.by(Sort.Direction.DESC, "last_message_at"))
-        );
+        PageRequest pageRequest = PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
+                Sort.by("last_message_at").descending());
+        List<ConversationDto> conversations;
+        if (starred == null) {
+            conversations = conversationsRepository.findByUserIdWithRecipientImage(userId, pageRequest);
+        } else {
+            conversations = conversationsRepository.findByUserIdAndStarredWithRecipientImage(userId, starred, pageRequest);
+        }
+        System.out.println(conversations);
         return provideConversationsWithUnreadCount(conversations, pagination);
     }
 

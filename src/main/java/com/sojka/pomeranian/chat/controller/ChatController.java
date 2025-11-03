@@ -56,8 +56,7 @@ public class ChatController {
         var messageResponse = MessageMapper.toDto(messageSaveResult.message());
 
         // Update both users chat
-        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), DM_DESTINATION,
-                new ChatResponse<>(messageResponse));
+        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), DM_DESTINATION, new ChatResponse<>(messageResponse));
         // Publish unread message notification
         if (!isOnline) {
             var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
