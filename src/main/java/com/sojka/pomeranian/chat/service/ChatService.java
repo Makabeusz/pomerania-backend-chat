@@ -136,8 +136,8 @@ public class ChatService {
         return readAt;
     }
 
-    public ResultsPage<ChatMessagePersisted> getConversation(UUID userId1, UUID userId2, String pageState) {
-        String roomId = generateRoomId(userId1, userId2);
+    public ResultsPage<ChatMessagePersisted> getConversation(UUID userId, UUID otherProfileId, String pageState) {
+        String roomId = generateRoomId(userId, otherProfileId);
         var page = messageRepository.findByRoomId(roomId, pageState, 20);
         return new ResultsPage<>(
                 page.getResults().stream()

@@ -32,8 +32,10 @@ public class ChatNotificationController {
 
     @GetMapping("/roomCount")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Integer> roomCount(@AuthenticationPrincipal User user,
-                                             @RequestParam String roomId) {
+    public ResponseEntity<Integer> roomCount(
+            @AuthenticationPrincipal User user,
+            @RequestParam String roomId
+    ) {
         return ResponseEntity.ok(chatService.getUnreadMessagesCount(user.getId(), roomId));
     }
 
@@ -41,7 +43,8 @@ public class ChatNotificationController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<NotificationDto>> getNotifications(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState) {
+            @RequestParam(required = false) String nextPageState
+    ) {
         return ResponseEntity.ok(chatService.getMessageNotifications(user.getId(), nextPageState));
     }
 
@@ -49,7 +52,8 @@ public class ChatNotificationController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ResultsPage<NotificationDto>> getNotificationHeaders(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState) {
+            @RequestParam(required = false) String nextPageState
+    ) {
         return ResponseEntity.ok(chatService.getMessageNotificationHeaders(user.getId(), nextPageState));
     }
 

@@ -207,7 +207,7 @@ CREATE TABLE IF NOT EXISTS likes (
 CREATE TABLE IF NOT EXISTS conversations (
     user_id UUID,
     recipient_id UUID,
-    flag VARCHAR,
+    flag VARCHAR DEFAULT 'NORMAL',
     last_message_at TIMESTAMP,
     PRIMARY KEY (user_id, recipient_id)
 );

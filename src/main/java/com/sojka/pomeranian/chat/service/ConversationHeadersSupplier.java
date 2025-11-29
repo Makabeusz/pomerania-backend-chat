@@ -98,6 +98,7 @@ public class ConversationHeadersSupplier extends ObjectProvider<ChatMessagePersi
             }
             result.getMessage().addMetadata("unread", result.getUnreadCount() + "");
             result.getMessage().addMetadata("flag", conversation.getFlag());
+            result.getMessage().addMetadata("image192", conversation.getImage192() + "");
 
             return Pair.of(conversation, result.getMessage());
         }

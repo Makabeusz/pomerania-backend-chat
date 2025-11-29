@@ -51,7 +51,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
     int updateLastMessageAt(UUID userId, UUID recipientId, Instant timestamp);
 
     @Query(value = """
-            SELECT c.user_id, c.recipient_id, c.flag, c.last_message_at, p.image_192
+            SELECT c.user_id, c.recipient_id, c.flag, c.last_message_at, p.image_192 AS image192
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId
@@ -60,7 +60,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
     List<ConversationDto> findByUserIdAndFlags(UUID userId, ConversationFlag flag1, ConversationFlag flag2, Pageable pageable);
 
     @Query(value = """
-            SELECT c.user_id, c.recipient_id, c.flag, c.last_message_at, p.image_192
+            SELECT c.user_id, c.recipient_id, c.flag, c.last_message_at, p.image_192 AS image192
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId
