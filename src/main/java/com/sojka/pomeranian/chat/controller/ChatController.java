@@ -39,7 +39,6 @@ public class ChatController {
     private final RedisWebSocketService messagingTemplate;
     private final ChatService chatService;
     private final ChatCache cache;
-//    private final MessageNotificationRepository notificationRepository;
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,

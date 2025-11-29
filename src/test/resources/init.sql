@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS personal (
 CREATE TABLE IF NOT EXISTS settings_blocked_users (
     profile_id UUID NOT NULL,
     blocked_user_id UUID NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (profile_id, blocked_user_id)
 );
 
@@ -145,6 +146,7 @@ CREATE TABLE IF NOT EXISTS verification_token (
     type VARCHAR(20) NOT NULL,
     user_id UUID NOT NULL,
     expiry_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY(token, type, user_id)
 );
 
@@ -195,7 +197,7 @@ CREATE TABLE IF NOT EXISTS likes (
     related_type VARCHAR(50) NOT NULL, -- e.g., 'POST', 'PHOTO', 'PROFILE'
     related_profile_id UUID NOT NULL,
     comment_type VARCHAR(64),
-    comment_type_owner_id UUID,
+    comment_type_owner_id VARCHAR(64),
     type VARCHAR(50) NOT NULL, -- currently only 'HEART'
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (profile_id, related_id)
@@ -205,8 +207,8 @@ CREATE TABLE IF NOT EXISTS likes (
 CREATE TABLE IF NOT EXISTS conversations (
     user_id UUID,
     recipient_id UUID,
-    starred BOOLEAN,
-    last_message_at TIMESTAMP, -- indexed
+    flag VARCHAR,
+    last_message_at TIMESTAMP,
     PRIMARY KEY (user_id, recipient_id)
 );
 
@@ -237,18 +239,18 @@ CREATE TABLE IF NOT EXISTS validation_photos (
     profile_id UUID PRIMARY KEY,
     photo_id UUID,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
     status VARCHAR,
     reason VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS profile_views (
     profile_id UUID,
-    day TEXT, -- e.g., '2025-07-24'
+    day DATE,
     viewer_id UUID,
     count INTEGER,
     first_timestamp TIMESTAMP NOT NULL,
-    last_timestamp TIMESTAMP,
+    last_timestamp TIMESTAMP  NOT NULL,
     PRIMARY KEY (profile_id, day, viewer_id)
 );
 
@@ -304,7 +306,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_profile_id ON comments(profile_id);
 CREATE INDEX IF NOT EXISTS idx_comments_related_profile_id ON comments(related_profile_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_last_message_at ON conversations(last_message_at);
-CREATE INDEX IF NOT EXISTS idx_conversations_starred ON conversations(starred);
+CREATE INDEX IF NOT EXISTS idx_conversations_flag ON conversations(flag);
 CREATE INDEX IF NOT EXISTS idx_message_notifications_created_at ON message_notifications(created_at);
 CREATE INDEX IF NOT EXISTS idx_likes_created_at ON likes(created_at);
 CREATE INDEX IF NOT EXISTS idx_likes_related_profile_id ON likes(related_profile_id);
@@ -315,8 +317,80 @@ CREATE INDEX IF NOT EXISTS idx_osmcities_municipality ON osmcities (municipality
 CREATE INDEX IF NOT EXISTS idx_osmcities_country ON osmcities (country);
 CREATE INDEX IF NOT EXISTS idx_osmcities_pop ON osmcities (pop);
 CREATE INDEX IF NOT EXISTS idx_profile_preferences_profile_id ON profile_preferences(profile_id);
+CREATE INDEX IF NOT EXISTS idx_profile_views_last_timestamp ON profile_views(last_timestamp);
 
 --handle roles
 INSERT INTO roles (id, name) VALUES (0, 'ADMIN');
 INSERT INTO roles (id, name) VALUES (1, 'USER');
 INSERT INTO roles (id, name) VALUES (2, 'DEACTIVATED');
+
+-----------------–-----------------------–-----------------------–-------------
+-----------------–------ Security blocked user context -----------------–------
+-----------------–-----------------------–-----------------------–-------------
+
+CREATE UNLOGGED TABLE IF NOT EXISTS app_session_context (
+    id SERIAL PRIMARY KEY,
+    current_user_id UUID NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure only one row exists
+DELETE FROM app_session_context;
+INSERT INTO app_session_context (current_user_id) VALUES ('00000000-0000-0000-0000-000000000000');
+
+-- 2. Secure function to set current user (only your app can call it)
+CREATE OR REPLACE FUNCTION public.set_current_user(user_id UUID)
+RETURNS void AS $$
+BEGIN
+    UPDATE app_session_context
+    SET current_user_id = user_id, updated_at = NOW()
+    WHERE id = 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- TODO: Grant only your app role permission
+--REVOKE ALL ON FUNCTION set_current_user(UUID) FROM PUBLIC;
+--GRANT EXECUTE ON FUNCTION set_current_user(UUID) TO your_app_role;
+
+
+CREATE OR REPLACE VIEW v_profiles AS
+SELECT p.*
+FROM profiles p
+WHERE NOT EXISTS (
+    SELECT 1 FROM settings_blocked_users bu
+    WHERE bu.profile_id = (SELECT current_user_id FROM app_session_context)
+      AND bu.blocked_user_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1 FROM settings_blocked_users bu
+    WHERE bu.profile_id = p.id
+      AND bu.blocked_user_id = (SELECT current_user_id FROM app_session_context)
+);
+
+CREATE OR REPLACE VIEW v_comments AS
+SELECT c.*
+FROM comments c
+WHERE c.profile_id IN (SELECT id FROM v_profiles);
+
+CREATE OR REPLACE VIEW v_followers AS
+SELECT f.*
+FROM followers f
+WHERE f.profile_id IN (SELECT id FROM v_profiles)
+AND f.follower_id IN (SELECT id FROM v_profiles);
+
+CREATE OR REPLACE VIEW v_friends AS
+SELECT f.*
+FROM friends f
+WHERE f.profile_id IN (SELECT id FROM v_profiles)
+AND f.friend_id IN (SELECT id FROM v_profiles);
+
+CREATE OR REPLACE VIEW v_likes AS
+SELECT l.*
+FROM likes l
+WHERE l.profile_id IN (SELECT id FROM v_profiles)
+AND l.related_profile_id IN (SELECT id FROM v_profiles);
+
+CREATE OR REPLACE VIEW v_profile_views AS
+SELECT v.*
+FROM profile_views v
+WHERE v.viewer_id IN (SELECT id FROM v_profiles);

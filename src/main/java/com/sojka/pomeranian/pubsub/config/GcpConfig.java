@@ -18,6 +18,7 @@ public class GcpConfig {
     CommentsConfig commentsConfig;
     DeleteAccountConfig deleteAccountConfig;
     ChatResourcesConfig chatResourcesConfig;
+    BlockUserConfig blockUserConfig;
 
     public GcpConfig(
             @Value("${gcp.project-id}") String projectId,
@@ -25,13 +26,16 @@ public class GcpConfig {
             NotificationsConfig notificationsConfig,
             CommentsConfig commentsConfig,
             DeleteAccountConfig deleteAccountConfig,
-            ChatResourcesConfig chatResourcesConfig) {
+            ChatResourcesConfig chatResourcesConfig,
+            BlockUserConfig blockUserConfig
+    ) {
         this.projectId = projectId;
         this.region = region;
         this.notificationsConfig = notificationsConfig;
         this.commentsConfig = commentsConfig;
         this.deleteAccountConfig = deleteAccountConfig;
         this.chatResourcesConfig = chatResourcesConfig;
+        this.blockUserConfig = blockUserConfig;
     }
 
     @Data
@@ -74,6 +78,17 @@ public class GcpConfig {
     @Component
     @ConfigurationProperties("gcp.pubsub.delete-account.subscriber")
     public static class DeleteAccountConfig {
+
+        String subscriptionName;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.block-user.subscriber")
+    public static class BlockUserConfig {
 
         String subscriptionName;
     }

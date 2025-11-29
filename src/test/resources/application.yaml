@@ -51,3 +51,6 @@ gcp:
     delete-account:
       subscriber:
         subscription-name: 'delete-account-dev'
+    block-user:
+      subscriber:
+        subscription-name: 'block-user-dev'

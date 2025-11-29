@@ -1,6 +1,7 @@
 package com.sojka.pomeranian;
 
 import com.sojka.pomeranian.astra.connection.Connector;
+import com.sojka.pomeranian.pubsub.BlockUserSubscriber;
 import com.sojka.pomeranian.pubsub.CommentsSubscriber;
 import com.sojka.pomeranian.pubsub.DeleteAccountSubscriber;
 import com.sojka.pomeranian.pubsub.NotificationSubscriber;
@@ -22,6 +23,7 @@ public class PomeranianChatApplication {
     private final NotificationSubscriber notificationSubscriber;
     private final CommentsSubscriber commentsSubscriber;
     private final DeleteAccountSubscriber deleteAccountSubscriber;
+    private final BlockUserSubscriber blockUserSubscriber;
 
     public static void main(String[] args) {
         SpringApplication.run(PomeranianChatApplication.class, args);
@@ -33,5 +35,6 @@ public class PomeranianChatApplication {
         notificationSubscriber.subscribeAsync();
         commentsSubscriber.subscribeAsync();
         deleteAccountSubscriber.subscribeAsync();
+        blockUserSubscriber.subscribeAsync();
     }
 }

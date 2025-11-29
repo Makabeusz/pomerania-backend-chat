@@ -2,6 +2,7 @@ package com.sojka.pomeranian.chat.repository;
 
 import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.model.Conversation;
+import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -26,9 +26,20 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     void deleteAllByIdUserId(UUID userId);
 
-    Optional<Long> countAllByIdUserId(UUID userId);
+    Long countAllByIdUserId(UUID userId);
 
-    Optional<Long> countAllByIdUserIdAndStarred(UUID userId, boolean starred);
+    @Query(value = """
+            SELECT COUNT(*) FROM conversations c
+            WHERE c.user_id = :userId
+            AND c.flag = ?#{#flag.name()}""", nativeQuery = true)
+    Long countAllByIdUserIdAndFlag(UUID userId, ConversationFlag flag);
+
+    @Query(value = """
+            SELECT COUNT(*) FROM conversations c
+            WHERE c.user_id = :userId
+            AND (c.flag = ?#{#flag1.name()}
+            OR c.flag = ?#{#flag2.name()})""", nativeQuery = true)
+    Long countAllByIdUserIdAndFlagOrFlag(UUID userId, ConversationFlag flag1, ConversationFlag flag2);
 
     @Modifying
     @Transactional
@@ -40,17 +51,20 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
     int updateLastMessageAt(UUID userId, UUID recipientId, Instant timestamp);
 
     @Query(value = """
-            SELECT c.user_id, c.recipient_id, c.starred, c.last_message_at, p.image_192
-            FROM conversations c
-            JOIN profiles p ON c.recipient_id = p.id
-            WHERE c.user_id = :userId""", nativeQuery = true)
-    List<ConversationDto> findByUserIdWithRecipientImage(UUID userId, Pageable pageable);
-
-    @Query(value = """
-            SELECT c.user_id, c.recipient_id, c.starred, c.last_message_at, p.image_192
+            SELECT c.user_id, c.recipient_id, c.flag, c.last_message_at, p.image_192
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId
-            AND c.starred = :starred""", nativeQuery = true)
-    List<ConversationDto> findByUserIdAndStarredWithRecipientImage(UUID userId, boolean starred, Pageable pageable);
+            AND (c.flag = ?#{#flag1.name()}
+            OR c.flag = ?#{#flag2.name()})""", nativeQuery = true)
+    List<ConversationDto> findByUserIdAndFlags(UUID userId, ConversationFlag flag1, ConversationFlag flag2, Pageable pageable);
+
+    @Query(value = """
+            SELECT c.user_id, c.recipient_id, c.flag, c.last_message_at, p.image_192
+            FROM conversations c
+            JOIN profiles p ON c.recipient_id = p.id
+            WHERE c.user_id = :userId
+            AND c.flag = ?#{#flag.name()}""", nativeQuery = true)
+    List<ConversationDto> findByUserIdAndFlag(UUID userId, ConversationFlag flag, Pageable pageable);
+
 }

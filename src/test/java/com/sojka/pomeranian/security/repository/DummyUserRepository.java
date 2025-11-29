@@ -32,6 +32,11 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByEmail(String email) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <S extends User> List<S> saveAll(Iterable<S> entities) {
         throw new UnsupportedOperationException();
     }

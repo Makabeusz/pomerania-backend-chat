@@ -44,9 +44,11 @@ public class ConversationHeadersSupplier extends ObjectProvider<ChatMessagePersi
 
     private class UnreadMessageCountSupplier extends ObjectSupplier<ChatMessagePersisted, ConversationDto> {
 
-        public UnreadMessageCountSupplier(SupplierQueue<ConversationDto> queue,
-                                          ConcurrentMap<Integer, Pair<ConversationDto, ChatMessagePersisted>> result,
-                                          Logger log) {
+        public UnreadMessageCountSupplier(
+                SupplierQueue<ConversationDto> queue,
+                ConcurrentMap<Integer, Pair<ConversationDto, ChatMessagePersisted>> result,
+                Logger log
+        ) {
             super(queue, result, log);
         }
 
@@ -95,6 +97,7 @@ public class ConversationHeadersSupplier extends ObjectProvider<ChatMessagePersi
                 }
             }
             result.getMessage().addMetadata("unread", result.getUnreadCount() + "");
+            result.getMessage().addMetadata("flag", conversation.getFlag());
 
             return Pair.of(conversation, result.getMessage());
         }

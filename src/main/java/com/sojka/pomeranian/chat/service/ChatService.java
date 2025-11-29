@@ -17,6 +17,7 @@ import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
+import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.lib.producerconsumer.ObjectProvider;
@@ -41,6 +42,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
+import static com.sojka.pomeranian.lib.dto.ConversationFlag.NORMAL;
+import static com.sojka.pomeranian.lib.dto.ConversationFlag.STARRED;
 import static com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId;
 import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
 import static com.sojka.pomeranian.lib.util.CommonUtils.noSuchElementException;
@@ -100,7 +103,7 @@ public class ChatService {
         if (!isOnline) {
             // Keep maximum 100 chars for message notification content
             String contentSlice = chatMessage.getContent().length() > 96
-                    ? chatMessage.getContent().substring(0, 97) + " ..."
+                    ? chatMessage.getContent().substring(0, 97) + "..."
                     : chatMessage.getContent();
             notification = messageNotificationRepository.save(
                     new MessageNotification(new MessageNotification.Id(recipientId, toLocalDateTime(now), senderId),
@@ -110,8 +113,8 @@ public class ChatService {
 
         var rowsUpdated = conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
         if (rowsUpdated != 2) {
-            var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), false, now);
-            var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), false, now);
+            var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), null, now);
+            var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), null, now);
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
@@ -135,7 +138,7 @@ public class ChatService {
 
     public ResultsPage<ChatMessagePersisted> getConversation(UUID userId1, UUID userId2, String pageState) {
         String roomId = generateRoomId(userId1, userId2);
-        var page = messageRepository.findByRoomId(roomId, pageState, 10);
+        var page = messageRepository.findByRoomId(roomId, pageState, 20);
         return new ResultsPage<>(
                 page.getResults().stream()
                         .sorted(Comparator.comparing(Message::getCreatedAt))
@@ -146,18 +149,18 @@ public class ChatService {
     }
 
     public ResultsPage<ChatMessagePersisted> getConversations(
-            UUID userId, Boolean starred, Pagination pagination
+            UUID userId, ConversationFlag flag, Pagination pagination
     ) {
-        log.trace("getConversationsHeaders input: userId={}, starred={}, pagination={}", userId, starred, pagination);
+        log.trace("getConversationsHeaders input: userId={}, flag={}, pagination={}", userId, flag, pagination);
         PageRequest pageRequest = PageRequest.of(pagination.pageNumber(), pagination.pageSize(),
                 Sort.by("last_message_at").descending());
         List<ConversationDto> conversations;
-        if (starred == null) {
-            conversations = conversationsRepository.findByUserIdWithRecipientImage(userId, pageRequest);
+        if (flag == NORMAL) {
+            conversations = conversationsRepository.findByUserIdAndFlags(userId, NORMAL, STARRED, pageRequest);
         } else {
-            conversations = conversationsRepository.findByUserIdAndStarredWithRecipientImage(userId, starred, pageRequest);
+            conversations = conversationsRepository.findByUserIdAndFlag(userId, flag, pageRequest);
         }
-        System.out.println(conversations);
+
         return provideConversationsWithUnreadCount(conversations, pagination);
     }
 
@@ -171,31 +174,21 @@ public class ChatService {
         return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));
     }
 
-    public long getConversationsCount(UUID userId, Boolean starred) {
-        if (starred == null) {
-            return getConversationsHeadersCount(userId);
+    public long getConversationsCount(UUID userId, ConversationFlag flag) {
+        if (flag == NORMAL) {
+            return conversationsRepository.countAllByIdUserIdAndFlagOrFlag(userId, NORMAL, STARRED);
         } else {
-            return getConversationsHeadersCount(userId, starred);
+            return conversationsRepository.countAllByIdUserIdAndFlag(userId, flag);
         }
     }
 
-    public long getConversationsHeadersCount(UUID userId) {
-        log.trace("getConversationsHeadersCount for userID={}", userId);
-        return conversationsRepository.countAllByIdUserId(userId).orElseThrow();
-    }
-
-    public long getConversationsHeadersCount(UUID userId, boolean starred) {
-        log.trace("getConversationsHeadersCount for userID={}, starred={}", userId, starred);
-        return conversationsRepository.countAllByIdUserIdAndStarred(userId, starred).orElseThrow();
-    }
-
-    public boolean updateConversationFlag(UUID userId, UUID recipientId, Boolean star) {
+    public boolean updateConversationFlag(UUID userId, UUID recipientId, ConversationFlag flag) {
         Conversation.Id id = new Conversation.Id(userId, recipientId);
         var conversation = conversationsRepository.findById(id).orElseThrow(noSuchElementException("conversation", id.toString()));
-        if (conversation.getStarred() == star) {
+        if (conversation.getFlag() == flag) {
             return false;
         }
-        conversation.setStarred(star);
+        conversation.setFlag(flag);
         conversationsRepository.save(conversation);
         return true;
     }
@@ -264,7 +257,7 @@ public class ChatService {
 
     @Transactional
     public long deleteUserConversations(UUID userId) {
-        var deletedUserConversations = conversationsRepository.countAllByIdUserId(userId).orElseThrow();
+        var deletedUserConversations = conversationsRepository.countAllByIdUserId(userId);
         conversationsRepository.deleteAllByIdUserId(userId);
         log.info("Removed {} conversations of userID={}", deletedUserConversations, userId);
         return deletedUserConversations;

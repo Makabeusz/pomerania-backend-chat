@@ -90,7 +90,7 @@ public class NotificationService {
     public Long countUnreadNotifications(UUID userId) {
         var count = notificationRepository.countByIdProfileId(userId).orElseThrow();
 
-        log.info("Fetched {} unread notifications count", count);
+        log.debug("Fetched {} unread notifications count", count);
         return count;
     }
 

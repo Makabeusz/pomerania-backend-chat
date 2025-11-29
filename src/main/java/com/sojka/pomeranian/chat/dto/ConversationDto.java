@@ -16,7 +16,7 @@ public class ConversationDto {
 
     private UUID userId;
     private UUID recipientId;
-    private Boolean starred;
+    private String flag;
     private Timestamp lastMessageAt;
     private UUID image192;
 }

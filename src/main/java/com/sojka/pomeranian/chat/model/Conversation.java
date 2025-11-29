@@ -1,9 +1,12 @@
 package com.sojka.pomeranian.chat.model;
 
+import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,8 +26,9 @@ public class Conversation {
     @EmbeddedId
     private Id id;
 
-    @Column(name = "starred")
-    private Boolean starred;
+    @Column(name = "flag")
+    @Enumerated(EnumType.STRING)
+    private ConversationFlag flag;
 
     @Column(name = "last_message_at", nullable = false)
     private Instant lastMessageAt;

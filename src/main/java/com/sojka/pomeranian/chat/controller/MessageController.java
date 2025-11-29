@@ -3,6 +3,7 @@ package com.sojka.pomeranian.chat.controller;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.service.ChatService;
+import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +45,9 @@ public class MessageController {
             @AuthenticationPrincipal User user,
             @RequestParam int pageNumber,
             @RequestParam int pageSize,
-            @RequestParam(required = false) Boolean starred
+            @RequestParam ConversationFlag flag
     ) {
-        return ResponseEntity.ok(chatService.getConversations(user.getId(), starred, new Pagination(pageNumber, pageSize)));
+        return ResponseEntity.ok(chatService.getConversations(user.getId(), flag, new Pagination(pageNumber, pageSize)));
     }
 
     @PostMapping("/headers")
@@ -54,9 +55,9 @@ public class MessageController {
     public ResponseEntity<Boolean> updateConversationFlag(
             @AuthenticationPrincipal User user,
             @RequestParam UUID recipientId,
-            @RequestParam Boolean flag) {
-        log.trace("updateConversationFlag input: userID={}, recipientId={}, flag={}",
-                user.getId(), recipientId, flag);
+            @RequestParam ConversationFlag flag
+    ) {
+        log.trace("updateConversationFlag input: userID={}, recipientId={}, flag={}", user.getId(), recipientId, flag);
         return ResponseEntity.ok(chatService.updateConversationFlag(user.getId(), recipientId, flag));
     }
 
@@ -64,10 +65,10 @@ public class MessageController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Long> getConversationCount(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) Boolean starred
+            @RequestParam ConversationFlag flag
     ) {
-        log.trace("getConversationCount input: userID={}, starred={}", user.getId(), starred);
-        return ResponseEntity.ok(chatService.getConversationsCount(user.getId(), starred));
+        log.trace("getConversationCount input: userID={}, flag={}", user.getId(), flag);
+        return ResponseEntity.ok(chatService.getConversationsCount(user.getId(), flag));
     }
 
     @DeleteMapping("/resource")

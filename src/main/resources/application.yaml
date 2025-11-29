@@ -28,23 +28,23 @@ logging:
             BaseExceptionHandler: DEBUG
           notification:
             service:
-              NotificationService: TRACE
+              NotificationService: INFO
           chat:
             repository:
-              MessageRepository: TRACE
+              MessageRepository: INFO
             service:
-              ChatService: TRACE
+              ChatService: INFO
             controller:
               MessageController: TRACE
-              StompSubscriptionController: TRACE
+              StompSubscriptionController: INFO
               GlobalExceptionHandler: DEBUG
           pubsub:
-            CommentsSubscriber: TRACE
-            NotificationSubscriber: TRACE
+            CommentsSubscriber: INFO
+            NotificationSubscriber: INFO
           comment:
             service:
-              CommentService: TRACE
-              SessionTracker: TRACE
+              CommentService: INFO
+              SessionTracker: INFO
 
 pomeranian:
   chat:
@@ -87,3 +87,6 @@ gcp:
     delete-account:
       subscriber:
         subscription-name: 'delete-account-dev'
+    block-user:
+      subscriber:
+        subscription-name: 'block-user-dev'
