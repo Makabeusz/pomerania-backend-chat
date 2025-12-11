@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The Postgres repository exists to overcome Astra limitations. <br>
+ * The Postgres repository exists to overcome Astra limitations.<br>
  * To achieve conversations overview the conversations need to be sorted desc by timestamp, in the same time timestamp
  * must not be part of primary (or clustering) key to be updatable.
  */

@@ -90,3 +90,6 @@ gcp:
     block-user:
       subscriber:
         subscription-name: 'block-user-dev'
+    user-presence:
+      publisher:
+        topic-name: 'user-presence-dev'

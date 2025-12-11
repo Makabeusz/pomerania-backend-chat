@@ -19,6 +19,7 @@ public class GcpConfig {
     DeleteAccountConfig deleteAccountConfig;
     ChatResourcesConfig chatResourcesConfig;
     BlockUserConfig blockUserConfig;
+    UserPresenceConfig userPresenceConfig;
 
     public GcpConfig(
             @Value("${gcp.project-id}") String projectId,
@@ -27,7 +28,8 @@ public class GcpConfig {
             CommentsConfig commentsConfig,
             DeleteAccountConfig deleteAccountConfig,
             ChatResourcesConfig chatResourcesConfig,
-            BlockUserConfig blockUserConfig
+            BlockUserConfig blockUserConfig,
+            UserPresenceConfig userPresenceConfig
     ) {
         this.projectId = projectId;
         this.region = region;
@@ -36,6 +38,7 @@ public class GcpConfig {
         this.deleteAccountConfig = deleteAccountConfig;
         this.chatResourcesConfig = chatResourcesConfig;
         this.blockUserConfig = blockUserConfig;
+        this.userPresenceConfig = userPresenceConfig;
     }
 
     @Data
@@ -93,4 +96,14 @@ public class GcpConfig {
         String subscriptionName;
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.user-presence.publisher")
+    public static class UserPresenceConfig {
+
+        String topicName;
+    }
 }
