@@ -35,11 +35,13 @@ public class UserPresencePublisher {
         TopicName topic = TopicName.of(gcpConfig.getProjectId(), gcpConfig.getUserPresenceConfig().getTopicName());
         this.publisher = Publisher.newBuilder(topic)
                 .setEndpoint(ENDPOINT_FORMAT.formatted(gcpConfig.getRegion()))
+                .setEnableMessageOrdering(true) // TODO: DIFFERENCE message ordering enabled
                 .build();
     }
 
     public ApiFuture<String> publish(UserPresenceRequest request) {
         var future = publisher.publish(PubsubMessage.newBuilder()
+                .setOrderingKey(request.userId().toString())// TODO: DIFFERENCE message ordering enabled
                 .setData(toData(request))
                 .build());
 

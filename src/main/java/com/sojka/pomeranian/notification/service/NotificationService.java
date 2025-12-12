@@ -4,7 +4,7 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
-import com.sojka.pomeranian.chat.service.ChatCache;
+import com.sojka.pomeranian.chat.service.ChatCacheInt;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
@@ -33,7 +33,7 @@ public class NotificationService {
     private final ReadNotificationRepository readNotificationRepository;
     private final MessageNotificationRepository messageNotificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final ChatCache cache;
+    private final ChatCacheInt cache;
 
     // TODO: check comment preference, currently it's skipping prefs and publishing all
     public NotificationResponse<NotificationDto> publish(NotificationDto notification) {

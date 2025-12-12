@@ -8,7 +8,7 @@ import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.service.ChatCache;
+import com.sojka.pomeranian.chat.service.ChatCacheInt;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.RedisWebSocketService;
 import com.sojka.pomeranian.chat.util.CommonUtils;
@@ -38,7 +38,7 @@ public class ChatController {
 
     private final RedisWebSocketService messagingTemplate;
     private final ChatService chatService;
-    private final ChatCache cache;
+    private final ChatCacheInt cache;
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,

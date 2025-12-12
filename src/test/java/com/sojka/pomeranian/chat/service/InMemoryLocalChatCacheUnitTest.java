@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InMemoryLocalChatCacheUnitTest {
 
     Map<UUID, ActiveUser> db = new HashMap<>();
-    ChatCache cache = new InMemoryLocalChatCache(db);
+    ChatCacheInt cache = new InMemoryLocalChatCache(db);
 
     @BeforeEach
     void setUp() {

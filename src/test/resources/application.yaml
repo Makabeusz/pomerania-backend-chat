@@ -16,6 +16,8 @@ astra:
 
 pomeranian:
   chat:
+    cache:
+      write-timeout-ms: 2000
     purge:
       batch-size: 1000
   security:

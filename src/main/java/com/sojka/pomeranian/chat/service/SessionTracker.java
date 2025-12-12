@@ -18,7 +18,7 @@ import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 @RequiredArgsConstructor
 public class SessionTracker {
 
-    private final ChatCache cache;
+    private final ChatCacheInt cache;
     private final UserPresencePublisher publisher;
 
     @EventListener

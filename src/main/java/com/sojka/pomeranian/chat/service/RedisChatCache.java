@@ -1,62 +1,44 @@
 package com.sojka.pomeranian.chat.service;
 
+import com.sojka.pomeranian.chat.config.ChatConfig;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
+import com.sojka.pomeranian.chat.exception.CacheException;
 import com.sojka.pomeranian.chat.model.ActiveUser;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.sojka.pomeranian.chat.config.redis.RedisConfig.ACTIVE_USER_PREFIX;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
-/**
- * An in-memory implementation of {@link ChatCacheInt} for tracking active chat users.
- * Uses a thread-safe {@link ConcurrentHashMap.KeySetView} to store user IDs.
- * Suitable for single-instance deployments; not designed for distributed environments.
- * <p>
- */
 @Slf4j
+@Primary
 @Component
-public class InMemoryLocalChatCache implements ChatCacheInt {
+@RequiredArgsConstructor
+public class RedisChatCache implements ChatCacheInt {
 
-    private final Map<UUID, ActiveUser> cache;
+    private final RedisTemplate<UUID, ActiveUser> cache;
+    private final ChatConfig config;
 
-    /**
-     * Constructs an instance with a provided map of active users.
-     *
-     * @param cache The map to store active user IDs.
-     */
-    public InMemoryLocalChatCache(Map<UUID, ActiveUser> cache) {
-        this.cache = cache;
-    }
-
-    /**
-     * Default constructor that initializes an empty thread-safe map for active users.
-     */
-    @Autowired
-    public InMemoryLocalChatCache() {
-        this.cache = new ConcurrentHashMap<>();
-    }
-
-    /**
-     * Checks if a user specific subscription is online.
-     *
-     * @param userId The ID of the user to check.
-     * @return {@code true} if the user is online, {@code false} otherwise.
-     */
     @Override
     public boolean isOnline(UUID userId, StompSubscription subscription) {
-        ActiveUser activeUser = cache.get(userId);
+        ActiveUser activeUser = cache.opsForValue().get(userId);
         if (activeUser != null) {
             return activeUser.getSubscriptions()
                     .getOrDefault(subscription.type().name(), Collections.emptyList())
@@ -65,15 +47,9 @@ public class InMemoryLocalChatCache implements ChatCacheInt {
         return false;
     }
 
-    /**
-     * Checks if a user is online.
-     *
-     * @param userId The ID of the user to check.
-     * @return {@code true} if the user is online, {@code false} otherwise.
-     */
     @Override
     public boolean isOnline(UUID userId, StompSubscription.Type type) {
-        ActiveUser activeUser = cache.get(userId);
+        ActiveUser activeUser = cache.opsForValue().get(userId);
         if (activeUser != null) {
             return activeUser.getSubscriptions().containsKey(type.name());
         }
@@ -82,27 +58,20 @@ public class InMemoryLocalChatCache implements ChatCacheInt {
 
     @Override
     public Optional<ActiveUser> get(UUID userId) {
-        return Optional.ofNullable(cache.get(userId));
+        return Optional.ofNullable(cache.opsForValue().get(userId));
     }
 
     @Override
     public List<ActiveUser> getAll() {
-        return new ArrayList<>(cache.values());
+        Set<UUID> allKeys = getAllKeys();
+        return cache.opsForValue().multiGet(allKeys);
     }
 
-    /**
-     * Adds a user to the active users map, marking them as online.
-     *
-     * @param userId       The ID of the user to add.
-     * @param subscription The online subscription
-     * @return {@code true} if the subscription was added (was not already online)
-     */
     @Override
     public boolean put(UUID userId, StompSubscription subscription) {
-        ActiveUser activeUser = cache.get(userId);
+        ActiveUser activeUser = cache.opsForValue().get(userId);
         if (activeUser == null) {
-            log.error("The user session does not exists");
-            return false;
+            throw new CacheException("User=%s is not online".formatted(userId));
         }
         var subscriptions = activeUser.getSubscriptions();
 
@@ -123,12 +92,22 @@ public class InMemoryLocalChatCache implements ChatCacheInt {
 
     @Override
     public boolean create(UUID userId, String simpSessionId) {
-        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()));
-        if (previousEntry != null) {
-            log.error("User already online: {}", previousEntry);
+        var exists = cache.opsForValue().setIfAbsent(
+                userId,
+                new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()),
+                config.getCache().getWriteTimeoutDuration()
+        );
+        log.warn("HALO, create cache entry result: {}", exists);
+        if (exists == null) {
+            log.warn("Unexpected cache operation in the pipeline / transaction, userId={}", userId);
+            return false;
+        } else if (exists) {
+            log.info("TODO: remove me, cache entry created, all good, user={} ", userId);
+            return true;
+        } else {
+            log.warn("User already online: {}", userId);
             return false;
         }
-        return true;
     }
 
     /**
@@ -140,12 +119,12 @@ public class InMemoryLocalChatCache implements ChatCacheInt {
      */
     @Override
     public boolean remove(UUID userId) {
-        return cache.remove(userId) != null;
+        return cache.delete(userId);
     }
 
     @Override
     public boolean remove(UUID userId, @NonNull List<StompSubscription> subscriptions) {
-        ActiveUser activeUser = cache.get(userId);
+        ActiveUser activeUser = cache.opsForValue().get(userId);
         if (activeUser != null) {
             for (StompSubscription subscription : subscriptions) {
                 if (subscription.id() == null || subscription.id().isBlank()) {
@@ -167,7 +146,7 @@ public class InMemoryLocalChatCache implements ChatCacheInt {
                 }
             }
             if (activeUser.getSubscriptions().isEmpty()) {
-                cache.remove(userId);
+                cache.delete(userId);
             }
         }
         return false;
@@ -178,6 +157,23 @@ public class InMemoryLocalChatCache implements ChatCacheInt {
      */
     @Override
     public void purge() {
-        cache.clear();
+        Set<UUID> allKeys = getAllKeys();
+        cache.delete(allKeys);
+    }
+
+    private Set<UUID> getAllKeys() {
+        Set<UUID> allKeys = new HashSet<>();
+        cache.execute((RedisCallback<Void>) connection -> {
+            ScanOptions options = ScanOptions.scanOptions().match(ACTIVE_USER_PREFIX + "*").count(100).build();
+            try (Cursor<byte[]> cursor = connection.scan(options)) {
+                while (cursor.hasNext()) {
+                    byte[] keyBytes = cursor.next();
+                    UUID key = (UUID) cache.getKeySerializer().deserialize(keyBytes);
+                    allKeys.add(key);
+                }
+            }
+            return null;
+        });
+        return allKeys;
     }
 }
