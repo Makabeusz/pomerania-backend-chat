@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.service;
 
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
 import com.sojka.pomeranian.lib.dto.UserPresenceRequest;
 import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.pubsub.UserPresencePublisher;
@@ -18,7 +19,7 @@ import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 @RequiredArgsConstructor
 public class SessionTracker {
 
-    private final ChatCacheInt cache;
+    private final ChatCache cache;
     private final UserPresencePublisher publisher;
 
     @EventListener

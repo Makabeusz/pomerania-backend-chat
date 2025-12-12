@@ -1,15 +1,17 @@
-package com.sojka.pomeranian.chat.service;
+package com.sojka.pomeranian.chat.service.cache;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,20 +20,33 @@ import java.util.stream.Collectors;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 /**
- * An in-memory implementation of {@link ChatCacheInt} for tracking active chat users.
+ * An in-memory implementation of {@link ChatCache} for tracking active chat users.
  * Uses a thread-safe {@link ConcurrentHashMap.KeySetView} to store user IDs.
  * Suitable for single-instance deployments; not designed for distributed environments.
  * <p>
  */
 @Slf4j
 @Component
-public abstract class ChatCacheA implements ChatCacheInt {
+public class InMemoryLocalChatCache implements ChatCache {
 
-    abstract ActiveUser getValue(UUID key);
-    abstract List<ActiveUser> getAllValues();
-    abstract boolean deleteEntry(UUID key);
-    abstract Boolean putEntry(UUID key, ActiveUser value);
-    abstract void purgeAll();
+    private final Map<UUID, ActiveUser> cache;
+
+    /**
+     * Constructs an instance with a provided map of active users.
+     *
+     * @param cache The map to store active user IDs.
+     */
+    public InMemoryLocalChatCache(Map<UUID, ActiveUser> cache) {
+        this.cache = cache;
+    }
+
+    /**
+     * Default constructor that initializes an empty thread-safe map for active users.
+     */
+    @Autowired
+    public InMemoryLocalChatCache() {
+        this.cache = new ConcurrentHashMap<>();
+    }
 
     /**
      * Checks if a user specific subscription is online.
@@ -41,7 +56,7 @@ public abstract class ChatCacheA implements ChatCacheInt {
      */
     @Override
     public boolean isOnline(UUID userId, StompSubscription subscription) {
-        ActiveUser activeUser = getValue(userId);
+        ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             return activeUser.getSubscriptions()
                     .getOrDefault(subscription.type().name(), Collections.emptyList())
@@ -58,7 +73,7 @@ public abstract class ChatCacheA implements ChatCacheInt {
      */
     @Override
     public boolean isOnline(UUID userId, StompSubscription.Type type) {
-        ActiveUser activeUser = getValue(userId);
+        ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             return activeUser.getSubscriptions().containsKey(type.name());
         }
@@ -67,12 +82,12 @@ public abstract class ChatCacheA implements ChatCacheInt {
 
     @Override
     public Optional<ActiveUser> get(UUID userId) {
-        return Optional.ofNullable(getValue(userId));
+        return Optional.ofNullable(cache.get(userId));
     }
 
     @Override
     public List<ActiveUser> getAll() {
-        return getAllValues();
+        return new ArrayList<>(cache.values());
     }
 
     /**
@@ -84,7 +99,7 @@ public abstract class ChatCacheA implements ChatCacheInt {
      */
     @Override
     public boolean put(UUID userId, StompSubscription subscription) {
-        ActiveUser activeUser = getValue(userId);
+        ActiveUser activeUser = cache.get(userId);
         if (activeUser == null) {
             log.error("The user session does not exists");
             return false;
@@ -103,23 +118,17 @@ public abstract class ChatCacheA implements ChatCacheInt {
             ids.add(subscription.id());
             subscriptions.put(subscription.type().name(), ids);
         }
-
         return true;
     }
 
     @Override
     public boolean create(UUID userId, String simpSessionId) {
-        var exists =  putEntry(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()));
-        if (exists == null) {
-            log.warn("Unexpected cache operation in the pipeline / transaction, userId={}", userId);
-            return false;
-        } else if (exists) {
-            log.info("TODO: remove me, cache entry created, all good, user={} ", userId);
-            return true;
-        } else {
-            log.warn("User already online: {}", userId);
+        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()));
+        if (previousEntry != null) {
+            log.error("User already online: {}", previousEntry);
             return false;
         }
+        return true;
     }
 
     /**
@@ -131,12 +140,12 @@ public abstract class ChatCacheA implements ChatCacheInt {
      */
     @Override
     public boolean remove(UUID userId) {
-        return deleteEntry(userId);
+        return cache.remove(userId) != null;
     }
 
     @Override
     public boolean remove(UUID userId, @NonNull List<StompSubscription> subscriptions) {
-        ActiveUser activeUser = getValue(userId);
+        ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             for (StompSubscription subscription : subscriptions) {
                 if (subscription.id() == null || subscription.id().isBlank()) {
@@ -158,7 +167,7 @@ public abstract class ChatCacheA implements ChatCacheInt {
                 }
             }
             if (activeUser.getSubscriptions().isEmpty()) {
-                deleteEntry(userId);
+                cache.remove(userId);
             }
         }
         return false;
@@ -169,6 +178,6 @@ public abstract class ChatCacheA implements ChatCacheInt {
      */
     @Override
     public void purge() {
-        purgeAll();
+        cache.clear();
     }
 }

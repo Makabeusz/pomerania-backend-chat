@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.chat.config.redis;
+package com.sojka.pomeranian.chat.config.cache;
 
 import com.sojka.pomeranian.chat.model.ActiveUser;
 import org.springframework.data.redis.serializer.RedisSerializer;

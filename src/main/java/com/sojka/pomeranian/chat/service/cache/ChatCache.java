@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.chat.service;
+package com.sojka.pomeranian.chat.service.cache;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * TODO: Add docs here, implementation don't need too much docs.
  */
-public interface ChatCacheInt {
+public interface ChatCache {
 
     /**
      * Checks if a user specific subscription is active.

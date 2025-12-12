@@ -2,6 +2,8 @@ package com.sojka.pomeranian.chat.service;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.chat.service.cache.InMemoryLocalChatCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InMemoryLocalChatCacheUnitTest {
 
     Map<UUID, ActiveUser> db = new HashMap<>();
-    ChatCacheInt cache = new InMemoryLocalChatCache(db);
+    ChatCache cache = new InMemoryLocalChatCache(db);
 
     @BeforeEach
     void setUp() {

@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.chat.service;
+package com.sojka.pomeranian.chat.service.cache;
 
 import com.sojka.pomeranian.chat.config.ChatConfig;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
@@ -24,14 +24,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.sojka.pomeranian.chat.config.redis.RedisConfig.ACTIVE_USER_PREFIX;
+import static com.sojka.pomeranian.chat.config.cache.RedisConfig.ACTIVE_USER_PREFIX;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 @Slf4j
 @Primary
 @Component
 @RequiredArgsConstructor
-public class RedisChatCache implements ChatCacheInt {
+public class RedisChatCache implements ChatCache {
 
     private final RedisTemplate<UUID, ActiveUser> cache;
     private final ChatConfig config;
@@ -87,7 +87,7 @@ public class RedisChatCache implements ChatCacheInt {
             ids.add(subscription.id());
             subscriptions.put(subscription.type().name(), ids);
         }
-        return true;
+        return Boolean.TRUE.equals(cache.opsForValue().setIfPresent(userId, activeUser));
     }
 
     @Override
@@ -97,12 +97,10 @@ public class RedisChatCache implements ChatCacheInt {
                 new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()),
                 config.getCache().getWriteTimeoutDuration()
         );
-        log.warn("HALO, create cache entry result: {}", exists);
         if (exists == null) {
             log.warn("Unexpected cache operation in the pipeline / transaction, userId={}", userId);
             return false;
         } else if (exists) {
-            log.info("TODO: remove me, cache entry created, all good, user={} ", userId);
             return true;
         } else {
             log.warn("User already online: {}", userId);
@@ -147,6 +145,8 @@ public class RedisChatCache implements ChatCacheInt {
             }
             if (activeUser.getSubscriptions().isEmpty()) {
                 cache.delete(userId);
+            } else {
+                cache.opsForValue().set(userId, activeUser);
             }
         }
         return false;
@@ -165,7 +165,7 @@ public class RedisChatCache implements ChatCacheInt {
         Set<UUID> allKeys = new HashSet<>();
         cache.execute((RedisCallback<Void>) connection -> {
             ScanOptions options = ScanOptions.scanOptions().match(ACTIVE_USER_PREFIX + "*").count(100).build();
-            try (Cursor<byte[]> cursor = connection.scan(options)) {
+            try (Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
                 while (cursor.hasNext()) {
                     byte[] keyBytes = cursor.next();
                     UUID key = (UUID) cache.getKeySerializer().deserialize(keyBytes);

@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.chat.config.redis;
+package com.sojka.pomeranian.chat.config.cache;
 
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
@@ -7,7 +7,7 @@ import org.springframework.lang.Nullable;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import static com.sojka.pomeranian.chat.config.redis.RedisConfig.ACTIVE_USER_PREFIX;
+import static com.sojka.pomeranian.chat.config.cache.RedisConfig.ACTIVE_USER_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class UUIDRedisSerializer implements RedisSerializer<UUID> {

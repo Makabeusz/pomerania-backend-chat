@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.service.ChatCacheInt;
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
 import com.sojka.pomeranian.security.model.Role;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 @RequiredArgsConstructor
 public class StompSubscriptionController {
 
-    private final ChatCacheInt cache;
+    private final ChatCache cache;
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/unsubscribe")
