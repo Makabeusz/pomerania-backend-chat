@@ -161,14 +161,6 @@ public class ChatService {
             conversations = conversationsRepository.findByUserIdAndFlag(userId, flag, pageRequest);
         }
 
-        return provideConversationsWithUnreadCount(conversations, pagination);
-    }
-
-    private ResultsPage<ChatMessagePersisted> provideConversationsWithUnreadCount(
-            List<ConversationDto> conversations, Pagination pagination
-    ) {
-        log.info("conversations, count: {}\n{}", conversations.size(), JsonUtils.writeToString(conversations));
-
         var headers = conversationHeadersSupplier.provide(conversations).stream().map(Pair::getSecond).toList();
 
         return new ResultsPage<>(headers, JsonUtils.writeToString(pagination));

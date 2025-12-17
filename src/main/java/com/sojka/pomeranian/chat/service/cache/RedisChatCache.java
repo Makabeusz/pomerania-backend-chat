@@ -138,7 +138,9 @@ public class RedisChatCache implements ChatCache {
                     activeUser.getSubscriptions().put(subscription.type().name(), ids);
 
                     if (ids.isEmpty()) {
-                        return activeUser.getSubscriptions().remove(subscription.type().name()) != null;
+                        var removed = activeUser.getSubscriptions().remove(subscription.type().name()) != null;
+                        cache.opsForValue().set(userId, activeUser);
+                        return removed;
                     }
                     return true;
                 }
