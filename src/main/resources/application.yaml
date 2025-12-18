@@ -56,7 +56,7 @@ pomeranian:
   #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
     allowed-origins: http://localhost:3000
-    roles: ADMIN, USER, DEACTIVATED
+    roles: ADMIN, USER, SOFT_BAN, DEACTIVATED, HARD_BAN
     public-paths:
     jwt:
       secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"

@@ -29,7 +29,7 @@ public class MessageController {
     private final ChatService chatService;
 
     @GetMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversation(
             @RequestParam UUID recipientId,
             @RequestParam(required = false) String nextPageState,
@@ -40,7 +40,7 @@ public class MessageController {
     }
 
     @GetMapping("/headers")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversations(
             @AuthenticationPrincipal User user,
             @RequestParam int pageNumber,
@@ -51,7 +51,7 @@ public class MessageController {
     }
 
     @PostMapping("/headers")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<Boolean> updateConversationFlag(
             @AuthenticationPrincipal User user,
             @RequestParam UUID recipientId,
@@ -62,7 +62,7 @@ public class MessageController {
     }
 
     @GetMapping("/headers/count")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<Long> getConversationCount(
             @AuthenticationPrincipal User user,
             @RequestParam ConversationFlag flag
@@ -72,7 +72,7 @@ public class MessageController {
     }
 
     @DeleteMapping("/resource")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<Boolean> deleteResource(
             @AuthenticationPrincipal User user,
             @RequestParam String roomId,
