@@ -7,7 +7,7 @@ import com.sojka.pomeranian.chat.model.ActiveUser;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -28,9 +28,13 @@ import static com.sojka.pomeranian.chat.config.cache.RedisConfig.ACTIVE_USER_PRE
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 @Slf4j
-@Primary
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+        prefix = "pomeranian.chat",
+        name = "redis-enabled",
+        havingValue = "true"
+)
 public class RedisChatCache implements ChatCache {
 
     private final RedisTemplate<UUID, ActiveUser> cache;

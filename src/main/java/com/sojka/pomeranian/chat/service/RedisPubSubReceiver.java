@@ -1,10 +1,17 @@
 package com.sojka.pomeranian.chat.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(
+        prefix = "pomeranian.chat",
+        name = "redis-enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class RedisPubSubReceiver {
 
     private final SimpMessagingTemplate template;

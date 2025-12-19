@@ -9,7 +9,6 @@ import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatService;
-import com.sojka.pomeranian.chat.service.RedisWebSocketService;
 import com.sojka.pomeranian.chat.service.cache.ChatCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
@@ -20,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -35,7 +35,7 @@ import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final RedisWebSocketService messagingTemplate;
+    private final SimpMessageSendingOperations messagingTemplate;
     private final ChatService chatService;
     private final ChatCache cache;
 

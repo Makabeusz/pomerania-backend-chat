@@ -5,6 +5,7 @@ import com.sojka.pomeranian.chat.model.ActiveUser;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -27,6 +28,12 @@ import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(
+        prefix = "pomeranian.chat",
+        name = "redis-enabled",
+        havingValue = "false",
+        matchIfMissing = true
+)
 public class InMemoryLocalChatCache implements ChatCache {
 
     private final Map<UUID, ActiveUser> cache;
