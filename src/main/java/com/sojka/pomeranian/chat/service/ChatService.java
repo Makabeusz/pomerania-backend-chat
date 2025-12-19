@@ -112,10 +112,12 @@ public class ChatService {
         }
 
         var rowsUpdated = conversationsRepository.updateLastMessageAt(senderId, recipientId, now);
+        log.debug("saveMessage: rowsUpdated={}", rowsUpdated);
         if (rowsUpdated != 2) {
-            var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), null, now);
-            var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), null, now);
+            var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), NORMAL, now);
+            var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), NORMAL, now);
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
+            log.debug("saveMessage: saved conversations={}", rowsUpdated);
         }
 
         return new MessageSaveResult(savedMessage, notification);
