@@ -37,6 +37,7 @@ public final class NotificationMapper {
                 .metadata(new HashMap<>(Map.of(
                         "senderId", notification.getSenderId() + "",
                         "senderUsername", notification.getSenderUsername(),
+                        "image192", notification.getSenderImage192() + "",
                         "count", notification.getCount() >= Integer.MAX_VALUE
                                 ? Integer.MAX_VALUE + ""
                                 : notification.getCount().toString()
@@ -46,15 +47,15 @@ public final class NotificationMapper {
 
     public static NotificationDto toDto(CommentStompRequest request) {
         var metadata = new HashMap<String, String>();
+        Optional.ofNullable(request.getImage192()).ifPresent(image192 -> metadata.put("image192", image192));
         Optional.ofNullable(request.getProfileId()).ifPresent(id -> metadata.put("senderId", id + ""));
         Optional.ofNullable(request.getUsername()).ifPresent(username -> metadata.put("senderUsername", username));
-        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(id -> metadata.put("relatedLocationId", id + ""));
+        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(idOrUsername -> metadata.put("relatedLocationId", idOrUsername));
 
         return NotificationDto.builder()
                 .profileId(request.getRelatedProfileId())
                 .createdAt(request.getCreatedAt())
                 .type(NotificationDto.Type.COMMENT)
-//                .readAt()
                 .content(request.getContent())
                 .relatedId(request.getRelatedId())
                 .relatedType(getNameOrNull(request.getRelatedType()))

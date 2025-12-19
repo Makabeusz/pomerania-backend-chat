@@ -21,6 +21,14 @@ public class ChatMessage {
     private ChatUser sender;
     private ChatUser recipient;
 
+    public ChatUser getSender() {
+        return sender == null ? ChatUser.getEmpty() : sender;
+    }
+
+    public ChatUser getRecipient() {
+        return recipient == null ? ChatUser.getEmpty() : recipient;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

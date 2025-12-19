@@ -107,7 +107,7 @@ public class ChatService {
                     : chatMessage.getContent();
             notification = messageNotificationRepository.save(
                     new MessageNotification(new MessageNotification.Id(recipientId, toLocalDateTime(now), senderId),
-                            chatMessage.getSender().username(), contentSlice)
+                            chatMessage.getSender().username(), chatMessage.getSender().image192(), contentSlice)
             );
         }
 

@@ -8,9 +8,9 @@ import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.service.cache.ChatCache;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.RedisWebSocketService;
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
@@ -23,7 +23,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
-import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
@@ -40,14 +39,12 @@ public class ChatController {
     private final ChatService chatService;
     private final ChatCache cache;
 
+    // TODO: if there is an error here then publish some feedback back to the client
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage,
                             Principal principal) {
         User user = getAuthUser(principal);
-        // ??? add sender image192 only, the rest append here as is
-        // TODO: DB schema is missing image192 field, review how it all looks in front and decide what to do
-        UUID image192 = null;// notificationRepository.findImage192(user.getId()).orElse(null);
-        chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), image192));
+        chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), chatMessage.getSender().image192()));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
         boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));

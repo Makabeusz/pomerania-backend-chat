@@ -18,6 +18,7 @@ public class NotificationHeader {
     private Timestamp createdAt;
     private UUID senderId;
     private String senderUsername;
+    private UUID senderImage192;
     private String content;
     private Long count;
 

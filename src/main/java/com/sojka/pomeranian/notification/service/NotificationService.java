@@ -31,17 +31,11 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final ReadNotificationRepository readNotificationRepository;
-    private final MessageNotificationRepository messageNotificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatCache cache;
 
     // TODO: check comment preference, currently it's skipping prefs and publishing all
     public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
-        if (notification.getMetadata() != null && !notification.getMetadata().containsKey("image192")) {
-            messageNotificationRepository.findImage192(notification.getProfileId()).ifPresent(
-                    image192 -> notification.addMetadata("image192", image192)
-            );
-        }
         Notification domain = NotificationMapper.toDomain(notification);
         domain.setCreatedAt(getCurrentInstant());
 

@@ -28,6 +28,9 @@ public class MessageNotification {
     @Column(name = "sender_username", nullable = false)
     private String senderUsername;
 
+    @Column(name = "sender_image_192", nullable = false)
+    private UUID senderImage192;
+
     @Column(name = "content", nullable = false)
     private String content;
 

@@ -26,6 +26,7 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
                 m.created_at,
                 m.sender_id,
                 m.sender_username,
+                m.sender_image_192,
                 m.content,
                 (SELECT COUNT(*)
                  FROM message_notifications m2
@@ -44,9 +45,5 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
     List<NotificationHeader> findNotificationsHeaders(UUID profileId, Pageable pageable);
 
     void deleteAllByIdProfileId(UUID profileId);
-
-    // TODO: Move image192 to User. Until then it will be here. OR if not move to user it will be sent via messages each time
-    @Query(value = "SELECT image_192 from profiles WHERE id = :profileId", nativeQuery = true)
-    Optional<String> findImage192(UUID profileId);
 
 }
