@@ -5,18 +5,20 @@ import com.sojka.pomeranian.chat.model.MessageNotification;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface MessageNotificationRepository extends JpaRepository<MessageNotification, MessageNotification.Id> {
 
-    Optional<Long> countByIdProfileId(String profileId);
+    Optional<Long> countByIdProfileId(UUID profileId);
 
-    List<MessageNotification> findByIdProfileId(String profileId, Pageable pageable);
+    Optional<Long> countByIdProfileIdAndIdSenderId(UUID profileId, UUID senderId);
+
+    List<MessageNotification> findByIdProfileId(UUID profileId, Pageable pageable);
 
     @Query(value = """
             SELECT
@@ -24,6 +26,7 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
                 m.created_at,
                 m.sender_id,
                 m.sender_username,
+                m.sender_image_192,
                 m.content,
                 (SELECT COUNT(*)
                  FROM message_notifications m2
@@ -39,6 +42,8 @@ public interface MessageNotificationRepository extends JpaRepository<MessageNoti
             )
             ORDER BY m.created_at DESC
             """, nativeQuery = true)
-    List<NotificationHeader> findNotificationsHeaders(@Param("profileId") String profileId, Pageable pageable);
+    List<NotificationHeader> findNotificationsHeaders(UUID profileId, Pageable pageable);
+
+    void deleteAllByIdProfileId(UUID profileId);
 
 }

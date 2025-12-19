@@ -1,11 +1,11 @@
-package com.sojka.pomeranian.chat.service;
+package com.sojka.pomeranian.chat.service.cache;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,8 +14,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 /**
  * An in-memory implementation of {@link ChatCache} for tracking active chat users.
@@ -25,16 +28,22 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(
+        prefix = "pomeranian.chat",
+        name = "redis-enabled",
+        havingValue = "false",
+        matchIfMissing = true
+)
 public class InMemoryLocalChatCache implements ChatCache {
 
-    private final Map<String, ActiveUser> cache;
+    private final Map<UUID, ActiveUser> cache;
 
     /**
      * Constructs an instance with a provided map of active users.
      *
      * @param cache The map to store active user IDs.
      */
-    public InMemoryLocalChatCache(Map<String, ActiveUser> cache) {
+    public InMemoryLocalChatCache(Map<UUID, ActiveUser> cache) {
         this.cache = cache;
     }
 
@@ -53,7 +62,7 @@ public class InMemoryLocalChatCache implements ChatCache {
      * @return {@code true} if the user is online, {@code false} otherwise.
      */
     @Override
-    public boolean isOnline(String userId, StompSubscription subscription) {
+    public boolean isOnline(UUID userId, StompSubscription subscription) {
         ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             return activeUser.getSubscriptions()
@@ -70,7 +79,7 @@ public class InMemoryLocalChatCache implements ChatCache {
      * @return {@code true} if the user is online, {@code false} otherwise.
      */
     @Override
-    public boolean isOnline(String userId, StompSubscription.Type type) {
+    public boolean isOnline(UUID userId, StompSubscription.Type type) {
         ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             return activeUser.getSubscriptions().containsKey(type.name());
@@ -79,7 +88,7 @@ public class InMemoryLocalChatCache implements ChatCache {
     }
 
     @Override
-    public Optional<ActiveUser> get(String userId) {
+    public Optional<ActiveUser> get(UUID userId) {
         return Optional.ofNullable(cache.get(userId));
     }
 
@@ -96,7 +105,7 @@ public class InMemoryLocalChatCache implements ChatCache {
      * @return {@code true} if the subscription was added (was not already online)
      */
     @Override
-    public boolean put(String userId, StompSubscription subscription) {
+    public boolean put(UUID userId, StompSubscription subscription) {
         ActiveUser activeUser = cache.get(userId);
         if (activeUser == null) {
             log.error("The user session does not exists");
@@ -120,8 +129,8 @@ public class InMemoryLocalChatCache implements ChatCache {
     }
 
     @Override
-    public boolean create(String userId, String simpSessionId) {
-        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, CommonUtils.getCurrentInstant()));
+    public boolean create(UUID userId, String simpSessionId) {
+        var previousEntry = cache.put(userId, new ActiveUser(userId, new HashMap<>(), simpSessionId, getCurrentInstant()));
         if (previousEntry != null) {
             log.error("User already online: {}", previousEntry);
             return false;
@@ -137,12 +146,12 @@ public class InMemoryLocalChatCache implements ChatCache {
      * {@code false} if the user was not present.
      */
     @Override
-    public boolean remove(String userId) {
+    public boolean remove(UUID userId) {
         return cache.remove(userId) != null;
     }
 
     @Override
-    public boolean remove(String userId, @NonNull List<StompSubscription> subscriptions) {
+    public boolean remove(UUID userId, @NonNull List<StompSubscription> subscriptions) {
         ActiveUser activeUser = cache.get(userId);
         if (activeUser != null) {
             for (StompSubscription subscription : subscriptions) {
@@ -163,6 +172,9 @@ public class InMemoryLocalChatCache implements ChatCache {
                     }
                     return true;
                 }
+            }
+            if (activeUser.getSubscriptions().isEmpty()) {
+                cache.remove(userId);
             }
         }
         return false;

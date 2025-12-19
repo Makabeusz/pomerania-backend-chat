@@ -1,9 +1,12 @@
 package com.sojka.pomeranian.chat.model;
 
+import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +14,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "conversations")
@@ -20,7 +24,11 @@ import java.time.Instant;
 public class Conversation {
 
     @EmbeddedId
-    Id id;
+    private Id id;
+
+    @Column(name = "flag")
+    @Enumerated(EnumType.STRING)
+    private ConversationFlag flag;
 
     @Column(name = "last_message_at", nullable = false)
     private Instant lastMessageAt;
@@ -32,9 +40,9 @@ public class Conversation {
     public static class Id implements Serializable {
 
         @Column(name = "user_id", nullable = false, updatable = false)
-        private String userId;
+        private UUID userId;
 
-        @Column(name = "room_id", nullable = false, updatable = false)
-        private String roomId;
+        @Column(name = "recipient_id", nullable = false, updatable = false)
+        private UUID recipientId;
     }
 }

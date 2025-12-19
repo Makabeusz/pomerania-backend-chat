@@ -15,19 +15,47 @@ astra:
   keyspace: 'messages'
 
 pomeranian:
+  chat:
+    cache:
+      write-timeout-ms: 2000
+    purge:
+      batch-size: 1000
   security:
-    public-paths: /auth/login, /auth/register, /api/city/hint
+    allowed-origins: http://localhost:3000
+    public-paths:
     jwt:
       secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
       expiration: 86400000
+      refresh-expiration: 172800000 # 48 hours # 7776000000 # 90 days
+    user-agent:
+      cache-size: 100
+      fields: DeviceClass, DeviceName, OperatingSystemName, AgentClass, AgentName
+      warmup: false
+#  security:
+#    public-paths: /auth/login, /auth/register, /api/city/hint
+#    jwt:
+#      secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
+#      expiration: 86400000
 
 gcp:
   project-id: 'pomeranian-463011'
   region: 'europe-central2' # Warsaw
   pubsub:
+    chat-resources:
+      publisher:
+        topic-name: 'r2-dev'
     notifications:
       subscriber:
         subscription-name: 'notifications-dev'
     comments:
       subscriber:
         subscription-name: 'comments-dev'
+    delete-account:
+      subscriber:
+        subscription-name: 'delete-account-dev'
+    block-user:
+      subscriber:
+        subscription-name: 'block-user-dev'
+    user-presence:
+      publisher:
+        topic-name: 'user-presence-dev'

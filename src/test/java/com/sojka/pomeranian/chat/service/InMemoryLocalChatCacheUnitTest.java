@@ -2,6 +2,8 @@ package com.sojka.pomeranian.chat.service;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.model.ActiveUser;
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.chat.service.cache.InMemoryLocalChatCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InMemoryLocalChatCacheUnitTest {
 
-    Map<String, ActiveUser> db = new HashMap<>();
+    Map<UUID, ActiveUser> db = new HashMap<>();
     ChatCache cache = new InMemoryLocalChatCache(db);
 
     @BeforeEach
@@ -26,43 +29,39 @@ class InMemoryLocalChatCacheUnitTest {
         db.clear();
     }
 
+    UUID userId = UUID.randomUUID();
+
     @Test
     void put_newEntry_true() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, new HashMap<>(), "", null));
 
-        assertTrue(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
+        assertTrue(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, userId + "")));
         assertTrue(db.containsKey(userId));
     }
 
     @Test
     void put_existingEntry_false() {
-        String userId = "user1";
-        db.put(userId, new ActiveUser(userId, Map.of("CHAT", new ArrayList<>(List.of(userId))), null, null));
+        db.put(userId, new ActiveUser(userId, Map.of("CHAT", new ArrayList<>(List.of(userId + ""))), null, null));
 
-        assertFalse(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
+        assertFalse(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, userId + "")));
         assertTrue(db.containsKey(userId));
     }
 
     @Test
     void isOnline_userPresent_true() {
-        String userId = "user1";
-        db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of(userId)), null, null));
+        db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of(userId + "")), null, null));
 
-        assertTrue(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
+        assertTrue(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, userId + "")));
     }
 
     @Test
     void isOnline_userAbsent_false() {
-        String userId = "user1";
-
-        assertFalse(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, userId)));
+        assertFalse(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, userId + "")));
     }
 
     @Test
     void remove_existingUser_true() {
-        String userId = "user1";
-        db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of(userId)), null, null));
+        db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of(userId + "")), null, null));
 
         assertTrue(cache.remove(userId));
         assertFalse(db.containsKey(userId));
@@ -70,16 +69,14 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void remove_nonExistingUser_false() {
-        String userId = "user1";
-
         assertFalse(cache.remove(userId));
         assertFalse(db.containsKey(userId));
     }
 
     @Test
     void purge_nonEmptyCache_clearsAll() {
-        db.put("user1", new ActiveUser());
-        db.put("user2", new ActiveUser());
+        db.put(userId, new ActiveUser());
+        db.put(UUID.randomUUID(), new ActiveUser());
 
         cache.purge();
         assertTrue(db.isEmpty());
@@ -93,7 +90,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void isOnline_userPresentNoSubscriptionType_false() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, new HashMap<>(), "", null));
 
         assertFalse(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, "sub1")));
@@ -101,7 +97,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void isOnline_userPresentNoMatchingSubscriptionId_false() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, Map.of("CHAT", List.of("sub1")), "", null));
 
         assertFalse(cache.isOnline(userId, new StompSubscription(StompSubscription.Type.CHAT, "sub2")));
@@ -109,7 +104,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void get_userPresent_returnsUser() {
-        String userId = "user1";
         ActiveUser user = new ActiveUser(userId, Map.of("CHAT", List.of("sub1")), "session1", null);
         db.put(userId, user);
 
@@ -119,8 +113,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void get_userAbsent_returnsEmpty() {
-        String userId = "user1";
-
         assertFalse(cache.get(userId).isPresent());
     }
 
@@ -133,10 +125,11 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void getAll_multipleUsers_returnsAllUsers() {
-        ActiveUser user1 = new ActiveUser("user1", Map.of("CHAT", List.of("sub1")), "session1", null);
-        ActiveUser user2 = new ActiveUser("user2", Map.of("NOTIFICATIONS", List.of("sub2")), "session2", null);
-        db.put("user1", user1);
-        db.put("user2", user2);
+        var userId2 = UUID.randomUUID();
+        ActiveUser user1 = new ActiveUser(userId, Map.of("CHAT", List.of("sub1")), "session1", null);
+        ActiveUser user2 = new ActiveUser(userId2, Map.of("NOTIFICATIONS", List.of("sub2")), "session2", null);
+        db.put(userId, user1);
+        db.put(userId2, user2);
 
         List<ActiveUser> result = cache.getAll();
 
@@ -146,15 +139,12 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void put_userAbsent_false() {
-        String userId = "user1";
-
         assertFalse(cache.put(userId, new StompSubscription(StompSubscription.Type.CHAT, "sub1")));
         assertFalse(db.containsKey(userId));
     }
 
     @Test
     void put_newSubscriptionType_true() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, new HashMap<>(), "", null));
         StompSubscription subscription = new StompSubscription(StompSubscription.Type.CHAT_NOTIFICATIONS, "sub1");
 
@@ -165,7 +155,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void create_newUser_true() {
-        String userId = "user1";
         String sessionId = "session1";
 
         assertTrue(cache.create(userId, sessionId));
@@ -177,7 +166,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void create_existingUser_false() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, new HashMap<>(), "session1", null));
 
         assertFalse(cache.create(userId, "session2"));
@@ -186,7 +174,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_nullSubscriptionId_removesType() {
-        String userId = "user1";
         Map<String, List<String>> subscriptions = new HashMap<>();
         subscriptions.put("CHAT", new ArrayList<>(List.of("sub1", "sub2")));
         db.put(userId, new ActiveUser(userId, subscriptions, "", null));
@@ -198,7 +185,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_blankSubscriptionId_removesType() {
-        String userId = "user1";
         Map<String, List<String>> subscriptions = new HashMap<>();
         subscriptions.put("CHAT", new ArrayList<>(List.of("sub1", "sub2")));
         db.put(userId, new ActiveUser(userId, subscriptions, "", null));
@@ -210,7 +196,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_validSubscriptionId_removesId() {
-        String userId = "user1";
         Map<String, List<String>> subscriptions = new HashMap<>();
         subscriptions.put("CHAT", new ArrayList<>(List.of("sub1", "sub2")));
         db.put(userId, new ActiveUser(userId, subscriptions, "", null));
@@ -223,7 +208,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_lastSubscriptionId_removesType() {
-        String userId = "user1";
         Map<String, List<String>> subscriptions = new HashMap<>();
         subscriptions.put("CHAT", new ArrayList<>(List.of("sub1")));
         db.put(userId, new ActiveUser(userId, subscriptions, "", null));
@@ -235,7 +219,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_userAbsent_false() {
-        String userId = "user1";
         List<StompSubscription> subs = List.of(new StompSubscription(StompSubscription.Type.CHAT, "sub1"));
 
         assertFalse(cache.remove(userId, subs));
@@ -243,7 +226,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_emptySubscriptionsList_false() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, new HashMap<>(), "", null));
 
         assertFalse(cache.remove(userId, Collections.emptyList()));
@@ -251,7 +233,6 @@ class InMemoryLocalChatCacheUnitTest {
 
     @Test
     void removeSubscriptions_nullSubscriptionsList_false() {
-        String userId = "user1";
         db.put(userId, new ActiveUser(userId, new HashMap<>(), "", null));
 
         assertThatThrownBy(() -> cache.remove(userId, null))

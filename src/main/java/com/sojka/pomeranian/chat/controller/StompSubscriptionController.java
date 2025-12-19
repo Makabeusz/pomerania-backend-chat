@@ -1,8 +1,8 @@
 package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.service.ChatCache;
-import com.sojka.pomeranian.chat.util.CommonUtils;
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.security.model.Role;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,9 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
+
+import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 
 @Slf4j
 @Controller
@@ -25,20 +28,22 @@ public class StompSubscriptionController {
     @MessageMapping("/unsubscribe")
     public void unsubscribe(@Payload List<StompSubscription> subscriptions,
                             Principal principal) {
-        removeFromCache(CommonUtils.getAuthUser(principal).getId(), subscriptions);
+        removeFromCache(getAuthUser(principal).getId(), subscriptions);
 
     }
 
     @MessageMapping("/subscribe")
     public void subscribe(@Payload StompSubscription subscription,
                           Principal principal) {
-        User user = CommonUtils.getAuthUser(principal);
-        cache.put(user.getId(), subscription);
-        log.info("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
+        User user = getAuthUser(principal);
+        if (user.getRole() != Role.PomeranianRole.DEACTIVATED) {
+            cache.put(user.getId(), subscription);
+            log.debug("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
+        }
     }
 
-    void removeFromCache(String userId, List<StompSubscription> connectors) {
+    void removeFromCache(UUID userId, List<StompSubscription> connectors) {
         cache.remove(userId, connectors);
-        log.info("Unsubscribed: user={}, subscription={}", userId, connectors);
+        log.debug("Unsubscribed: user={}, subscription={}", userId, connectors);
     }
 }

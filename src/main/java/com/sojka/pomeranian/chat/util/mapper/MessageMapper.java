@@ -5,7 +5,8 @@ import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.model.Message;
 
-import static com.sojka.pomeranian.chat.util.CommonUtils.formatToDateString;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
+
 
 public final class MessageMapper {
 
@@ -15,16 +16,18 @@ public final class MessageMapper {
     public static ChatMessagePersisted toDto(Message message) {
         return ChatMessagePersisted.builder()
                 .roomId(message.getRoomId())
-                .createdAt(formatToDateString(message.getCreatedAt()))
-                .sender(new ChatUser(message.getProfileId(), message.getUsername()))
-                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername()))
+                .createdAt(toDateString(message.getCreatedAt()))
+                // TODO: check if valid - hardcoded null image192
+                .sender(new ChatUser(message.getProfileId(), message.getUsername(), null))
+                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername(), null))
                 .content(message.getContent())
                 .resourceId(message.getResourceId())
+                .resourceType(message.getResourceType())
                 .threadId(message.getThreadId())
                 .editedAt(message.getEditedAt())
                 .deletedAt(message.getDeletedAt())
                 .pinned(message.getPinned())
-                .readAt(formatToDateString(message.getReadAt()))
+                .readAt(toDateString(message.getReadAt()))
                 .metadata(message.getMetadata())
                 .build();
     }
@@ -33,18 +36,23 @@ public final class MessageMapper {
         return Message.builder()
                 .roomId(row.getString("room_id"))
                 .createdAt(row.getInstant("created_at"))
-                .profileId(row.getString("profile_id"))
+                .profileId(row.getUuid("profile_id"))
                 .username(row.getString("username"))
                 .recipientUsername(row.getString("recipient_username"))
-                .recipientProfileId(row.getString("recipient_profile_id"))
+                .recipientProfileId(row.getUuid("recipient_profile_id"))
                 .content(row.getString("content"))
-                .resourceId(row.getString("resource_id"))
-                .threadId(row.getString("thread_id"))
+                .resourceId(row.getUuid("resource_id"))
+                .resourceType(row.getString("resource_type"))
+                .threadId(row.getUuid("thread_id"))
                 .editedAt(row.getString("edited_at"))
                 .deletedAt(row.getString("deleted_at"))
                 .pinned(row.getBoolean("pinned"))
                 .readAt(row.getInstant("read_at"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
+    }
+
+    public static String roomIdFromAstraRow(Row row) {
+        return row.getString("room_id");
     }
 }

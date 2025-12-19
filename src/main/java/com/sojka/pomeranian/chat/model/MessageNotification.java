@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "message_notifications")
@@ -27,6 +28,9 @@ public class MessageNotification {
     @Column(name = "sender_username", nullable = false)
     private String senderUsername;
 
+    @Column(name = "sender_image_192", nullable = false)
+    private UUID senderImage192;
+
     @Column(name = "content", nullable = false)
     private String content;
 
@@ -37,13 +41,13 @@ public class MessageNotification {
     public static class Id implements Serializable {
 
         @Column(name = "profile_id", nullable = false, updatable = false)
-        private String profileId;
+        private UUID profileId;
 
         @Column(name = "created_at", nullable = false, updatable = false)
         private LocalDateTime createdAt;
 
         @Column(name = "sender_id", nullable = false, updatable = false)
-        private String senderId;
+        private UUID senderId;
     }
 
 }

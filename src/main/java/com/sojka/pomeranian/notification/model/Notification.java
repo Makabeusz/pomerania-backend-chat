@@ -1,6 +1,6 @@
 package com.sojka.pomeranian.notification.model;
 
-import com.sojka.pomeranian.chat.dto.NotificationType;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -15,10 +16,11 @@ import java.util.Map;
 @AllArgsConstructor
 public class Notification {
 
-    private String profileId;
+    private UUID profileId;
     private Instant createdAt;
-    private NotificationType type;
-    private String relatedId;
+    private NotificationDto.Type type;
+    private UUID relatedId;
+    private String relatedType;
     private String content;
     private Map<String, String> metadata;
 

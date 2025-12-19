@@ -1,12 +1,13 @@
 package com.sojka.pomeranian.notification.controller;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ public class NotificationApiController {
     private final NotificationService notificationService;
 
     @GetMapping("/unread")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<NotificationDto>> getUnreadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState) {
@@ -30,6 +32,7 @@ public class NotificationApiController {
     }
 
     @GetMapping("/read")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<NotificationDto>> getReadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState) {
@@ -38,6 +41,7 @@ public class NotificationApiController {
     }
 
     @GetMapping("/count")
+    @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<Long> count(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(notificationService.countUnreadNotifications(user.getId()));
     }

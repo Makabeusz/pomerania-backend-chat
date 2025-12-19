@@ -1,4 +1,11 @@
 package com.sojka.pomeranian.chat.dto;
 
-public record ChatUser(String id, String username) {
+// TODO: move to shared api
+
+import java.util.UUID;
+
+public record ChatUser(UUID id, String username, UUID image192) {
+    public static ChatUser getEmpty() {
+        return new ChatUser(null, null, null);
+    }
 }

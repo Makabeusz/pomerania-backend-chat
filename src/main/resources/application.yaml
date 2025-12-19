@@ -2,7 +2,7 @@ server:
   port: 8081
 
 spring:
-# required for security - change to some custom stuff and leave spring configuration alone
+  # required for security - change to some custom stuff and leave spring configuration alone
   datasource:
     url: jdbc:postgresql://localhost:5432/mydb
     username: myuser
@@ -10,17 +10,63 @@ spring:
     driver-class-name: org.postgresql.Driver
   application:
     name: pomeranian-chat
+  redis:
+    host: ${REDIS_HOST:localhost}  # Default local, override in GCP env vars
+    port: ${REDIS_PORT:6379}
+#    username: ${REDIS_USERNAME:}   # Optional, if auth enabled
+#    password: ${REDIS_PASSWORD:}   # Optional
 
 logging:
   level:
-    org.springframework.security: INFO
+    org:
+      springframework:
+        security: INFO
+    com:
+      sojka:
+        pomeranian:
+          lib:
+            BaseExceptionHandler: DEBUG
+          notification:
+            service:
+              NotificationService: INFO
+          chat:
+            repository:
+              MessageRepository: INFO
+            service:
+              ChatService: INFO
+            controller:
+              MessageController: TRACE
+              StompSubscriptionController: DEBUG
+              GlobalExceptionHandler: DEBUG
+          pubsub:
+            CommentsSubscriber: INFO
+            NotificationSubscriber: INFO
+          comment:
+            service:
+              CommentService: INFO
+              SessionTracker: INFO
 
 pomeranian:
+  chat:
+    redis-enabled: false
+    cache:
+      write-timeout-ms: 2000
+    purge:
+      batch-size: 1000
+  #  security:
+  #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
+    allowed-origins: http://localhost:3000
+    roles: ADMIN, USER, SOFT_BAN, DEACTIVATED, HARD_BAN
     public-paths:
     jwt:
       secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
       expiration: 86400000
+      refresh-expiration: 172800000 # 48 hours # 7776000000 # 90 days
+    user-agent:
+      cache-size: 100
+      fields: DeviceClass, DeviceName, OperatingSystemName, AgentClass, AgentName
+      warmup: false
 
 astra:
   connectionBundleFilePath: '/Users/shitty/IdeaProjects/pomerania-backend-chat/src/main/resources/db/secure-connect-pomeranian.zip'
@@ -32,9 +78,21 @@ gcp:
   project-id: 'pomeranian-463011'
   region: 'europe-central2' # Warsaw
   pubsub:
+    chat-resources:
+      publisher:
+        topic-name: 'r2-dev'
     notifications:
       subscriber:
         subscription-name: 'notifications-dev'
     comments:
       subscriber:
         subscription-name: 'comments-dev'
+    delete-account:
+      subscriber:
+        subscription-name: 'delete-account-dev'
+    block-user:
+      subscriber:
+        subscription-name: 'block-user-dev'
+    user-presence:
+      publisher:
+        topic-name: 'user-presence-dev'

@@ -1,13 +1,13 @@
 package com.sojka.pomeranian.notification.util;
 
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
 import java.time.Instant;
-import java.util.Optional;
+
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 public final class ReadNotificationMapper {
 
@@ -20,10 +20,11 @@ public final class ReadNotificationMapper {
         }
         return NotificationDto.builder()
                 .profileId(notification.getProfileId())
-                .createdAt(CommonUtils.formatToDateString(notification.getCreatedAt()))
-                .type(Optional.ofNullable(notification.getType()).map(NotificationType::name).orElse(null))
-                .readAt(CommonUtils.formatToDateString(notification.getReadAt()))
+                .createdAt(toDateString(notification.getCreatedAt()))
+                .type(notification.getType())
+                .readAt(toDateString(notification.getReadAt()))
                 .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
                 .build();
@@ -35,10 +36,11 @@ public final class ReadNotificationMapper {
         }
         return ReadNotification.builder()
                 .profileId(notification.getProfileId())
-                .createdAt(CommonUtils.formatToInstant(notification.getCreatedAt()))
-                .type(NotificationType.valueOf(notification.getType()))
+                .createdAt(toInstant(notification.getCreatedAt()))
+                .type(notification.getType())
                 .readAt(readAt)
                 .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
                 .content(notification.getContent())
                 .metadata(notification.getMetadata())
                 .build();
@@ -49,13 +51,13 @@ public final class ReadNotificationMapper {
             return null;
         }
         String typeValue = row.getString("type");
-        NotificationType type = typeValue != null ? NotificationType.valueOf(typeValue) : null;
         return ReadNotification.builder()
-                .profileId(row.getString("profile_id"))
+                .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(type)
+                .type(typeValue != null ? NotificationDto.Type.valueOf(typeValue) : null)
                 .readAt(row.getInstant("read_at"))
-                .relatedId(row.getString("related_id"))
+                .relatedId(row.getUuid("related_id"))
+                .relatedType(row.getString("related_type"))
                 .content(row.getString("content"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();

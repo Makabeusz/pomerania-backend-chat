@@ -15,15 +15,15 @@ import static org.mockito.Mockito.when;
 class MessageRepositoryImplUnitTest {
 
     CqlSession mockedSection = mock(CqlSession.class);
-    MessageRepository repository = new MessageRepositoryImpl(new AstraDummyConnector(mockedSection));
+    MessageRepository repository = new MessageRepository(new AstraDummyConnector(mockedSection));
 
     @Test
     void findByRoomId_invalidPageState_throwIllegalArgumentException() {
         assertThatThrownBy(() -> repository.findByRoomId("dummyRoomId", "ERROR", 10))
                 .isExactlyInstanceOf(AstraException.class)
+                .hasMessage("Failed to execute findByRoomId, for: RoomIdState[roomId=dummyRoomId, pageState=ERROR, pageSize=10]")
                 .hasCauseExactlyInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid pageState")
-                .hasRootCauseMessage("Last unit does not have enough valid bits");
+                .hasRootCauseMessage("Invalid pageState: Last unit does not have enough valid bits");
     }
 
     @Test
@@ -31,8 +31,9 @@ class MessageRepositoryImplUnitTest {
         when(mockedSection.execute(any(SimpleStatement.class))).thenThrow(new IllegalStateException("session error"));
         assertThatThrownBy(() -> repository.findByRoomId("dummyRoomId", null, 10))
                 .isExactlyInstanceOf(AstraException.class)
+                .hasMessage("Cassandra session not initialized, id=RoomIdState[roomId=dummyRoomId, pageState=null, pageSize=10]")
                 .hasCauseExactlyInstanceOf(IllegalStateException.class)
-                .hasMessage("Cassandra session not initialized");
+                .hasRootCauseMessage("session error");
     }
 
     @Test
@@ -40,8 +41,9 @@ class MessageRepositoryImplUnitTest {
         when(mockedSection.execute(any(SimpleStatement.class))).thenThrow(new RuntimeException("unexpected error"));
         assertThatThrownBy(() -> repository.findByRoomId("dummyRoomId", null, 10))
                 .isExactlyInstanceOf(AstraException.class)
+                .hasMessage("Failed to execute findByRoomId, for: RoomIdState[roomId=dummyRoomId, pageState=null, pageSize=10]")
                 .hasCauseExactlyInstanceOf(RuntimeException.class)
-                .hasMessage("Unexpected issue");
+                .hasRootCauseMessage("unexpected error");
     }
 
     @Test
@@ -49,8 +51,9 @@ class MessageRepositoryImplUnitTest {
         when(mockedSection.execute(any(SimpleStatement.class))).thenThrow(new RuntimeException("unexpected error"));
         assertThatThrownBy(() -> repository.save(Message.builder().roomId("user1:user2").content("dummy").username("dummy").build()))
                 .isExactlyInstanceOf(AstraException.class)
+                .hasMessage("Failed to execute save, for: Message(roomId=user1:user2, createdAt=null, profileId=null, username=dummy, recipientProfileId=null, recipientUsername=null, content=dummy, resourceId=null, resourceType=null, threadId=null, editedAt=null, deletedAt=null, pinned=null, readAt=null, metadata=null)")
                 .hasCauseExactlyInstanceOf(RuntimeException.class)
-                .hasMessage("Failed to save message for room_id=user1:user2");
+                .hasRootCauseMessage("unexpected error");
     }
 
     public static class AstraDummyConnector extends Connector {

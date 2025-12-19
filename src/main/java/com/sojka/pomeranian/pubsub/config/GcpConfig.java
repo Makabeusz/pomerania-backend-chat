@@ -16,16 +16,40 @@ public class GcpConfig {
     String region;
     NotificationsConfig notificationsConfig;
     CommentsConfig commentsConfig;
+    DeleteAccountConfig deleteAccountConfig;
+    ChatResourcesConfig chatResourcesConfig;
+    BlockUserConfig blockUserConfig;
+    UserPresenceConfig userPresenceConfig;
 
     public GcpConfig(
             @Value("${gcp.project-id}") String projectId,
             @Value("${gcp.region}") String region,
             NotificationsConfig notificationsConfig,
-            CommentsConfig commentsConfig) {
+            CommentsConfig commentsConfig,
+            DeleteAccountConfig deleteAccountConfig,
+            ChatResourcesConfig chatResourcesConfig,
+            BlockUserConfig blockUserConfig,
+            UserPresenceConfig userPresenceConfig
+    ) {
         this.projectId = projectId;
         this.region = region;
         this.notificationsConfig = notificationsConfig;
         this.commentsConfig = commentsConfig;
+        this.deleteAccountConfig = deleteAccountConfig;
+        this.chatResourcesConfig = chatResourcesConfig;
+        this.blockUserConfig = blockUserConfig;
+        this.userPresenceConfig = userPresenceConfig;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.chat-resources.publisher")
+    public static class ChatResourcesConfig {
+
+        String topicName;
     }
 
     @Data
@@ -50,4 +74,36 @@ public class GcpConfig {
         String subscriptionName;
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.delete-account.subscriber")
+    public static class DeleteAccountConfig {
+
+        String subscriptionName;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.block-user.subscriber")
+    public static class BlockUserConfig {
+
+        String subscriptionName;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Component
+    @ConfigurationProperties("gcp.pubsub.user-presence.publisher")
+    public static class UserPresenceConfig {
+
+        String topicName;
+    }
 }

@@ -7,10 +7,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.astra.repository.AstraRepository;
-import com.sojka.pomeranian.chat.dto.NotificationType;
-import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.notification.dto.NotificationDto;
+import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,19 +21,22 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class NotificationRepositoryImpl extends AstraRepository<Notification> implements NotificationRepository {
+public class NotificationRepositoryImpl extends AstraPageableRepository implements NotificationRepository {
 
     private static final String NOTIFICATIONS_TABLE = "notifications";
     private static final String INSERT = """
             INSERT INTO %s.%s ( \
-            profile_id, created_at, type, related_id, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+            profile_id, created_at, type, related_id, related_type, content, metadata \
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
     private static final String SELECT_BY_PRIMARY_KEY = """
             SELECT * FROM %s.%s \
@@ -50,8 +51,9 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             AND created_at = ? \
             AND type = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String COUNT_BY_PROFILE_ID = """
-            SELECT COUNT(*) FROM %s.%s \
-            WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+            SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+    private static final String DELETE_BY_PROFILE_ID = """
+            DELETE FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
 
 
     private final Connector connector;
@@ -68,7 +70,7 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
                             notification.getType().name(), notification.getRelatedId(),
-                            notification.getContent(), notification.getMetadata())
+                            notification.getRelatedType(), notification.getContent(), notification.getMetadata())
                     .build();
 
             var session = connector.getSession();
@@ -84,7 +86,7 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
     }
 
     @Override
-    public Optional<Notification> findById(String profileId, Instant createdAt, NotificationType type) {
+    public Optional<Notification> findById(UUID profileId, Instant createdAt, NotificationDto.Type type) {
         return execute(() -> {
             var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
                     .addPositionalValues(profileId, createdAt, type.name())
@@ -94,11 +96,11 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             Row row = session.execute(statement).one();
 
             return Optional.ofNullable(NotificationMapper.fromAstraRow(row));
-        }, "findBy", List.of(profileId, createdAt, type));
+        }, "findById", List.of(profileId, createdAt, type));
     }
 
     @Override
-    public ResultsPage<Notification> findAllBy(String profileId, String pageState, int pageSize) {
+    public ResultsPage<Notification> findAllBy(UUID profileId, String pageState, int pageSize) {
         return execute(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
@@ -120,7 +122,7 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
         execute(() -> {
             List<SimpleStatement> deleteStatements = notifications.stream()
                     .map(n -> SimpleStatement.builder(DELETE_BY)
-                            .addPositionalValues(n.getProfileId(), CommonUtils.formatToInstant(n.getCreatedAt()), n.getType())
+                            .addPositionalValues(n.getProfileId(), toInstant(n.getCreatedAt()), getNameOrNull(n.getType()))
                             .build())
                     .toList();
 
@@ -132,20 +134,31 @@ public class NotificationRepositoryImpl extends AstraRepository<Notification> im
             session.execute(statement);
 
             return true;
-        }, "findAllBy", notifications);
+        }, "deleteAll", notifications);
     }
 
     @Override
-    public Optional<Long> countByIdProfileId(String profileId) {
+    public Optional<Long> countByIdProfileId(UUID profileId) {
         return execute(() -> {
-            var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID)
-                    .addPositionalValues(profileId)
-                    .build();
+            var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
             var session = connector.getSession();
             Row row = session.execute(statement).one();
 
             return Optional.ofNullable(row).map(r -> r.getLong(0));
         }, "countByIdProfileId", profileId);
+    }
+
+    @Override
+    public void deleteAllByIdProfileId(UUID profileId) {
+        log.trace("deleteAllByIdProfileId input: profileId={}", profileId);
+        execute(() -> {
+            var statement = SimpleStatement.builder(DELETE_BY_PROFILE_ID).addPositionalValues(profileId).build();
+
+            var session = connector.getSession();
+            session.execute(statement);
+
+            return true;
+        }, "deleteAllByIdProfileId", profileId);
     }
 }

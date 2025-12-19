@@ -5,9 +5,9 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import com.sojka.pomeranian.chat.util.JsonUtils;
-import com.sojka.pomeranian.comment.CommentStompRequest;
 import com.sojka.pomeranian.comment.service.CommentService;
+import com.sojka.pomeranian.lib.dto.CommentStompRequest;
+import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.pubsub.config.GcpConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +30,7 @@ public class CommentsSubscriber {
         MessageReceiver receiver =
                 (PubsubMessage message, AckReplyConsumer consumer) -> {
                     var notification = JsonUtils.readObject(message.getData().toByteArray(), CommentStompRequest.class);
+                    log.trace("Received {}", notification);
 
                     commentService.publish(notification);
                     consumer.ack();
