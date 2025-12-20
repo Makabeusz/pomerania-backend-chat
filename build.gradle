@@ -66,6 +66,7 @@ dependencies {
 	// GCP
 	implementation platform('com.google.cloud:libraries-bom:26.61.0')
 	implementation 'com.google.cloud:google-cloud-pubsub'
+    implementation("com.google.cloud:spring-cloud-gcp-starter-sql-postgresql")
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -78,6 +79,12 @@ dependencies {
 //	testImplementation 'org.testcontainers:junit-jupiter'
 //	testImplementation 'org.testcontainers:r2dbc'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'com.google.cloud:spring-cloud-gcp-dependencies:7.4.2'  // Use the latest version from https://github.com/GoogleCloudPlatform/spring-cloud-gcp
+    }
 }
 
 tasks.named('test') {

@@ -4,10 +4,17 @@ server:
 spring:
   # required for security - change to some custom stuff and leave spring configuration alone
   datasource:
-    url: jdbc:postgresql://localhost:5432/mydb
-    username: myuser
-    password: secret
+    url: ${POSTGRESQL_URL}
+    username: ${POSTGRESQL_USERNAME}
+    password: ${POSTGRESQL_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  cloud:
+    gcp:
+      project-id: ${PROJECT_ID}
+      sql:
+        enabled: true
+        database-name: ${DB_NAME}
+        instance-connection-name: ${INSTANCE_CONNECTION_NAME}
   application:
     name: pomeranian-chat
   redis:
@@ -56,11 +63,11 @@ pomeranian:
   #  security:
   #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
-    allowed-origins: http://localhost:3000
+    allowed-origins: ${ALLOWED_ORIGINS}
     roles: ADMIN, USER, SOFT_BAN, DEACTIVATED, HARD_BAN
     public-paths:
     jwt:
-      secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
+      secret: ${JWT_SECRET}
       expiration: 86400000
       refresh-expiration: 172800000 # 48 hours # 7776000000 # 90 days
     user-agent:
@@ -69,7 +76,7 @@ pomeranian:
       warmup: false
 
 astra:
-  connectionBundleFilePath: '/Users/shitty/IdeaProjects/pomerania-backend-chat/src/main/resources/db/secure-connect-pomeranian.zip'
+  connectionBundleFilePath: ${ASTRA_CONNECTION_BUNDLE}
   clientId: ${ASTRA_CLIENT_ID}
   clientSecret: ${ASTRA_SECRET}
 #  keyspace: 'messages' # using 2 keyspaces with a single connection, specifying keyspace for each query
