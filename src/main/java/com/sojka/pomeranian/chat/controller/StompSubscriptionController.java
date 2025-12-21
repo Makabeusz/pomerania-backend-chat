@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.controller;
 
+import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.cache.ChatCache;
 import com.sojka.pomeranian.security.model.Role;
@@ -8,14 +9,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
-
-import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 
 @Slf4j
 @Controller
@@ -23,19 +21,24 @@ import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 public class StompSubscriptionController {
 
     private final ChatCache cache;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final StompRequestAuthenticator authenticator;
 
     @MessageMapping("/unsubscribe")
-    public void unsubscribe(@Payload List<StompSubscription> subscriptions,
-                            Principal principal) {
-        removeFromCache(getAuthUser(principal).getId(), subscriptions);
+    public void unsubscribe(
+            @Payload List<StompSubscription> subscriptions,
+            StompHeaderAccessor headerAccessor
+    ) {
+        User user = authenticator.getUser(headerAccessor);
+        removeFromCache(user.getId(), subscriptions);
 
     }
 
     @MessageMapping("/subscribe")
-    public void subscribe(@Payload StompSubscription subscription,
-                          Principal principal) {
-        User user = getAuthUser(principal);
+    public void subscribe(
+            @Payload StompSubscription subscription,
+            StompHeaderAccessor headerAccessor
+    ) {
+        User user = authenticator.getUser(headerAccessor);
         if (user.getRole() != Role.PomeranianRole.DEACTIVATED) {
             cache.put(user.getId(), subscription);
             log.debug("Subscribed: user_id={}, subscription={}", user.getId(), subscription);

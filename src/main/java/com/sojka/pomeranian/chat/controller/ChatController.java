@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.controller;
 
+import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
@@ -20,13 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
-
-import java.security.Principal;
 
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
-import static com.sojka.pomeranian.lib.util.CommonUtils.getAuthUser;
 import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
@@ -38,12 +37,15 @@ public class ChatController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final ChatService chatService;
     private final ChatCache cache;
+    private final StompRequestAuthenticator authenticator;
 
     // TODO: if there is an error here then publish some feedback back to the client
     @MessageMapping("/chat.send")
-    public void sendMessage(@Payload ChatMessage chatMessage,
-                            Principal principal) {
-        User user = getAuthUser(principal);
+    public void sendMessage(
+            @Payload ChatMessage chatMessage,
+            StompHeaderAccessor headerAccessor
+    ) {
+        User user = authenticator.getUser(headerAccessor);
         chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), chatMessage.getSender().image192()));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
@@ -63,9 +65,11 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.read")
-    public void readMessage(@Payload ReadMessageDto dto,
-                            Principal principal) {
-        User user = getAuthUser(principal);
+    public void readMessage(
+            @Payload ReadMessageDto dto,
+            StompHeaderAccessor headerAccessor
+    ) {
+        User user = authenticator.getUser(headerAccessor);
         var recipientId = getRecipientIdFromRoomId(dto.roomId(), user.getId());
 
         var readAt = chatService.markRead(

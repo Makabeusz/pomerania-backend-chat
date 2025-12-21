@@ -22,7 +22,17 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
+    public boolean existsByUsernameIgnoreCase(String username) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean existsByEmailIgnoreCase(String email) {
         throw new UnsupportedOperationException();
     }
 

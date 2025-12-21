@@ -4,9 +4,9 @@ server:
 spring:
   # required for security - change to some custom stuff and leave spring configuration alone
   datasource:
-    url: ${POSTGRESQL_URL}
-    username: ${POSTGRESQL_USERNAME}
-    password: ${POSTGRESQL_PASSWORD}
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
   cloud:
     gcp:
@@ -60,12 +60,12 @@ pomeranian:
       write-timeout-ms: 2000
     purge:
       batch-size: 1000
-  #  security:
-  #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
     allowed-origins: ${ALLOWED_ORIGINS}
     roles: ADMIN, USER, SOFT_BAN, DEACTIVATED, HARD_BAN
-    public-paths:
+    public-paths: ${PUBLIC_PATHS}
+    cookie:
+      secure: ${SECURITY_COOKIE_SECURE}
     jwt:
       secret: ${JWT_SECRET}
       expiration: 86400000

@@ -60,7 +60,7 @@ dependencies {
     implementation 'io.projectreactor.netty:reactor-netty:1.1.25'
 
 	// Pomeranian
-	implementation 'com.sojka:Pomeranian-Security:0.4.52'
+	implementation 'com.sojka:Pomeranian-Security:0.4.60'
 	implementation 'com.sojka:pomeranian-astra:0.2.17'
 
 	// GCP
