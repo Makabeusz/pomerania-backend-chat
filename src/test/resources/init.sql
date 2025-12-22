@@ -21,11 +21,67 @@ CREATE TABLE IF NOT EXISTS profiles (
     image_192 UUID,
     created_at TIMESTAMP NOT NULL,
     last_login_at TIMESTAMP,
+    is_online BOOLEAN DEFAULT false,
     is_pair BOOLEAN,
     description TEXT,
     city_id UUID,
 --    blocked_users JSONB,
-    validation_status VARCHAR
+    validation_status VARCHAR DEFAULT 'RAW'
+);
+
+CREATE TABLE IF NOT EXISTS sexualities (
+    id UUID PRIMARY KEY,
+    profile_id UUID NOT NULL,
+    pair_order INTEGER NOT NULL,
+    orientation VARCHAR,
+    sex_readiness VARCHAR,
+    penis_size VARCHAR,
+    sexual_role VARCHAR,
+    sex_climate JSONB,
+    experience VARCHAR,
+    recording VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS sexual_preferences (
+    id UUID PRIMARY KEY,
+    kissing VARCHAR,
+    vaginal VARCHAR,
+    anal VARCHAR,
+    oral VARCHAR,
+    deepthroat VARCHAR,
+    rimming VARCHAR,
+    facesitting VARCHAR,
+    sixty_nine VARCHAR,
+    cum VARCHAR,
+    masturbation VARCHAR,
+    fingering_handjob VARCHAR,
+    spanking VARCHAR,
+    humiliation VARCHAR,
+    breath_play VARCHAR,
+    spitting VARCHAR,
+    face_slapping VARCHAR,
+    massage VARCHAR,
+    feet VARCHAR,
+    fisting VARCHAR,
+    butt_plug VARCHAR,
+    chastity VARCHAR,
+    dildos VARCHAR,
+    strap_on VARCHAR,
+    cock_ring VARCHAR,
+    genital_pump VARCHAR,
+    nipple_clamps VARCHAR,
+    sex_machines VARCHAR,
+    remote_controlled_toys VARCHAR,
+    electro_stim VARCHAR,
+    ball_stretcher VARCHAR,
+    blindfold VARCHAR,
+    handcuffs VARCHAR,
+    whips VARCHAR,
+    latex_gear VARCHAR,
+    pet_toys VARCHAR,
+    rope_bondage VARCHAR,
+    costumes VARCHAR,
+    group_sex JSONB
 );
 
 -- New user_preferences table for non-core settings
@@ -150,6 +206,13 @@ CREATE TABLE IF NOT EXISTS verification_token (
     PRIMARY KEY(token, type, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS banned_users (
+    user_id UUID REFERENCES users(id) PRIMARY KEY,
+    role_id INT REFERENCES roles(id),
+    expiry_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- Create friends table
 CREATE TABLE IF NOT EXISTS friends (
     profile_id UUID NOT NULL,
@@ -217,6 +280,7 @@ CREATE TABLE IF NOT EXISTS message_notifications (
     created_at TIMESTAMP,
     sender_id UUID,
     sender_username VARCHAR,
+    sender_image_192 UUID,
     content VARCHAR,
     PRIMARY KEY (profile_id, created_at, sender_id)
 );
@@ -249,6 +313,7 @@ CREATE TABLE IF NOT EXISTS profile_views (
     day DATE,
     viewer_id UUID,
     count INTEGER,
+    available BOOLEAN DEFAULT false,
     first_timestamp TIMESTAMP NOT NULL,
     last_timestamp TIMESTAMP  NOT NULL,
     PRIMARY KEY (profile_id, day, viewer_id)
@@ -277,12 +342,12 @@ ALTER TABLE posts ADD CONSTRAINT fk_posts_resource FOREIGN KEY (resource_id) REF
 ALTER TABLE comments ADD CONSTRAINT fk_comments_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 ALTER TABLE comments ADD CONSTRAINT fk_comments_personal FOREIGN KEY (pair_author_personal_id, profile_id) REFERENCES personal(id, profile_id) ON DELETE CASCADE;
 ALTER TABLE verification_token ADD CONSTRAINT fk_verification_token_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
---TODO: skip temporary to pass tests
---ALTER TABLE conversations ADD CONSTRAINT fk_conversations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
---TODO: skip temporary to pass tests
---ALTER TABLE message_notifications ADD CONSTRAINT fk_message_notifications_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
+ALTER TABLE conversations ADD CONSTRAINT fk_conversations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE message_notifications ADD CONSTRAINT fk_message_notifications_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 ALTER TABLE profile_preferences ADD CONSTRAINT fk_profile_preferences_user FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 ALTER TABLE validation_photos ADD CONSTRAINT fk_validation_photos_user FOREIGN KEY (profile_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE sexual_preferences ADD CONSTRAINT fk_sexual_preferences_user FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE sexualities ADD CONSTRAINT fk_sexualities_user FOREIGN KEY (profile_id) REFERENCES users(id) ON DELETE CASCADE;
 
 --ALTER TABLE user_tokens ADD CONSTRAINT fk_user_tokens_users FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 
@@ -323,6 +388,8 @@ CREATE INDEX IF NOT EXISTS idx_profile_views_last_timestamp ON profile_views(las
 INSERT INTO roles (id, name) VALUES (0, 'ADMIN');
 INSERT INTO roles (id, name) VALUES (1, 'USER');
 INSERT INTO roles (id, name) VALUES (2, 'DEACTIVATED');
+INSERT INTO roles (id, name) VALUES (3, 'SOFT_BAN');
+INSERT INTO roles (id, name) VALUES (4, 'HARD_BAN');
 
 -----------------–-----------------------–-----------------------–-------------
 -----------------–------ Security blocked user context -----------------–------
@@ -356,6 +423,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE VIEW v_profiles AS
 SELECT p.*
 FROM profiles p
+JOIN users u ON p.id = u.id
 WHERE NOT EXISTS (
     SELECT 1 FROM settings_blocked_users bu
     WHERE bu.profile_id = (SELECT current_user_id FROM app_session_context)
@@ -365,7 +433,8 @@ AND NOT EXISTS (
     SELECT 1 FROM settings_blocked_users bu
     WHERE bu.profile_id = p.id
       AND bu.blocked_user_id = (SELECT current_user_id FROM app_session_context)
-);
+)
+AND u.enabled = true;
 
 CREATE OR REPLACE VIEW v_comments AS
 SELECT c.*

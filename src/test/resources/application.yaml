@@ -5,6 +5,13 @@ spring:
     username: myuser
     password: password
     driver-class-name: org.postgresql.Driver
+  cloud:
+    gcp:
+      project-id: dummy-id
+      sql:
+        enabled: false
+        database-name: pomeranian
+        instance-connection-name: connection:name:dummy
   application:
     name: pomeranian-chat
 
@@ -23,6 +30,8 @@ pomeranian:
   security:
     allowed-origins: http://localhost:3000
     public-paths:
+    cookie:
+      secure: false
     jwt:
       secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
       expiration: 86400000
