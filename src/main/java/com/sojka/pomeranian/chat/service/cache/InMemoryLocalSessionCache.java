@@ -68,6 +68,9 @@ public class InMemoryLocalSessionCache implements SessionCache {
     public boolean isOnline(UUID userId, StompSubscription.Type type) {
         ActiveUser activeUser = users.get(userId);
         if (activeUser != null) {
+            if (type == StompSubscription.Type.CHAT_NOTIFICATIONS) {
+                return true;
+            }
             return activeUser.isOnline(type);
         }
         return false;
@@ -83,40 +86,41 @@ public class InMemoryLocalSessionCache implements SessionCache {
         return new ArrayList<>(users.values());
     }
 
-    /**
-     * Adds a user to the active users map, marking them as online.
-     *
-     * @param userId       The ID of the user to add.
-     * @param subscription The online subscription
-     * @return {@code true} if the subscription was added (was not already online)
-     */
     @Override
-    public boolean add(UUID userId, String simpSessionId, StompSubscription subscription) {
+    public boolean add(UUID userId, String simpSessionId, List<StompSubscription> subscriptions) {
         ActiveUser activeUser = users.get(userId);
         if (activeUser == null) {
             throw new CacheException("User=%s is not online".formatted(userId));
         }
+        boolean result = true;
 
         for (ActiveUser.Session session : activeUser.getSessions()) {
-            Map<String, List<String>> subscriptions = session.getSubscriptions();
+            Map<String, List<String>> sessionSubscriptions = session.getSubscriptions();
 
             if (session.getSimpSessionId().equals(simpSessionId)) {
-                if (subscriptions.containsKey(subscription.type().name())) {
-                    List<String> ids = subscriptions.get(subscription.type().name());
-                    if (ids.contains(subscription.id())) {
-                        log.error("Subscription already exists: user_id={}, subscription={}", userId, subscription);
-                        return false;
+                for (StompSubscription subscription : subscriptions) {
+                    if (sessionSubscriptions.containsKey(subscription.type().name())) {
+                        List<String> ids = sessionSubscriptions.get(subscription.type().name());
+                        if (ids.contains(subscription.id())) {
+                            log.error("Subscription already exists: user_id={}, subscription={}", userId, subscription);
+                            result = false;
+                        }
+                        sessionSubscriptions.get(subscription.type().name()).add(subscription.id());
+                    } else {
+                        List<String> ids = new ArrayList<>();
+                        ids.add(subscription.id());
+                        sessionSubscriptions.put(subscription.type().name(), ids);
                     }
-                    subscriptions.get(subscription.type().name()).add(subscription.id());
-                } else {
-                    List<String> ids = new ArrayList<>();
-                    ids.add(subscription.id());
-                    subscriptions.put(subscription.type().name(), ids);
                 }
-                return true;
+                return result;
             }
         }
         throw new CacheException("User=%s do not have active simpSessionID=%s".formatted(userId, simpSessionId));
+    }
+
+    @Override
+    public boolean add(UUID userId, String simpSessionId, StompSubscription subscription) {
+        return add(userId, simpSessionId, List.of(subscription));
     }
 
     @Override
@@ -157,30 +161,28 @@ public class InMemoryLocalSessionCache implements SessionCache {
     }
 
     @Override
-    public boolean remove(UUID userId, String simpSessionId, @NonNull List<StompSubscription> subscriptions) {
+    public boolean remove(UUID userId, String simpSessionId, @NonNull StompSubscription subscription) {
         ActiveUser activeUser = users.get(userId);
         if (activeUser != null) {
-            for (StompSubscription subscription : subscriptions) {
-                for (ActiveUser.Session session : activeUser.getSessions()) {
-                    if (session.getSimpSessionId().equals(simpSessionId)) {
-                        if (subscription.id() == null || subscription.id().isBlank()) {
-                            session.getSubscriptions().remove(subscription.type().name());
-                        } else {
-                            var ids = session.getSubscriptions().get(subscription.type().name());
-                            if (ids == null) {
-                                break;
-                            }
-                            ids = ids.stream()
-                                    .filter(id -> !id.equals(subscription.id()))
-                                    .collect(Collectors.toCollection(ArrayList::new));
-                            session.getSubscriptions().put(subscription.type().name(), ids);
-
-                            if (ids.isEmpty()) {
-                                session.getSubscriptions().remove(subscription.type().name());
-                            }
+            for (ActiveUser.Session session : activeUser.getSessions()) {
+                if (session.getSimpSessionId().equals(simpSessionId)) {
+                    if (subscription.id() == null || subscription.id().isBlank()) {
+                        session.getSubscriptions().remove(subscription.type().name());
+                    } else {
+                        var ids = session.getSubscriptions().get(subscription.type().name());
+                        if (ids == null) {
+                            break;
                         }
-                        break;
+                        ids = ids.stream()
+                                .filter(id -> !id.equals(subscription.id()))
+                                .collect(Collectors.toCollection(ArrayList::new));
+                        session.getSubscriptions().put(subscription.type().name(), ids);
+
+                        if (ids.isEmpty()) {
+                            session.getSubscriptions().remove(subscription.type().name());
+                        }
                     }
+                    break;
                 }
             }
             users.put(userId, activeUser);

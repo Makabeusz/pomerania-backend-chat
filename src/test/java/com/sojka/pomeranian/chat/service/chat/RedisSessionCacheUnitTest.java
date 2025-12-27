@@ -259,11 +259,10 @@ class RedisSessionCacheUnitTest {
         subs.put(StompSubscription.Type.CHAT.name(), new ArrayList<>(List.of("sub1", "sub2")));
         ActiveUser.Session session = new ActiveUser.Session(subs, simpSessionId, Instant.now());
         ActiveUser activeUser = new ActiveUser(userId, new ArrayList<>(List.of(session)));
-        List<StompSubscription> subscriptions = List.of(new StompSubscription(StompSubscription.Type.CHAT, null));
 
         doReturn(activeUser).when(usersOps).get(userId);
 
-        assertTrue(cache.remove(userId, simpSessionId, subscriptions));
+        assertTrue(cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, null)));
 
         ArgumentCaptor<ActiveUser> captor = ArgumentCaptor.forClass(ActiveUser.class);
         verify(usersOps).set(eq(userId), captor.capture());
@@ -278,11 +277,10 @@ class RedisSessionCacheUnitTest {
         subs.put(StompSubscription.Type.CHAT.name(), new ArrayList<>(List.of("sub1", "sub2")));
         ActiveUser.Session session = new ActiveUser.Session(subs, simpSessionId, Instant.now());
         ActiveUser activeUser = new ActiveUser(userId, new ArrayList<>(List.of(session)));
-        List<StompSubscription> subscriptions = List.of(new StompSubscription(StompSubscription.Type.CHAT, ""));
 
         doReturn(activeUser).when(usersOps).get(userId);
 
-        assertTrue(cache.remove(userId, simpSessionId, subscriptions));
+        assertTrue(cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, "")));
 
         ArgumentCaptor<ActiveUser> captor = ArgumentCaptor.forClass(ActiveUser.class);
         verify(usersOps).set(eq(userId), captor.capture());
@@ -297,11 +295,10 @@ class RedisSessionCacheUnitTest {
         subs.put(StompSubscription.Type.CHAT.name(), new ArrayList<>(List.of("sub1", "sub2")));
         ActiveUser.Session session = new ActiveUser.Session(subs, simpSessionId, Instant.now());
         ActiveUser activeUser = new ActiveUser(userId, new ArrayList<>(List.of(session)));
-        List<StompSubscription> subscriptions = List.of(new StompSubscription(StompSubscription.Type.CHAT, "sub1"));
 
         doReturn(activeUser).when(usersOps).get(userId);
 
-        assertTrue(cache.remove(userId, simpSessionId, subscriptions));
+        assertTrue(cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, "sub1")));
 
         ArgumentCaptor<ActiveUser> captor = ArgumentCaptor.forClass(ActiveUser.class);
         verify(usersOps).set(eq(userId), captor.capture());
@@ -317,11 +314,10 @@ class RedisSessionCacheUnitTest {
         subs.put(StompSubscription.Type.CHAT.name(), new ArrayList<>(List.of("sub1")));
         ActiveUser.Session session = new ActiveUser.Session(subs, simpSessionId, Instant.now());
         ActiveUser activeUser = new ActiveUser(userId, new ArrayList<>(List.of(session)));
-        List<StompSubscription> subscriptions = List.of(new StompSubscription(StompSubscription.Type.CHAT, "sub1"));
 
         doReturn(activeUser).when(usersOps).get(userId);
 
-        assertTrue(cache.remove(userId, simpSessionId, subscriptions));
+        assertTrue(cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, "sub1")));
 
         ArgumentCaptor<ActiveUser> captor = ArgumentCaptor.forClass(ActiveUser.class);
         verify(usersOps).set(eq(userId), captor.capture());
@@ -332,12 +328,10 @@ class RedisSessionCacheUnitTest {
     @Test
     void removeSubscriptions_userAbsent_throws() {
         String simpSessionId = "session1";
-        List<StompSubscription> subscriptions = List.of(new StompSubscription(StompSubscription.Type.CHAT, "sub1"));
         doReturn(null).when(usersOps).get(userId);
 
-        assertThatThrownBy(() -> cache.remove(userId, simpSessionId, subscriptions))
+        assertThatThrownBy(() -> cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, "sub1")))
                 .isInstanceOf(CacheException.class)
                 .hasMessage("User=%s is not online".formatted(userId));
     }
-
 }

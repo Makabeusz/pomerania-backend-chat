@@ -38,12 +38,21 @@ public class StompRequestAuthenticator {
             var nativeHeaders = simpConnectMessageHeader.getHeaders().get("nativeHeaders");
             if (nativeHeaders instanceof Map nativeHeadersMap) {
                 List<String> authJwt = (List<String>) nativeHeadersMap.get("auth_jwt");
-                if (authJwt != null || !authJwt.isEmpty()) {
+                if (authJwt != null && !authJwt.isEmpty()) {
                     return authJwt.getFirst();
                 }
             }
         }
         return null;
+    }
+
+    public User getUser(AbstractSubProtocolEvent event, StompHeaderAccessor accessor) throws SecurityException {
+        if (event.getUser() instanceof UsernamePasswordAuthenticationToken token) {
+            return (User) token.getPrincipal();
+        } else if (event.getUser() instanceof User user) {
+            return user;
+        }
+        return getUser(accessor);
     }
 
     public User getUser(AbstractSubProtocolEvent event) throws SecurityException {

@@ -49,6 +49,8 @@ public interface SessionCache {
      */
     boolean add(UUID userId, String simpSessionId, StompSubscription subscription);
 
+    boolean add(UUID userId, String simpSessionId, List<StompSubscription> subscriptions);
+
     /**
      * Adds a user to the active users cache, marking them as online.
      *
@@ -66,7 +68,7 @@ public interface SessionCache {
      */
     UUID remove(String simpSessionId) throws NullPointerException;
 
-    boolean remove(UUID userId, String simpSessionId, List<StompSubscription> subscription);
+    boolean remove(UUID userId, String simpSessionId, StompSubscription subscription);
 
     void purge();
 }
