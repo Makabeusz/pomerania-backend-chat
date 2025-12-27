@@ -1,6 +1,5 @@
 package com.sojka.pomeranian.chat.service.cache;
 
-import com.sojka.pomeranian.chat.config.ChatConfig;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.exception.CacheException;
 import com.sojka.pomeranian.chat.model.ActiveUser;
@@ -39,7 +38,6 @@ public class RedisSessionCache implements SessionCache {
 
     private final RedisTemplate<UUID, ActiveUser> users;
     private final RedisTemplate<String, UUID> sessions;
-    private final ChatConfig config;
 
     @Override
     public boolean isOnline(UUID userId, StompSubscription subscription) {
@@ -122,7 +120,7 @@ public class RedisSessionCache implements SessionCache {
     public UUID remove(String simpSessionId) {
         UUID userId = sessions.opsForValue().get(simpSessionId);
         if (userId == null) {
-            throw new CacheException("Session=%s not online".formatted(simpSessionId));
+            throw new CacheException("Session=%s is not online".formatted(simpSessionId));
         }
         ActiveUser activeUser = users.opsForValue().get(userId);
         if (activeUser == null) {

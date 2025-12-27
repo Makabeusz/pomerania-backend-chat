@@ -1,4 +1,4 @@
-package com.sojka.pomeranian.chat.service;
+package com.sojka.pomeranian.chat.service.chat;
 
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.exception.CacheException;
