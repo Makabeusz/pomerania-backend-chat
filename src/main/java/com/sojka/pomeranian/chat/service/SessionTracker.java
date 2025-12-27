@@ -29,10 +29,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SessionTracker {
 
-    private static final String SUB_SIZE_KEY = "subSize";
-    private static final String SUB_TYPE_KEY = "subType";
-    private static final String SUB_ID_KEY = "subId";
-
     private final SessionCache cache;
     private final UserPresencePublisher publisher;
     private final StompRequestAuthenticator requestAuthenticator;
@@ -41,35 +37,10 @@ public class SessionTracker {
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
         log.trace("SessionConnectedEvent: {}", event);
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Map<String, List<String>> nativeHeaders = getNativeHeaders(accessor);
-
         try {
             String simpSessionId = (String) event.getMessage().getHeaders().get("simpSessionId");
-            User user = requestAuthenticator.getUser(event, accessor);
+            User user = requestAuthenticator.getUser(event);
             boolean isCreated = cache.create(user.getId(), simpSessionId);
-            int subSizeKey = Integer.parseInt(getHeaderValue(nativeHeaders.get(SUB_SIZE_KEY), "0"));
-            if (subSizeKey > 0) {
-                List<StompSubscription> subscriptions = new ArrayList<>(subSizeKey);
-                for (int i = 0; i < subSizeKey; i++) {
-                    String id = getHeaderValue(nativeHeaders.get(SUB_ID_KEY + i));
-                    String type = getHeaderValue(nativeHeaders.get(SUB_TYPE_KEY + i));
-                    if (id == null || type == null) {
-                        log.error(
-                                "Session connection attempt with null subscription values: user={}, id={}, type={}",
-                                user.getUsername(), id, type
-                        );
-                    } else {
-                        subscriptions.add(new StompSubscription(StompSubscription.Type.valueOf(type), id));
-                    }
-                }
-                if (!subscriptions.isEmpty()) {
-                    cache.add(user.getId(), simpSessionId, subscriptions);
-                } else {
-                    log.error("No subscription had a valid values: user={}, subSize={}", user.getUsername(), subSizeKey);
-                }
-            }
-
             if (isCreated) {
                 publisher.publish(new UserPresenceRequest(user.getId(), true, DateTimeUtils.getCurrentInstant()));
                 log.debug("Online: userId={}", user.getId());
