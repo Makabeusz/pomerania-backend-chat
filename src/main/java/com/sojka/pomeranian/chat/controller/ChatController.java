@@ -10,7 +10,7 @@ import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatService;
-import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
@@ -36,7 +36,7 @@ public class ChatController {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ChatService chatService;
-    private final ChatCache cache;
+    private final SessionCache cache;
     private final StompRequestAuthenticator authenticator;
 
     // TODO: if there is an error here then publish some feedback back to the client

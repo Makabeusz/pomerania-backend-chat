@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.model.ActiveUser;
-import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CacheController {
 
-    private final ChatCache cache;
+    private final SessionCache cache;
 
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")

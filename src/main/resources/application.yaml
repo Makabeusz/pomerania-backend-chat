@@ -41,6 +41,7 @@ logging:
               MessageRepository: INFO
             service:
               ChatService: INFO
+              SessionTracker: TRACE
             controller:
               MessageController: TRACE
               StompSubscriptionController: DEBUG

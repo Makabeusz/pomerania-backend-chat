@@ -43,10 +43,10 @@ public class StompRequestAuthenticator {
                 }
             }
         }
-        throw new SecurityException("WebSocket connection attempt without principal, command=%s".formatted(accessor.getCommand()));
+        return null;
     }
 
-    public User getUser(AbstractSubProtocolEvent event) {
+    public User getUser(AbstractSubProtocolEvent event) throws SecurityException {
         if (event.getUser() instanceof UsernamePasswordAuthenticationToken token) {
             return (User) token.getPrincipal();
         } else if (event.getUser() instanceof User user) {
@@ -63,7 +63,7 @@ public class StompRequestAuthenticator {
             var userDetails = userDetailsService.loadUserByUsername(username);
             return (User) userDetails;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SecurityException(e);
         }
     }
 

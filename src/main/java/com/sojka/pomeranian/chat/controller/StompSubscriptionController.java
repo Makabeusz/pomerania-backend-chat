@@ -2,7 +2,7 @@ package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import com.sojka.pomeranian.security.model.Role;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -13,14 +13,13 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class StompSubscriptionController {
 
-    private final ChatCache cache;
+    private final SessionCache cache;
     private final StompRequestAuthenticator authenticator;
 
     @MessageMapping("/unsubscribe")
@@ -29,8 +28,11 @@ public class StompSubscriptionController {
             StompHeaderAccessor headerAccessor
     ) {
         User user = authenticator.getUser(headerAccessor);
-        removeFromCache(user.getId(), subscriptions);
-
+        cache.remove(user.getId(), headerAccessor.getSessionId(), subscriptions);
+        log.debug(
+                "Unsubscribed: user={}, simpSessionId={}, subscription={}",
+                user.getId(), headerAccessor.getSessionId(), subscriptions
+        );
     }
 
     @MessageMapping("/subscribe")
@@ -40,13 +42,12 @@ public class StompSubscriptionController {
     ) {
         User user = authenticator.getUser(headerAccessor);
         if (user.getRole() != Role.PomeranianRole.DEACTIVATED) {
-            cache.put(user.getId(), subscription);
-            log.debug("Subscribed: user_id={}, subscription={}", user.getId(), subscription);
+            cache.add(user.getId(), headerAccessor.getSessionId(), subscription);
+            log.debug(
+                    "Subscribed: user_id={}, simpSessionId={}, subscription={}",
+                    user.getId(), headerAccessor.getSessionId(), subscription
+            );
         }
     }
 
-    void removeFromCache(UUID userId, List<StompSubscription> connectors) {
-        cache.remove(userId, connectors);
-        log.debug("Unsubscribed: user={}, subscription={}", userId, connectors);
-    }
 }
