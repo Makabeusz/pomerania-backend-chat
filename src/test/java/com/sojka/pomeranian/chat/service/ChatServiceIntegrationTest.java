@@ -122,10 +122,7 @@ class ChatServiceIntegrationTest {
                 .recipientUsername(row.getString("recipient_username"))
                 .content(row.getString("content"))
                 .resourceId(row.getUuid("resource_id"))
-                .threadId(row.getUuid("thread_id"))
                 .editedAt(row.getString("edited_at"))
-                .deletedAt(row.getString("deleted_at"))
-                .pinned(row.getBoolean("pinned"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
         assertThat(saveResult).usingRecursiveComparison(new RecursiveComparisonConfiguration())
@@ -138,7 +135,6 @@ class ChatServiceIntegrationTest {
                         .recipientUsername(user2Id + "-username")
                         .content("Hello, World!")
                         .metadata(Collections.emptyMap())
-                        .pinned(false)
                         .build());
 
         assertThat(conversationsRepository.findAll()).containsExactly(
@@ -324,10 +320,7 @@ class ChatServiceIntegrationTest {
                 .recipientUsername(row.getString("recipient_username"))
                 .content(row.getString("content"))
                 .resourceId(row.getUuid("resource_id"))
-                .threadId(row.getUuid("thread_id"))
                 .editedAt(row.getString("edited_at"))
-                .deletedAt(row.getString("deleted_at"))
-                .pinned(row.getBoolean("pinned"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
         assertThat(savedMessage).usingRecursiveComparison(new RecursiveComparisonConfiguration())
@@ -340,7 +333,6 @@ class ChatServiceIntegrationTest {
                         .recipientUsername(user2Id + "-username")
                         .content("Hey, you there?")
                         .metadata(Collections.emptyMap())
-                        .pinned(false)
                         .build());
 
         // Verify notification

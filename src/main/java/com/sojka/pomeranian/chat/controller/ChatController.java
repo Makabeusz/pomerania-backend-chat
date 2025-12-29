@@ -15,6 +15,7 @@ import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +75,7 @@ public class ChatController {
 
         var readAt = chatService.markRead(
                 new MessageKey(dto.roomId(), dto.createdAt().stream()
-                        .map(com.sojka.pomeranian.lib.util.DateTimeUtils::toInstant)
+                        .map(DateTimeUtils::toInstant)
                         .toList(), recipientId));
 
         log.info("Marked as read: {}", dto);

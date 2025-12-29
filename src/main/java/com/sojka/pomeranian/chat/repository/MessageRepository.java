@@ -96,10 +96,7 @@ public class MessageRepository extends AstraPageableRepository {
                     .value("content", literal(message.getContent()))
                     .value("resource_id", literal(message.getResourceId()))
                     .value("resource_type", literal(message.getResourceType()))
-                    .value("thread_id", literal(message.getThreadId()))
                     .value("edited_at", literal(message.getEditedAt()))
-                    .value("deleted_at", literal(message.getDeletedAt()))
-                    .value("pinned", literal(message.getPinned()))
                     .value("read_at", literal(message.getReadAt()))
                     .value("metadata", literal(message.getMetadata()));
 
@@ -193,10 +190,7 @@ public class MessageRepository extends AstraPageableRepository {
                     .setColumn("content", literal(message.getContent()))
                     .setColumn("resource_id", literal(message.getResourceId()))
                     .setColumn("resource_type", literal(message.getResourceType()))
-                    .setColumn("thread_id", literal(message.getThreadId()))
                     .setColumn("edited_at", literal(message.getEditedAt()))
-                    .setColumn("deleted_at", literal(message.getDeletedAt()))
-                    .setColumn("pinned", literal(message.getPinned()))
                     //.setColumn("read_at", literal(message.getReadAt()))
                     .setColumn("metadata", literal(message.getMetadata()))
                     .whereColumn("room_id").isEqualTo(literal(message.getRoomId()))

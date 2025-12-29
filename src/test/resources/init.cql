@@ -12,10 +12,7 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     content TEXT,
     resource_id UUID,
     resource_type VARCHAR,
-    thread_id UUID,
     edited_at VARCHAR,
-    deleted_at VARCHAR,
-    pinned BOOLEAN,
     read_at TIMESTAMP,
     metadata MAP<VARCHAR, VARCHAR>,
     PRIMARY KEY (room_id, created_at, profile_id)

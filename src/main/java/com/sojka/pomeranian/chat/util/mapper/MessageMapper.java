@@ -23,10 +23,7 @@ public final class MessageMapper {
                 .content(message.getContent())
                 .resourceId(message.getResourceId())
                 .resourceType(message.getResourceType())
-                .threadId(message.getThreadId())
                 .editedAt(message.getEditedAt())
-                .deletedAt(message.getDeletedAt())
-                .pinned(message.getPinned())
                 .readAt(toDateString(message.getReadAt()))
                 .metadata(message.getMetadata())
                 .build();
@@ -43,10 +40,7 @@ public final class MessageMapper {
                 .content(row.getString("content"))
                 .resourceId(row.getUuid("resource_id"))
                 .resourceType(row.getString("resource_type"))
-                .threadId(row.getUuid("thread_id"))
                 .editedAt(row.getString("edited_at"))
-                .deletedAt(row.getString("deleted_at"))
-                .pinned(row.getBoolean("pinned"))
                 .readAt(row.getInstant("read_at"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
