@@ -50,7 +50,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@Disabled("SQL profile ID foreign key is breaking those tests")
 @Import({TestcontainersConfiguration.class})
 @SpringBootTest
 class ChatServiceIntegrationTest {
@@ -362,9 +361,7 @@ class ChatServiceIntegrationTest {
         Message message = createChatMessage(roomId, "Hello!", user1Id, user2Id, Instant.now());
         messageRepository.save(message);
         MessageNotification notification = MessageNotification.builder()
-                .id(new MessageNotification.Id(user2Id,
-                        fromInstant(message.getCreatedAt()),
-                        user1Id))
+                .id(new MessageNotification.Id(user2Id, fromInstant(message.getCreatedAt()), user1Id))
                 .senderUsername(user1Id + "-username")
                 .content("Hello!")
                 .build();
@@ -374,11 +371,7 @@ class ChatServiceIntegrationTest {
         Instant readAt = chatService.markRead(key);
 
         // Verify message readAt updated
-        SimpleStatement selectMessage = SimpleStatement.newInstance(
-                "SELECT read_at FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
-                roomId, message.getCreatedAt(), user1Id
-        );
-        var row = connector.getSession().execute(selectMessage).one();
+        var row = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user1Id)).one();
         assertThat(row.getInstant("read_at")).isEqualTo(readAt);
 
         // Verify notification deleted
@@ -386,6 +379,61 @@ class ChatServiceIntegrationTest {
                 user2Id, LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), user1Id)
         );
         assertThat(notExisting).isEmpty();
+    }
+
+    @Test
+    void markRead_messageNotExists_notUpdatedAndNotCreatedNewRow() {
+        String roomId = user1Id + ":" + user2Id;
+        Message message = createChatMessage(roomId, "Hello!", user1Id, user2Id, Instant.now());
+        messageRepository.save(message);
+        MessageNotification notification = MessageNotification.builder()
+                .id(new MessageNotification.Id(user2Id, fromInstant(message.getCreatedAt()), user1Id))
+                .senderUsername(user1Id + "-username")
+                .content("Hello!")
+                .build();
+        messageNotificationRepository.save(notification);
+
+        MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt()), user2Id);
+        chatService.markRead(key);
+
+        // Verify message readAt not updated and empty message not created
+        var existingMessage = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user1Id)).one();
+        assertThat(existingMessage.getInstant("read_at")).isNull();
+        var updatedKeyMessage = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user2Id)).one();
+        assertThat(updatedKeyMessage).isNull();
+        // Verify notification deleted
+        Optional<MessageNotification> actualNotification = messageNotificationRepository.findById(new MessageNotification.Id(
+                user2Id, LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), user1Id)
+        );
+        assertThat(actualNotification).contains(notification);
+    }
+
+    @Test
+    void markRead_messagesPartiallyExists_partiallyUpdated() {
+        String roomId = user1Id + ":" + user2Id;
+        Message message = createChatMessage(roomId, "Hello!", user1Id, user2Id, Instant.now());
+        messageRepository.save(message);
+        MessageNotification notification = MessageNotification.builder()
+                .id(new MessageNotification.Id(user2Id, fromInstant(message.getCreatedAt()), user1Id))
+                .senderUsername(user1Id + "-username")
+                .content("Hello!")
+                .build();
+        messageNotificationRepository.save(notification);
+
+        Instant notExistingKey = Instant.now();
+        MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt(), notExistingKey), user1Id);
+        chatService.markRead(key);
+
+        // Verify message readAt not updated and empty message not created
+        var existingMessage = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user1Id)).one();
+        assertThat(existingMessage.getInstant("read_at")).isNull();
+        var updatedKeyMessage = connector.getSession().execute(selectMessage(roomId, notExistingKey, user1Id)).one();
+        assertThat(updatedKeyMessage).isNull();
+        // Verify notification deleted
+        Optional<MessageNotification> actualNotification = messageNotificationRepository.findById(new MessageNotification.Id(
+                user2Id, LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), user1Id)
+        );
+        assertThat(actualNotification).isEmpty();
     }
 
     @Test
@@ -544,6 +592,13 @@ class ChatServiceIntegrationTest {
         assertThat(messageRepository.findByRoomId(room12, null, 10).getResults()).isNotEmpty();
         assertThat(messageRepository.findByRoomId(room13, null, 10).getResults()).isEmpty();
         assertThat(messageRepository.findByRoomId(room14, null, 10).getResults()).isEmpty();
+    }
+
+    SimpleStatement selectMessage(String roomId, Instant createdAt, UUID userId) {
+        return SimpleStatement.newInstance(
+                "SELECT read_at FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
+                roomId, createdAt, userId
+        );
     }
 
 }

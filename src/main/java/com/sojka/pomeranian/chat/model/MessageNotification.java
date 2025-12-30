@@ -21,6 +21,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MessageNotification {
+    // TODO: refactor this one, keep only one notification, make createdAt updatable.
 
     @EmbeddedId
     Id id;

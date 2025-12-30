@@ -128,9 +128,7 @@ public class ChatService {
         UUID senderId = getRecipientIdFromRoomId(keys.roomId(), keys.profileId());
 
         var ids = keys.createdAt().stream()
-                .map(createdAt -> new MessageNotification.Id(
-                        senderId, toLocalDateTime(createdAt), keys.profileId())
-                )
+                .map(createdAt -> new MessageNotification.Id(senderId, toLocalDateTime(createdAt), keys.profileId()))
                 .toList();
 
         messageNotificationRepository.deleteAllByIdInBatch(ids);

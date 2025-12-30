@@ -26,6 +26,7 @@ public class CommentService {
 
         // comments section update
         messagingTemplate.convertAndSendToUser(dto.getRelatedId() + "", COMMENTS_DESTINATION, dto);
+        // TODO: should check instead if given StompSubscription (POST_COMMENTS + postId) is online
         if (dto.isPublishNotification() && !cache.isOnline(dto.getRelatedProfileId(), POST_COMMENTS)) {
             notificationService.publish(NotificationMapper.toDto(dto));
         }

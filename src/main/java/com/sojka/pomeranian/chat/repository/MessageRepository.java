@@ -113,11 +113,12 @@ public class MessageRepository extends AstraPageableRepository {
             var readTime = getCurrentInstant();
             var update = key.createdAt().stream()
                     // todo: to plain text query
-                    .map(k -> QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
-                            .value("room_id", literal(key.roomId()))
-                            .value("created_at", literal(k))
-                            .value("profile_id", literal(key.profileId()))
-                            .value("read_at", literal(readTime))
+                    .map(k -> QueryBuilder.update(MESSAGES_KEYSPACE, MESSAGES_TABLE)
+                            .setColumn("read_at", literal(readTime))
+                            .whereColumn("room_id").isEqualTo(literal(key.roomId()))
+                            .whereColumn("created_at").isEqualTo(literal(k))
+                            .whereColumn("profile_id").isEqualTo(literal(key.profileId()))
+                            .ifExists()
                             .build())
                     .toList();
 
@@ -126,9 +127,11 @@ public class MessageRepository extends AstraPageableRepository {
                     .build();
 
             var session = connector.getSession();
-            session.execute(statement);
-
-            log.trace("Marked message as read: {}, read_at={}", key, readTime);
+            var result = session.execute(statement);
+            if (!result.wasApplied()) {
+                log.warn("The mark-read not applied for {}", key);
+            }
+            log.trace("Marked messages as read: {}, read_at={}", key, readTime);
 
             return readTime;
         }, "markRead", key);
