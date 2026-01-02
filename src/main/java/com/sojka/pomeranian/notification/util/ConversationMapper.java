@@ -20,6 +20,7 @@ public final class ConversationMapper {
                 .content(model.getContent())
                 .contentType(getNameOrNull(model.getContentType()))
                 .unreadCount(model.getUnreadCount())
+                .isLastMessageFromUser(false) // TODO: hardcoded per current single usage
                 .build();
     }
 
@@ -33,6 +34,7 @@ public final class ConversationMapper {
                 .content(projection.getContent())
                 .contentType(projection.getContentType())
                 .unreadCount(projection.getUnreadCount())
+                .isLastMessageFromUser(projection.getIsLastMessageFromUser())
                 .build();
     }
 }

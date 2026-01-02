@@ -20,4 +20,5 @@ public class ConversationDto {
     private String content;
     private String contentType;
     private Integer unreadCount;
+    private Boolean isLastMessageFromUser;
 }

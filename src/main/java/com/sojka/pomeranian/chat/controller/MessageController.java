@@ -37,7 +37,7 @@ public class MessageController {
             @AuthenticationPrincipal User user
     ) {
         log.trace("getConversation input: recipientId={}, nextPageState={}", recipientId, nextPageState);
-        return ResponseEntity.ok(chatService.getConversation(user.getId(), recipientId, nextPageState));
+        return ResponseEntity.ok(chatService.getConversationMessages(user.getId(), recipientId, nextPageState));
     }
 
     @GetMapping("/headers")

@@ -46,6 +46,9 @@ public class Conversation {
     @Column(name = "unread_count", nullable = false)
     private Integer unreadCount;
 
+    @Column(name = "is_last_message_from_user", nullable = false)
+    private Boolean isLastMessageFromUser;
+
     @Embeddable
     @Data
     @AllArgsConstructor

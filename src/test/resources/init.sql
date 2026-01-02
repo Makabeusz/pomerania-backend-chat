@@ -274,6 +274,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     content VARCHAR,
     content_type VARCHAR,
     unread_count INTEGER,
+    is_last_message_from_user BOOLEAN,
     PRIMARY KEY (user_id, recipient_id)
 );
 

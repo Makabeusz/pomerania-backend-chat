@@ -138,7 +138,7 @@ class ChatServiceIntegrationTest {
     }
 
     @Test
-    void getConversation_fewMessages_sameMessagesInDescOrder() {
+    void getConversationMessages_fewMessages_sameMessagesInDescOrder() {
         Message message1 = createChatMessage(roomIdXY, "Message 1", userX, userY, Instant.now().minusSeconds(10));
         Message message2 = createChatMessage(roomIdXY, "Message 2", userX, userY, Instant.now().minusSeconds(5));
         Message message3 = createChatMessage(roomIdXY, "Message 3", userY, userX, Instant.now());
@@ -146,7 +146,7 @@ class ChatServiceIntegrationTest {
         messageRepository.save(message2);
         messageRepository.save(message3);
 
-        var response = chatService.getConversation(userX, userY, null);
+        var response = chatService.getConversationMessages(userX, userY, null);
 
         assertEquals(3, response.getResults().size());
         assertEquals("Message 1", response.getResults().get(0).getContent()); // Sorted by created_at DESC
@@ -158,7 +158,7 @@ class ChatServiceIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("conversationHeadersSource")
-    void getConversationsHeaders_twoConversationsWithFewMessagesEach_twoConversationHeaders(Pagination pagination) {
+    void getConversationsMessages_twoConversationsWithFewMessagesEach_twoConversationMessages(Pagination pagination) {
         Message message3 = createChatMessage(roomIdXY, "Message 3", userY, userX, Instant.now());
         Message message2 = createChatMessage(roomIdXY, "Message 2", userX, userY, Instant.now().minusSeconds(5));
         Message message1 = createChatMessage(roomIdXY, "Message 1", userX, userZ, Instant.now().minusSeconds(10));
@@ -192,7 +192,7 @@ class ChatServiceIntegrationTest {
     }
 
     @Test
-    void getConversationsHeaders_fourConversationsWithManyMessages_fourConversationsWithLatestMessages() {
+    void getConversationsMessages_fourConversationsWithManyMessages_fourConversationsWithLatestMessages() {
         Random random = new Random();
         for (int i = 0; i < 12; i++) {
             String roomId;
@@ -420,7 +420,7 @@ class ChatServiceIntegrationTest {
     }
 
     @Test
-    void getConversation_manyMessages_twoPagedResults() {
+    void getConversationMessages_manyMessages_twoPagedResults() {
         List<Message> messages = new ArrayList<>();
         for (int i = 1; i <= 25; i++) {
             messages.add(createChatMessage(roomIdXY, "Message " + i, userX, userY, Instant.now().minusSeconds(15 - i)));
@@ -428,14 +428,14 @@ class ChatServiceIntegrationTest {
         messages.forEach(messageRepository::save);
 
         // First page
-        ResultsPage<ChatMessagePersisted> response1 = chatService.getConversation(userX, userY, null);
+        ResultsPage<ChatMessagePersisted> response1 = chatService.getConversationMessages(userX, userY, null);
         assertEquals(20, response1.getResults().size());
         assertEquals("Message 6", response1.getResults().get(0).getContent());
         assertEquals("Message 25", response1.getResults().get(19).getContent());
         assertThat(response1.getNextPageState()).isNotNull();
 
         // Second page
-        ResultsPage<ChatMessagePersisted> response2 = chatService.getConversation(userX, userY, response1.getNextPageState());
+        ResultsPage<ChatMessagePersisted> response2 = chatService.getConversationMessages(userX, userY, response1.getNextPageState());
         assertEquals(5, response2.getResults().size());
         assertEquals("Message 1", response2.getResults().get(0).getContent());
         assertEquals("Message 5", response2.getResults().get(4).getContent());

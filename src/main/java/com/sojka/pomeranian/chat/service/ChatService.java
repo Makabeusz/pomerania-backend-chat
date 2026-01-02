@@ -105,12 +105,12 @@ public class ChatService {
                 ? chatMessage.getContent().substring(0, 97) + "..."
                 : chatMessage.getContent();
 
-        var senderConversation = getExistingOrNewConversation(senderId, recipientId, now, contentSlice, contentType);
+        var senderConversation = getExistingOrNewConversation(senderId, recipientId, now, contentSlice, contentType, true);
         senderConversation.setUnreadCount(0); // for extra safety, no unread if user is actively writing in the chat
         conversationsRepository.save(senderConversation);
         log.trace("Updated sender conversation: {}", senderConversation);
 
-        var recipientConversation = getExistingOrNewConversation(recipientId, senderId, now, contentSlice, contentType);
+        var recipientConversation = getExistingOrNewConversation(recipientId, senderId, now, contentSlice, contentType, false);
         recipientConversation.setUnreadCount(isRecipientOnline ? 0 : recipientConversation.getUnreadCount() + 1);
         conversationsRepository.save(recipientConversation);
         log.trace("Updated recipient conversation: {}", recipientConversation);
@@ -125,7 +125,8 @@ public class ChatService {
             UUID recipientId,
             Instant lastMessageAt,
             String content,
-            Conversation.ContentType contentType
+            Conversation.ContentType contentType,
+            boolean isUserConversation
     ) {
         Conversation.Id conversationId = new Conversation.Id(userId, recipientId);
         var conversation = conversationsRepository.findById(conversationId)
@@ -136,6 +137,7 @@ public class ChatService {
         conversation.setLastMessageAt(lastMessageAt);
         conversation.setContent(content);
         conversation.setContentType(contentType);
+        conversation.setIsLastMessageFromUser(isUserConversation);
         return conversation;
     }
 
@@ -151,7 +153,7 @@ public class ChatService {
         return readAt;
     }
 
-    public ResultsPage<ChatMessagePersisted> getConversation(UUID userId, UUID otherProfileId, String pageState) {
+    public ResultsPage<ChatMessagePersisted> getConversationMessages(UUID userId, UUID otherProfileId, String pageState) {
         String roomId = generateRoomId(userId, otherProfileId);
         var page = messageRepository.findByRoomId(roomId, pageState, 20);
         return new ResultsPage<>(

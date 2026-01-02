@@ -40,7 +40,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     @Query(value = """
             SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count
+                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user
             FROM conversations c
             LEFT JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId
@@ -50,7 +50,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     @Query(value = """
             SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count
+                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user
             FROM conversations c
             LEFT JOIN profiles p ON c.recipient_id = p.id
             WHERE c.user_id = :userId
@@ -75,7 +75,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     @Query(value = """
             SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \
-                null, c.last_message_at, c.content, c.content_type, c.unread_count
+                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user
             FROM conversations c
             LEFT JOIN profiles p ON p.id = c.recipient_id
             WHERE c.user_id = :userId
