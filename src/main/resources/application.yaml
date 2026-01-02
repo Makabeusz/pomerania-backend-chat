@@ -89,19 +89,19 @@ gcp:
   pubsub:
     chat-resources:
       publisher:
-        topic-name: 'r2-bucket'
+        topic-name: ${PUBSUB_CHAT_RESOURCES_TOPIC:r2-bucket-dev}
     notifications:
       subscriber:
-        subscription-name: 'notifications'
+        subscription-name: ${PUBSUB_NOTIFICATIONS_SUB:notifications-dev}
     comments:
       subscriber:
-        subscription-name: 'comments'
+        subscription-name: ${PUBSUB_COMMENTS_SUB:comments-dev}
     delete-account:
       subscriber:
-        subscription-name: 'delete-account'
+        subscription-name: ${PUBSUB_DELETE_ACCOUNT_SUB:delete-account-dev}
     block-user:
       subscriber:
-        subscription-name: 'block-user'
+        subscription-name: ${PUBSUB_BLOCK_USER_SUB:block-user-dev}
     user-presence:
       publisher:
-        topic-name: 'user-presence'
+        topic-name: ${PUBSUB_USER_PRESENCE_TOPIC:user-presence-dev}
