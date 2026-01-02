@@ -4,7 +4,6 @@ import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
-import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
@@ -12,8 +11,8 @@ import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
-import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
+import com.sojka.pomeranian.lib.dto.ChatUser;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.security.model.User;
@@ -41,27 +40,23 @@ public class ChatController {
     private final StompRequestAuthenticator authenticator;
 
     // TODO: if there is an error here then publish some feedback back to the client
+    // TODO: it sends back the message even before it finish updating conversations or notifications, so it might still break with properly saved message as well
     @MessageMapping("/chat.send")
-    public void sendMessage(
-            @Payload ChatMessage chatMessage,
-            StompHeaderAccessor headerAccessor
-    ) {
+    public void sendMessage(@Payload ChatMessage chatMessage, StompHeaderAccessor headerAccessor) {
         User user = authenticator.getUser(headerAccessor);
         chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), chatMessage.getSender().image192()));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
         boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));
-        var messageSaveResult = chatService.saveMessage(chatMessage, roomId, isOnline);
-        var messageResponse = MessageMapper.toDto(messageSaveResult.message());
+        var saved = chatService.saveMessage(chatMessage, roomId, isOnline);
 
-        // Update both users chat
-        messagingTemplate.convertAndSendToUser(messageResponse.getRoomId(), DM_DESTINATION, new ChatResponse<>(messageResponse));
         // Publish unread message notification
         if (!isOnline) {
-            var notificationDto = NotificationMapper.toDto(messageSaveResult.notification());
+            var notificationDto = NotificationMapper.toDto(saved.notification());
 
-            messagingTemplate.convertAndSendToUser(notificationDto.getProfileId() + "", NOTIFY_DESTINATION,
+            messagingTemplate.convertAndSendToUser(saved.notification().getRecipient().id() + "", NOTIFY_DESTINATION,
                     new NotificationResponse<>(notificationDto, NotificationDto.Type.MESSAGE));
+            log.trace("Sent message notification: {}", saved.notification());
         }
     }
 

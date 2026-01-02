@@ -36,7 +36,6 @@ public class DeleteAccountSubscriber {
 
                     chatService.deleteUserInactiveRooms(request.id());
                     chatService.deleteUserConversations(request.id());
-                    chatService.deleteUserMessageNotifications(request.id());
 
                     notificationService.deleteUserNotifications(request.id());
                     notificationService.deleteUserReadNotifications(request.id());

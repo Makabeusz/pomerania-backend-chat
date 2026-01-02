@@ -2,11 +2,10 @@ package com.sojka.pomeranian.chat.util.mapper;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
-import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.lib.dto.ChatUser;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
-
 
 public final class MessageMapper {
 
@@ -46,7 +45,4 @@ public final class MessageMapper {
                 .build();
     }
 
-    public static String roomIdFromAstraRow(Row row) {
-        return row.getString("room_id");
-    }
 }

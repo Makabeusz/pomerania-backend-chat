@@ -7,23 +7,21 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
-import com.sojka.pomeranian.chat.dto.ChatUser;
+import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.dto.MessageKey;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.chat.model.MessageNotification;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
-import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
+import com.sojka.pomeranian.lib.dto.ChatUser;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.security.model.User;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -33,19 +31,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static com.sojka.pomeranian.chat.model.Conversation.ContentType.MESSAGE;
 import static com.sojka.pomeranian.chat.util.TestUtils.createChatMessage;
+import static com.sojka.pomeranian.lib.dto.ConversationFlag.NORMAL;
 import static com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId;
+import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -64,8 +62,6 @@ class ChatServiceIntegrationTest {
     AstraTestcontainersConnector connector;
     @Autowired
     ConversationsRepository conversationsRepository;
-    @Autowired
-    MessageNotificationRepository messageNotificationRepository;
 
     CqlSession session;
 
@@ -77,8 +73,8 @@ class ChatServiceIntegrationTest {
     UUID userX = UUID.randomUUID();
     UUID userY = UUID.randomUUID();
     UUID userZ = UUID.randomUUID();
-    String roomIdXY = userX + ":" + userY;
-    String roomIdXZ = userX + ":" + userZ;
+    String roomIdXY = generateRoomId(userX, userY);
+    String roomIdXZ = generateRoomId(userX, userZ);
 
     @BeforeEach
     void setUp() {
@@ -86,28 +82,27 @@ class ChatServiceIntegrationTest {
         session.execute("TRUNCATE messages.messages");
         userRepository.deleteAll();
         conversationsRepository.deleteAll();
-        messageNotificationRepository.deleteAll();
         userRepository.deleteAll();
     }
 
-    @Disabled("fix me!!!")
     @Test
     void saveMessage_message_savedWithBothConversations() {
+        String content = "Hello, World!";
         UUID user1Id = UUID.randomUUID();
         UUID user2Id = UUID.randomUUID();
         ChatMessage chatMessage = ChatMessage.basicBuilder()
-                .content("Hello, World!")
+                .content(content)
                 .sender(new ChatUser(user1Id, user1Id + "-username", null))
                 .recipient(new ChatUser(user2Id, user2Id + "-username", null))
                 .build();
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
-        var saved = chatService.saveMessage(chatMessage, roomId, false).message();
+        var saved = chatService.saveMessage(chatMessage, roomId, false);
 
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
                 "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
-                saved.getRoomId(), saved.getCreatedAt(), saved.getProfileId()
+                roomId, toInstant(saved.message().getCreatedAt()), saved.message().getSender().id()
         );
         var row = connector.getSession()
                 .execute(selectMessage)
@@ -132,17 +127,16 @@ class ChatServiceIntegrationTest {
                         .username(user1Id + "-username")
                         .recipientProfileId(user2Id)
                         .recipientUsername(user2Id + "-username")
-                        .content("Hello, World!")
+                        .content(content)
                         .metadata(Collections.emptyMap())
                         .build());
 
         assertThat(conversationsRepository.findAll()).containsExactly(
-                new Conversation(new Conversation.Id(user1Id, user2Id), null, saveResult.getCreatedAt()),
-                new Conversation(new Conversation.Id(user2Id, user1Id), null, saveResult.getCreatedAt())
+                createReadConversation(new Conversation.Id(user1Id, user2Id), saveResult.getCreatedAt(), content),
+                createUnreadConversation(new Conversation.Id(user2Id, user1Id), saveResult.getCreatedAt(), content)
         );
     }
 
-    @Disabled("fix me!!!")
     @Test
     void getConversation_fewMessages_sameMessagesInDescOrder() {
         Message message1 = createChatMessage(roomIdXY, "Message 1", userX, userY, Instant.now().minusSeconds(10));
@@ -162,13 +156,12 @@ class ChatServiceIntegrationTest {
         assertNull(response.getNextPageState()); // No more pages
     }
 
-    @Disabled("fix me!!!")
     @ParameterizedTest
     @MethodSource("conversationHeadersSource")
     void getConversationsHeaders_twoConversationsWithFewMessagesEach_twoConversationHeaders(Pagination pagination) {
         Message message3 = createChatMessage(roomIdXY, "Message 3", userY, userX, Instant.now());
         Message message2 = createChatMessage(roomIdXY, "Message 2", userX, userY, Instant.now().minusSeconds(5));
-        Message message1 = createChatMessage(roomIdXY, "Message 1", userX, userY, Instant.now().minusSeconds(10));
+        Message message1 = createChatMessage(roomIdXY, "Message 1", userX, userZ, Instant.now().minusSeconds(10));
         Message message0 = createChatMessage(roomIdXZ, "Message 0", userZ, userX, Instant.now().minusSeconds(15));
         Message messageNotInTheScope = createChatMessage("userY:userZ", "Other users message", userZ, userY, Instant.now().minusSeconds(15));
         messageRepository.save(messageNotInTheScope);
@@ -177,18 +170,17 @@ class ChatServiceIntegrationTest {
         messageRepository.save(message2);
         messageRepository.save(message3);
         // user conversations
-        conversationsRepository.save(new Conversation(new Conversation.Id(userX, userY), null, message3.getCreatedAt()));
-        conversationsRepository.save(new Conversation(new Conversation.Id(userX, userZ), null, message0.getCreatedAt()));
+        conversationsRepository.save(createReadConversation(new Conversation.Id(userX, userY), message2.getCreatedAt(), "Message 2"));
+        conversationsRepository.save(createReadConversation(new Conversation.Id(userX, userZ), message1.getCreatedAt(), "Message 1"));
         // other party conversations
-        conversationsRepository.save(new Conversation(new Conversation.Id(userY, userX), null, message3.getCreatedAt()));
-        conversationsRepository.save(new Conversation(new Conversation.Id(userZ, userX), null, message0.getCreatedAt()));
+        conversationsRepository.save(createReadConversation(new Conversation.Id(userY, userX), message3.getCreatedAt(), "Message 3"));
+        conversationsRepository.save(createReadConversation(new Conversation.Id(userZ, userX), message0.getCreatedAt(), "Message 0"));
 
-
-        ResultsPage<ChatMessagePersisted> response = chatService.getConversations(userX, null, pagination);
+        ResultsPage<ConversationDto> response = chatService.getConversations(userX, NORMAL, pagination);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("Message 3", response.getResults().get(0).getContent()); // most recent on top
-        assertEquals("Message 0", response.getResults().get(1).getContent());
+        assertEquals("Message 2", response.getResults().get(0).getContent()); // most recent on top
+        assertEquals("Message 1", response.getResults().get(1).getContent());
         assertNull(response.getNextPageState()); // No more pages
     }
 
@@ -199,7 +191,6 @@ class ChatServiceIntegrationTest {
         );
     }
 
-    @Disabled("fix me!!!")
     @Test
     void getConversationsHeaders_fourConversationsWithManyMessages_fourConversationsWithLatestMessages() {
         Random random = new Random();
@@ -224,19 +215,20 @@ class ChatServiceIntegrationTest {
                 senderId = otherUser;
                 recipientId = user1Id;
             }
+            String content = "Message " + (i + 1);
 
             Instant now = Instant.now();
-            messageRepository.save(createChatMessage(roomId, "Message " + (i + 1), senderId, recipientId, now));
+            messageRepository.save(createChatMessage(roomId, content, senderId, recipientId, now));
 
-            var senderConversation = new Conversation(new Conversation.Id(senderId, recipientId), null, now);
-            var recipientConversation = new Conversation(new Conversation.Id(recipientId, senderId), null, now);
+            var senderConversation = createReadConversation(new Conversation.Id(senderId, recipientId), now, content);
+            var recipientConversation = createUnreadConversation(new Conversation.Id(recipientId, senderId), now, content);
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
-        ResultsPage<ChatMessagePersisted> response = chatService.getConversations(user1Id, null, new Pagination(0, 10));
+        ResultsPage<ConversationDto> response = chatService.getConversations(user1Id, NORMAL, new Pagination(0, 10));
 
         assertEquals(4, response.getResults().size());
-        assertThat(response.getNextPageState()).isNull(); // Assuming pagination
+        assertNull(response.getNextPageState()); // Assuming pagination
         assertThat(response.getResults().get(0).getContent()).isEqualTo("Message 12");
         assertThat(response.getResults().get(1).getContent()).isEqualTo("Message 11");
         assertThat(response.getResults().get(2).getContent()).isEqualTo("Message 10");
@@ -275,7 +267,7 @@ class ChatServiceIntegrationTest {
 //        ResultsPage<ChatMessagePersisted> response = new ResultsPage<>(Collections.emptyList(), toEncodedString(0, 10));
 //
 //        do {
-//            response = chatService.getConversationsHeaders("userA", response.getNextPageState());
+//            response = chatService.getConversations("userA", response.getNextPageState());
 //            messages.addAll(response.getResults());
 //        } while (response.getNextPageState() != null);
 //
@@ -290,11 +282,11 @@ class ChatServiceIntegrationTest {
 //        assertNull(response.getNextPageState());
 //    }
 
-    @Disabled("fix me!!!")
     @Test
-    void saveMessage_offlineRecipient_savedWithNotification() {
+    void saveMessage_offlineRecipient_savedWithConversation() {
+        String content = "Hey, you there?";
         ChatMessage chatMessage = ChatMessage.basicBuilder()
-                .content("Hey, you there?")
+                .content(content)
                 .sender(new ChatUser(user1Id, user1Id + "-username", null))
                 .recipient(new ChatUser(user2Id, user2Id + "-username", null))
                 .build();
@@ -305,7 +297,7 @@ class ChatServiceIntegrationTest {
         // Verify message in messages table
         SimpleStatement selectMessage = SimpleStatement.newInstance(
                 "SELECT * FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
-                saved.message().getRoomId(), saved.message().getCreatedAt(), saved.message().getProfileId()
+                roomId, toInstant(saved.message().getCreatedAt()), saved.message().getSender().id()
         );
         var row = connector.getSession()
                 .execute(selectMessage)
@@ -330,42 +322,23 @@ class ChatServiceIntegrationTest {
                         .username(user1Id + "-username")
                         .recipientProfileId(user2Id)
                         .recipientUsername(user2Id + "-username")
-                        .content("Hey, you there?")
+                        .content(content)
                         .metadata(Collections.emptyMap())
                         .build());
-
-        // Verify notification
-        MessageNotification savedNotification = messageNotificationRepository.findById(new MessageNotification.Id(
-                user2Id, LocalDateTime.ofInstant(saved.message().getCreatedAt(), ZoneId.of("UTC")), user1Id)
-        ).orElseThrow();
-        assertThat(savedNotification).usingRecursiveComparison(new RecursiveComparisonConfiguration())
-                .ignoringFields("id.createdAt")
-                .isEqualTo(MessageNotification.builder()
-                        .id(new MessageNotification.Id(user2Id,
-                                null,
-                                user1Id))
-                        .senderUsername(user1Id + "-username")
-                        .content("Hey, you there?")
-                        .build());
-
         // Verify conversations
         assertThat(conversationsRepository.findAll()).containsExactlyInAnyOrder(
-                new Conversation(new Conversation.Id(user1Id, user2Id), null, saved.message().getCreatedAt()),
-                new Conversation(new Conversation.Id(user2Id, user1Id), null, saved.message().getCreatedAt())
+                createReadConversation(new Conversation.Id(user1Id, user2Id), toInstant(saved.message().getCreatedAt()), content),
+                createUnreadConversation(new Conversation.Id(user2Id, user1Id), toInstant(saved.message().getCreatedAt()), content)
         );
     }
 
     @Test
-    void markRead_messageExists_readAtUpdatedAndNotificationDeleted() {
+    void markRead_messageExists_readAtUpdatedAndConversationUpdated() {
         String roomId = user1Id + ":" + user2Id;
         Message message = createChatMessage(roomId, "Hello!", user1Id, user2Id, Instant.now());
         messageRepository.save(message);
-        MessageNotification notification = MessageNotification.builder()
-                .id(new MessageNotification.Id(user2Id, fromInstant(message.getCreatedAt()), user1Id))
-                .senderUsername(user1Id + "-username")
-                .content("Hello!")
-                .build();
-        messageNotificationRepository.save(notification);
+        Conversation conversation = createUnreadConversation(new Conversation.Id(user2Id, user1Id), message.getCreatedAt(), "Hello!");
+        conversationsRepository.save(conversation);
 
         MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt()), user1Id);
         Instant readAt = chatService.markRead(key);
@@ -373,25 +346,17 @@ class ChatServiceIntegrationTest {
         // Verify message readAt updated
         var row = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user1Id)).one();
         assertThat(row.getInstant("read_at")).isEqualTo(readAt);
-
         // Verify notification deleted
-        Optional<MessageNotification> notExisting = messageNotificationRepository.findById(new MessageNotification.Id(
-                user2Id, LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), user1Id)
-        );
-        assertThat(notExisting).isEmpty();
+        assertThat(conversationsRepository.findById(new Conversation.Id(user2Id, user1Id)).get().getUnreadCount()).isZero();
     }
 
     @Test
-    void markRead_messageNotExists_notUpdatedAndNotCreatedNewRow() {
+    void markRead_messageNotExists_notUpdated() {
         String roomId = user1Id + ":" + user2Id;
         Message message = createChatMessage(roomId, "Hello!", user1Id, user2Id, Instant.now());
         messageRepository.save(message);
-        MessageNotification notification = MessageNotification.builder()
-                .id(new MessageNotification.Id(user2Id, fromInstant(message.getCreatedAt()), user1Id))
-                .senderUsername(user1Id + "-username")
-                .content("Hello!")
-                .build();
-        messageNotificationRepository.save(notification);
+        Conversation conversation = createUnreadConversation(new Conversation.Id(user2Id, user1Id), message.getCreatedAt(), "Hello!");
+        conversationsRepository.save(conversation);
 
         MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt()), user2Id);
         chatService.markRead(key);
@@ -401,11 +366,8 @@ class ChatServiceIntegrationTest {
         assertThat(existingMessage.getInstant("read_at")).isNull();
         var updatedKeyMessage = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user2Id)).one();
         assertThat(updatedKeyMessage).isNull();
-        // Verify notification deleted
-        Optional<MessageNotification> actualNotification = messageNotificationRepository.findById(new MessageNotification.Id(
-                user2Id, LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), user1Id)
-        );
-        assertThat(actualNotification).contains(notification);
+        // Verify conversation count not updated
+        assertThat(conversationsRepository.findById(new Conversation.Id(user2Id, user1Id)).get().getUnreadCount()).isOne();
     }
 
     @Test
@@ -413,12 +375,8 @@ class ChatServiceIntegrationTest {
         String roomId = user1Id + ":" + user2Id;
         Message message = createChatMessage(roomId, "Hello!", user1Id, user2Id, Instant.now());
         messageRepository.save(message);
-        MessageNotification notification = MessageNotification.builder()
-                .id(new MessageNotification.Id(user2Id, fromInstant(message.getCreatedAt()), user1Id))
-                .senderUsername(user1Id + "-username")
-                .content("Hello!")
-                .build();
-        messageNotificationRepository.save(notification);
+        Conversation conversation = createUnreadConversation(new Conversation.Id(user2Id, user1Id), message.getCreatedAt(), "Hello!");
+        conversationsRepository.save(conversation);
 
         Instant notExistingKey = Instant.now();
         MessageKey key = new MessageKey(roomId, List.of(message.getCreatedAt(), notExistingKey), user1Id);
@@ -430,39 +388,16 @@ class ChatServiceIntegrationTest {
         var updatedKeyMessage = connector.getSession().execute(selectMessage(roomId, notExistingKey, user1Id)).one();
         assertThat(updatedKeyMessage).isNull();
         // Verify notification deleted
-        Optional<MessageNotification> actualNotification = messageNotificationRepository.findById(new MessageNotification.Id(
-                user2Id, LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.of("UTC")), user1Id)
-        );
-        assertThat(actualNotification).isEmpty();
+        assertThat(conversationsRepository.findById(new Conversation.Id(user2Id, user1Id)).get().getUnreadCount()).isZero();
     }
 
     @Test
     void countNotifications_multipleNotifications_correctCount() {
-        LocalDateTime now = LocalDateTime.now();
-        MessageNotification notification1 = MessageNotification.builder()
-                .id(new MessageNotification.Id(userX,
-                        now,
-                        user2Id))
-                .senderUsername(user2Id + "-username")
-                .content("Message 1")
-                .build();
-        MessageNotification notification2 = MessageNotification.builder()
-                .id(new MessageNotification.Id(userX,
-                        now.plusSeconds(1L),
-                        user3Id))
-                .senderUsername(user3Id + "-username")
-                .content("Message 2")
-                .build();
-        MessageNotification otherUserNotification = MessageNotification.builder()
-                .id(new MessageNotification.Id(user4Id,
-                        now,
-                        user1Id))
-                .senderUsername(user1Id + "-username")
-                .content("Message 3")
-                .build();
-        messageNotificationRepository.save(notification1);
-        messageNotificationRepository.save(notification2);
-        messageNotificationRepository.save(otherUserNotification);
+        Instant now = Instant.now();
+        Conversation conversation1 = createUnreadConversation(new Conversation.Id(userX, user2Id), now, "Message 1");
+        Conversation conversation2 = createUnreadConversation(new Conversation.Id(userX, user3Id), now.plusSeconds(1L), "Message 2");
+        Conversation otherUserNotification = createUnreadConversation(new Conversation.Id(user4Id, user1Id), now, "Message 3");
+        conversationsRepository.saveAll(List.of(conversation1, conversation2, otherUserNotification));
 
         Long count = chatService.countNotifications(userX);
 
@@ -471,23 +406,10 @@ class ChatServiceIntegrationTest {
 
     @Test
     void getNotifications_fewMessageNotifications_sortedByCreatedAtDesc() {
-        LocalDateTime now = LocalDateTime.now();
-        MessageNotification notification1 = MessageNotification.builder()
-                .id(new MessageNotification.Id(userX,
-                        now.minusSeconds(10L),
-                        user2Id))
-                .senderUsername(user2Id + "-username")
-                .content("Old message")
-                .build();
-        MessageNotification notification2 = MessageNotification.builder()
-                .id(new MessageNotification.Id(userX,
-                        now,
-                        user3Id))
-                .senderUsername(user3Id + "-username")
-                .content("New message")
-                .build();
-        messageNotificationRepository.save(notification1);
-        messageNotificationRepository.save(notification2);
+        Instant now = Instant.now();
+        Conversation conversation1 = createUnreadConversation(new Conversation.Id(userX, user2Id), now.minusSeconds(1L), "Old message");
+        Conversation conversation2 = createUnreadConversation(new Conversation.Id(userX, user3Id), now, "New message");
+        conversationsRepository.saveAll(List.of(conversation1, conversation2));
 
         ResultsPage<NotificationDto> response = chatService.getMessageNotifications(userX, null);
 
@@ -497,20 +419,19 @@ class ChatServiceIntegrationTest {
         assertNull(response.getNextPageState());
     }
 
-    @Disabled("fix me!!!")
     @Test
     void getConversation_manyMessages_twoPagedResults() {
         List<Message> messages = new ArrayList<>();
-        for (int i = 1; i <= 15; i++) {
+        for (int i = 1; i <= 25; i++) {
             messages.add(createChatMessage(roomIdXY, "Message " + i, userX, userY, Instant.now().minusSeconds(15 - i)));
         }
         messages.forEach(messageRepository::save);
 
         // First page
         ResultsPage<ChatMessagePersisted> response1 = chatService.getConversation(userX, userY, null);
-        assertEquals(10, response1.getResults().size());
+        assertEquals(20, response1.getResults().size());
         assertEquals("Message 6", response1.getResults().get(0).getContent());
-        assertEquals("Message 15", response1.getResults().get(9).getContent());
+        assertEquals("Message 25", response1.getResults().get(19).getContent());
         assertThat(response1.getNextPageState()).isNotNull();
 
         // Second page
@@ -519,10 +440,6 @@ class ChatServiceIntegrationTest {
         assertEquals("Message 1", response2.getResults().get(0).getContent());
         assertEquals("Message 5", response2.getResults().get(4).getContent());
         assertNull(response2.getNextPageState());
-    }
-
-    public LocalDateTime fromInstant(Instant instant) {
-        return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
     }
 
     @Test
@@ -553,7 +470,6 @@ class ChatServiceIntegrationTest {
         assertThat(messageRepository.findByRoomId(room13, null, 10).getResults()).isNotEmpty();
     }
 
-    @Disabled("fix me!!!")
     @Test
     void deleteUserInactiveMessages_roomsWithInactiveUsers_roomsDeleted() {
         String room12 = generateRoomId(user1Id, user2Id);
@@ -571,7 +487,6 @@ class ChatServiceIntegrationTest {
         assertThat(messageRepository.findByRoomId(room13, null, 10).getResults()).isEmpty();
     }
 
-    @Disabled("fix me!!!")
     @Test
     void deleteUserInactiveMessages_mixedActiveInactive_selectiveDeletion() {
         User user2 = User.builder().id(user2Id).build();
@@ -594,11 +509,40 @@ class ChatServiceIntegrationTest {
         assertThat(messageRepository.findByRoomId(room14, null, 10).getResults()).isEmpty();
     }
 
+    @Test
+    void getRoomUnreadMessagesCount() {
+        var conversation1 = createConversation(new Conversation.Id(userX, userY), Instant.now(), "dummy", 2);
+        var conversation2 = createUnreadConversation(new Conversation.Id(userX, userZ), Instant.now(), "dummy");
+        conversationsRepository.saveAll(List.of(conversation1, conversation2));
+
+        assertThat(chatService.getRoomUnreadMessagesCount(userX, generateRoomId(userX, userZ))).isEqualTo(1L);
+    }
+
+
     SimpleStatement selectMessage(String roomId, Instant createdAt, UUID userId) {
         return SimpleStatement.newInstance(
                 "SELECT read_at FROM messages.messages WHERE room_id = ? AND created_at = ? AND profile_id = ?",
                 roomId, createdAt, userId
         );
+    }
+
+    Conversation createUnreadConversation(Conversation.Id id, Instant lastMessageAt, String content) {
+        return createConversation(id, lastMessageAt, content, 1);
+    }
+
+    Conversation createReadConversation(Conversation.Id id, Instant lastMessageAt, String content) {
+        return createConversation(id, lastMessageAt, content, 0);
+    }
+
+    Conversation createConversation(Conversation.Id id, Instant lastMessageAt, String content, int unreadCount) {
+        return Conversation.builder()
+                .id(id)
+                .lastMessageAt(lastMessageAt)
+                .content(content)
+                .unreadCount(unreadCount)
+                .flag(NORMAL)
+                .contentType(MESSAGE)
+                .build();
     }
 
 }

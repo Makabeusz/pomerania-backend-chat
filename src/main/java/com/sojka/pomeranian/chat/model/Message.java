@@ -23,9 +23,9 @@ public class Message {
     private String username;
     private UUID recipientProfileId;
     private String recipientUsername;
-    // @NotBlank
     private String content;
     private UUID resourceId;
+    // TODO: move ResourceType to lib from main and use here
     private String resourceType;
     private String editedAt;
     private Instant readAt;

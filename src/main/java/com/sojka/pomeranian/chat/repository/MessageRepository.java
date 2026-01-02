@@ -198,7 +198,8 @@ public class MessageRepository extends AstraPageableRepository {
                     .setColumn("metadata", literal(message.getMetadata()))
                     .whereColumn("room_id").isEqualTo(literal(message.getRoomId()))
                     .whereColumn("created_at").isEqualTo(literal(message.getCreatedAt()))
-                    .whereColumn("profile_id").isEqualTo(literal(message.getProfileId()));
+                    .whereColumn("profile_id").isEqualTo(literal(message.getProfileId()))
+                    .ifExists();
 
             var session = connector.getSession();
             session.execute(messageUpdate.build());

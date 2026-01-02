@@ -266,25 +266,16 @@ CREATE TABLE IF NOT EXISTS likes (
     PRIMARY KEY (profile_id, related_id)
 );
 
--- messages backup START --
 CREATE TABLE IF NOT EXISTS conversations (
     user_id UUID,
     recipient_id UUID,
-    flag VARCHAR DEFAULT 'NORMAL',
+    flag VARCHAR DEFAULT 'NORMAL' NOT NULL,
     last_message_at TIMESTAMP,
+    content VARCHAR,
+    content_type VARCHAR,
+    unread_count INTEGER,
     PRIMARY KEY (user_id, recipient_id)
 );
-
-CREATE TABLE IF NOT EXISTS message_notifications (
-    profile_id UUID,
-    created_at TIMESTAMP,
-    sender_id UUID,
-    sender_username VARCHAR,
-    sender_image_192 UUID,
-    content VARCHAR,
-    PRIMARY KEY (profile_id, created_at, sender_id)
-);
--- messages backup END --
 
 CREATE TABLE IF NOT EXISTS osmcities (
     id UUID PRIMARY KEY,
@@ -344,7 +335,6 @@ ALTER TABLE comments ADD CONSTRAINT fk_comments_personal FOREIGN KEY (pair_autho
 ALTER TABLE verification_token ADD CONSTRAINT fk_verification_token_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 -- TODO: those are disabled for tests, implement some helper class to fulfill this condition
 --ALTER TABLE conversations ADD CONSTRAINT fk_conversations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
---ALTER TABLE message_notifications ADD CONSTRAINT fk_message_notifications_profile FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 ALTER TABLE profile_preferences ADD CONSTRAINT fk_profile_preferences_user FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 ALTER TABLE validation_photos ADD CONSTRAINT fk_validation_photos_user FOREIGN KEY (profile_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE sexual_preferences ADD CONSTRAINT fk_sexual_preferences_user FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE;
@@ -373,7 +363,6 @@ CREATE INDEX IF NOT EXISTS idx_comments_profile_id ON comments(profile_id);
 CREATE INDEX IF NOT EXISTS idx_comments_related_profile_id ON comments(related_profile_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_last_message_at ON conversations(last_message_at);
 CREATE INDEX IF NOT EXISTS idx_conversations_flag ON conversations(flag);
-CREATE INDEX IF NOT EXISTS idx_message_notifications_created_at ON message_notifications(created_at);
 CREATE INDEX IF NOT EXISTS idx_likes_created_at ON likes(created_at);
 CREATE INDEX IF NOT EXISTS idx_likes_related_profile_id ON likes(related_profile_id);
 CREATE INDEX IF NOT EXISTS idx_osmcities_geom ON osmcities USING GIST (geom);

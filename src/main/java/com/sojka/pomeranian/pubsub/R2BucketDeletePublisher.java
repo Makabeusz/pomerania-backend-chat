@@ -10,7 +10,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-import com.sojka.pomeranian.chat.dto.R2BucketDeleteRequest;
+import com.sojka.pomeranian.lib.dto.R2BucketDeleteRequest;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.pubsub.config.GcpConfig;
 import lombok.extern.slf4j.Slf4j;

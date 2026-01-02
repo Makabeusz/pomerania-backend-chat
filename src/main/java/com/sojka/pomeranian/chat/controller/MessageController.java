@@ -2,6 +2,7 @@ package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
+import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import com.sojka.pomeranian.lib.dto.Pagination;
@@ -41,7 +42,7 @@ public class MessageController {
 
     @GetMapping("/headers")
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversations(
+    public ResponseEntity<ResultsPage<ConversationDto>> getConversations(
             @AuthenticationPrincipal User user,
             @RequestParam int pageNumber,
             @RequestParam int pageSize,
@@ -50,6 +51,7 @@ public class MessageController {
         return ResponseEntity.ok(chatService.getConversations(user.getId(), flag, new Pagination(pageNumber, pageSize)));
     }
 
+    // TODO: rename those "headers" to conversations everywhere
     @PostMapping("/headers")
     @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<Boolean> updateConversationFlag(

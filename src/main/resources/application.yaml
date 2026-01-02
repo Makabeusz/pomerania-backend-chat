@@ -40,9 +40,10 @@ logging:
             repository:
               MessageRepository: INFO
             service:
-              ChatService: INFO
-              SessionTracker: TRACE
+              ChatService: TRACE
+              SessionTracker: WARN
             controller:
+              ChatController: TRACE
               MessageController: TRACE
               StompSubscriptionController: DEBUG
               GlobalExceptionHandler: DEBUG

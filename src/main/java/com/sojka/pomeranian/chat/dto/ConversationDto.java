@@ -1,12 +1,12 @@
 package com.sojka.pomeranian.chat.dto;
 
+import com.sojka.pomeranian.lib.dto.ChatUser;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
-import java.util.UUID;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -14,9 +14,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ConversationDto {
 
-    private UUID userId;
-    private UUID recipientId;
+    private ChatUser recipient;
     private String flag;
-    private Timestamp lastMessageAt;
-    private UUID image192;
+    private Instant lastMessageAt;
+    private String content;
+    private String contentType;
+    private Integer unreadCount;
 }

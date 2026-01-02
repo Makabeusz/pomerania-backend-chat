@@ -51,7 +51,7 @@ class MessageRepositoryImplUnitTest {
         when(mockedSection.execute(any(SimpleStatement.class))).thenThrow(new RuntimeException("unexpected error"));
         assertThatThrownBy(() -> repository.save(Message.builder().roomId("user1:user2").content("dummy").username("dummy").build()))
                 .isExactlyInstanceOf(AstraException.class)
-                .hasMessage("Failed to execute save, for: Message(roomId=user1:user2, createdAt=null, profileId=null, username=dummy, recipientProfileId=null, recipientUsername=null, content=dummy, resourceId=null, resourceType=null, threadId=null, editedAt=null, deletedAt=null, pinned=null, readAt=null, metadata=null)")
+                .hasMessage("Failed to execute save, for: Message(roomId=user1:user2, createdAt=null, profileId=null, username=dummy, recipientProfileId=null, recipientUsername=null, content=dummy, resourceId=null, resourceType=null, editedAt=null, readAt=null, metadata=null)")
                 .hasCauseExactlyInstanceOf(RuntimeException.class)
                 .hasRootCauseMessage("unexpected error");
     }

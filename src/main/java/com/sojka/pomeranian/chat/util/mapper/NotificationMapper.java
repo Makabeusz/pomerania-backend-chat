@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.chat.util.mapper;
 
-import com.sojka.pomeranian.chat.dto.NotificationHeader;
-import com.sojka.pomeranian.chat.model.MessageNotification;
+import com.sojka.pomeranian.chat.dto.ConversationDto;
+import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
 import com.sojka.pomeranian.lib.dto.CommentStompRequest;
 import com.sojka.pomeranian.lib.dto.NotificationDto;
 
@@ -17,30 +17,28 @@ public final class NotificationMapper {
     private NotificationMapper() {
     }
 
-    public static NotificationDto toDto(MessageNotification notification) {
+    public static NotificationDto toDto(ConversationDto conversation) {
         return NotificationDto.builder()
-                .profileId(notification.getId().getProfileId())
-                .createdAt(toDateString(notification.getId().getCreatedAt()))
-                .content(notification.getContent())
+                .createdAt(toDateString(conversation.getLastMessageAt()))
+                .content(conversation.getContent())
                 .metadata(new HashMap<>(Map.of(
-                        "senderId", notification.getId().getSenderId() + "",
-                        "senderUsername", notification.getSenderUsername()
+                        "senderId", conversation.getRecipient().id() + "",
+                        "senderUsername", conversation.getRecipient().username() + "", // fix null
+                        "senderImage192", conversation.getRecipient().image192() + ""
                 )))
                 .build();
     }
 
-    public static NotificationDto toDto(NotificationHeader notification) {
+    public static NotificationDto toDto(ConversationProjection projection) {
         return NotificationDto.builder()
-                .profileId(notification.getProfileId())
-                .createdAt(toDateString(notification.getCreatedAt().toLocalDateTime()))
-                .content(notification.getContent())
+                .profileId(projection.getRecipientId())
+                .createdAt(toDateString(projection.getLastMessageAt()))
+                .content(projection.getContent())
+                .relatedType(projection.getContentType())
                 .metadata(new HashMap<>(Map.of(
-                        "senderId", notification.getSenderId() + "",
-                        "senderUsername", notification.getSenderUsername(),
-                        "image192", notification.getSenderImage192() + "",
-                        "count", notification.getCount() >= Integer.MAX_VALUE
-                                ? Integer.MAX_VALUE + ""
-                                : notification.getCount().toString()
+                        "senderImage192", projection.getRecipientImage192() + "",
+                        "senderUsername", projection.getRecipientUsername() + "", // fix null
+                        "unreadCount", projection.getUnreadCount() + ""
                 )))
                 .build();
     }
