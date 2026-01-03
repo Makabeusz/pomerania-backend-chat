@@ -63,7 +63,7 @@ public interface SessionCache {
     /**
      * Removes a user from the active users cache, marking them as offline.
      *
-     * @return {@code userId}.
+     * @return {@code userId} if successfully removed, {@code null} if user already not online.
      * @throws NullPointerException if user don't exists
      */
     UUID remove(String simpSessionId) throws NullPointerException;

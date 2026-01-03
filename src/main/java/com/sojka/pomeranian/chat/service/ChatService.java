@@ -186,7 +186,7 @@ public class ChatService {
         );
     }
 
-    public long getConversationsCount(UUID userId, ConversationFlag flag) {
+    public Long getConversationsCount(UUID userId, ConversationFlag flag) {
         if (flag == NORMAL) {
             return conversationsRepository.countAllByIdUserIdAndFlagOrFlag(userId, NORMAL, STARRED);
         } else {
@@ -258,7 +258,7 @@ public class ChatService {
         log.info("Removed all conversations of userID={}", userId);
     }
 
-    public long getRoomUnreadMessagesCount(UUID userId, String roomId) {
+    public Long getRoomUnreadMessagesCount(UUID userId, String roomId) {
         if (roomId == null || roomId.length() != 73) {
             throw new IllegalArgumentException(roomId);
         }

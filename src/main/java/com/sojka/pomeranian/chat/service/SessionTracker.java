@@ -19,7 +19,6 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +56,12 @@ public class SessionTracker {
         log.trace("SessionDisconnectEvent: {}", event);
         try {
             var userId = cache.remove(event.getSessionId());
-            publisher.publish(new UserPresenceRequest(userId, false, DateTimeUtils.getCurrentInstant()));
-            log.debug("Offline: userId={}", userId);
+            if (userId != null) {
+                publisher.publish(new UserPresenceRequest(userId, false, DateTimeUtils.getCurrentInstant()));
+                log.debug("Offline: userId={}", userId);
+            } else {
+                log.debug("SessionId={} already online", event.getSessionId());
+            }
         } catch (SecurityException e) {
             log.debug("Unknown session", e);
         }

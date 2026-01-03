@@ -29,14 +29,14 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
             SELECT COUNT(*) FROM conversations c
             WHERE c.user_id = :userId
             AND c.flag = ?#{#flag.name()}""", nativeQuery = true)
-    Integer countAllByIdUserIdAndFlag(UUID userId, ConversationFlag flag);
+    Long countAllByIdUserIdAndFlag(UUID userId, ConversationFlag flag);
 
     @Query(value = """
             SELECT COUNT(*) FROM conversations c
             WHERE c.user_id = :userId
             AND (c.flag = ?#{#flag1.name()}
             OR c.flag = ?#{#flag2.name()})""", nativeQuery = true)
-    Integer countAllByIdUserIdAndFlagOrFlag(UUID userId, ConversationFlag flag1, ConversationFlag flag2);
+    Long countAllByIdUserIdAndFlagOrFlag(UUID userId, ConversationFlag flag1, ConversationFlag flag2);
 
     @Query(value = """
             SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \

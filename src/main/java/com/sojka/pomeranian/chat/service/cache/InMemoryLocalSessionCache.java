@@ -90,7 +90,7 @@ public class InMemoryLocalSessionCache implements SessionCache {
     public boolean add(UUID userId, String simpSessionId, List<StompSubscription> subscriptions) {
         ActiveUser activeUser = users.get(userId);
         if (activeUser == null) {
-            throw new CacheException("User=%s is not online".formatted(userId));
+            return false;
         }
         boolean result = true;
 
@@ -115,7 +115,7 @@ public class InMemoryLocalSessionCache implements SessionCache {
                 return result;
             }
         }
-        throw new CacheException("User=%s do not have active simpSessionID=%s".formatted(userId, simpSessionId));
+        return false;
     }
 
     @Override
@@ -146,11 +146,11 @@ public class InMemoryLocalSessionCache implements SessionCache {
     public UUID remove(String simpSessionId) {
         UUID userId = sessions.get(simpSessionId);
         if (userId == null) {
-            throw new CacheException("Session=%s not online".formatted(simpSessionId));
+            return null;
         }
         ActiveUser activeUser = users.get(userId);
         if (activeUser == null) {
-            throw new CacheException("User=%s not online".formatted(userId));
+            return null;
         } else {
             activeUser.getSessions().stream()
                     .map(ActiveUser.Session::getSimpSessionId)
@@ -188,7 +188,7 @@ public class InMemoryLocalSessionCache implements SessionCache {
             users.put(userId, activeUser);
             return true;
         }
-        throw new CacheException("User=%s is not online".formatted(userId));
+        return false;
     }
 
     /**

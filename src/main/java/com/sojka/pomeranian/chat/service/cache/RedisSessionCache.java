@@ -75,7 +75,7 @@ public class RedisSessionCache implements SessionCache {
     public boolean add(UUID userId, String simpSessionId, List<StompSubscription> subscriptions) {
         ActiveUser activeUser = users.opsForValue().get(userId);
         if (activeUser == null) {
-            throw new CacheException("User=%s is not online".formatted(userId));
+            return false;
         }
         boolean result = true;
 
@@ -101,7 +101,7 @@ public class RedisSessionCache implements SessionCache {
                 return result;
             }
         }
-        throw new CacheException("User=%s do not have active simpSessionID=%s".formatted(userId, simpSessionId));
+        return false;
     }
 
     @Override
@@ -132,11 +132,11 @@ public class RedisSessionCache implements SessionCache {
     public UUID remove(String simpSessionId) {
         UUID userId = sessions.opsForValue().get(simpSessionId);
         if (userId == null) {
-            throw new CacheException("Session=%s is not online".formatted(simpSessionId));
+            return null;
         }
         ActiveUser activeUser = users.opsForValue().get(userId);
         if (activeUser == null) {
-            throw new CacheException("User=%s not online".formatted(userId));
+            return null;
         } else {
             List<String> allSessionIds = activeUser.getSessions().stream().map(ActiveUser.Session::getSimpSessionId).toList();
             sessions.delete(allSessionIds);
@@ -173,7 +173,7 @@ public class RedisSessionCache implements SessionCache {
             users.opsForValue().set(userId, activeUser);
             return true;
         }
-        throw new CacheException("User=%s is not online".formatted(userId));
+        return false;
     }
 
     /**
