@@ -1,6 +1,5 @@
 package com.sojka.pomeranian.chat.dto;
 
-import com.sojka.pomeranian.lib.dto.ChatUser;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

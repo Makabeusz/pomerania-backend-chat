@@ -1,9 +1,9 @@
 package com.sojka.pomeranian.notification.util;
 
+import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
-import com.sojka.pomeranian.lib.dto.ChatUser;
 
 import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 
