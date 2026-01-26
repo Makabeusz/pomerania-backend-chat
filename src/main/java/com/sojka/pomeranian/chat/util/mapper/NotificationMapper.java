@@ -31,11 +31,11 @@ public final class NotificationMapper {
 
     public static NotificationDto toDto(ConversationProjection projection) {
         return NotificationDto.builder()
-                .profileId(projection.getRecipientId())
                 .createdAt(toDateString(projection.getLastMessageAt()))
                 .content(projection.getContent())
                 .relatedType(projection.getContentType())
                 .metadata(new HashMap<>(Map.of(
+                        "senderId", projection.getRecipientId() + "",
                         "senderImage192", projection.getRecipientImage192() + "",
                         "senderUsername", projection.getRecipientUsername() + "", // fix null
                         "unreadCount", projection.getUnreadCount() + ""
