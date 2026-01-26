@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -82,12 +83,10 @@ class InMemoryLocalSessionCacheUnitTest {
     }
 
     @Test
-    void remove_nonExistingUser_throws() {
+    void remove_nonExistingUser_null() {
         String simpSessionId = "session1";
 
-        assertThatThrownBy(() -> cache.remove(simpSessionId))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("Session=%s not online".formatted(simpSessionId));
+        assertThat(cache.remove(simpSessionId)).isNull();
     }
 
     @Test
@@ -166,12 +165,10 @@ class InMemoryLocalSessionCacheUnitTest {
     }
 
     @Test
-    void add_userAbsent_throws() {
+    void add_userAbsent_false() {
         StompSubscription subscription = new StompSubscription(StompSubscription.Type.CHAT, "sub1");
 
-        assertThatThrownBy(() -> cache.add(userId, "session1", subscription))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("User=%s is not online".formatted(userId));
+        assertThat(cache.add(userId, "session1", subscription)).isFalse();
     }
 
     @Test
@@ -214,16 +211,14 @@ class InMemoryLocalSessionCacheUnitTest {
     }
 
     @Test
-    void add_nonExistingSession_throws() {
+    void add_nonExistingSession_false() {
         String sessionId = "session1";
         cache.create(userId, sessionId);
 
         String wrongSessionId = "wrong";
         StompSubscription subscription = new StompSubscription(StompSubscription.Type.CHAT, "sub1");
 
-        assertThatThrownBy(() -> cache.add(userId, wrongSessionId, subscription))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("User=%s do not have active simpSessionID=%s".formatted(userId, wrongSessionId));
+        assertThat(cache.add(userId, wrongSessionId, subscription)).isFalse();
     }
 
     @Test

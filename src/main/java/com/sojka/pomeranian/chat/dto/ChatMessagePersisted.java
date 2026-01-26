@@ -26,9 +26,10 @@ public class ChatMessagePersisted extends ChatMessage {
     private Map<String, String> metadata;
 
     @Builder
-    public ChatMessagePersisted(String content, ChatUser sender, ChatUser recipient,
-                                String roomId, String createdAt, UUID resourceId, String resourceType, String editedAt,
-                                Map<String, String> metadata, String readAt
+    public ChatMessagePersisted(
+            String content, ChatUser sender, ChatUser recipient,
+            String roomId, String createdAt, UUID resourceId, String resourceType, String editedAt,
+            Map<String, String> metadata, String readAt
     ) {
         super(
                 content, (resourceId != null && resourceType != null) ? new Resource(resourceId, resourceType) : null,

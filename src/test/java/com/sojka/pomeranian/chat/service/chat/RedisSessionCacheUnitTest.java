@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -151,18 +152,16 @@ class RedisSessionCacheUnitTest {
     }
 
     @Test
-    void add_userAbsent_throws() {
+    void add_userAbsent_false() {
         String simpSessionId = "session1";
         StompSubscription subscription = new StompSubscription(StompSubscription.Type.CHAT, "sub1");
         doReturn(null).when(usersOps).get(userId);
 
-        assertThatThrownBy(() -> cache.add(userId, simpSessionId, subscription))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("User=%s is not online".formatted(userId));
+        assertThat(cache.add(userId, simpSessionId, subscription)).isFalse();
     }
 
     @Test
-    void add_nonExistingSession_throws() {
+    void add_nonExistingSession_false() {
         String simpSessionId = "session1";
         String wrongSimpSessionId = "wrong";
         ActiveUser.Session session = new ActiveUser.Session(new HashMap<>(), simpSessionId, Instant.now());
@@ -171,9 +170,7 @@ class RedisSessionCacheUnitTest {
 
         doReturn(activeUser).when(usersOps).get(userId);
 
-        assertThatThrownBy(() -> cache.add(userId, wrongSimpSessionId, subscription))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("User=%s do not have active simpSessionID=%s".formatted(userId, wrongSimpSessionId));
+        assertThat(cache.add(userId, wrongSimpSessionId, subscription)).isFalse();
     }
 
     @Test
@@ -232,24 +229,20 @@ class RedisSessionCacheUnitTest {
     }
 
     @Test
-    void remove_nonExistingSession_throws() {
+    void remove_nonExistingSession_null() {
         String simpSessionId = "session1";
         doReturn(null).when(sessionsOps).get(simpSessionId);
 
-        assertThatThrownBy(() -> cache.remove(simpSessionId))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("Session=%s is not online".formatted(simpSessionId));
+        assertThat(cache.remove(simpSessionId)).isNull();
     }
 
     @Test
-    void remove_userNotOnline_throws() {
+    void remove_userNotOnline_false() {
         String simpSessionId = "session1";
         doReturn(userId).when(sessionsOps).get(simpSessionId);
         doReturn(null).when(usersOps).get(userId);
 
-        assertThatThrownBy(() -> cache.remove(simpSessionId))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("User=%s not online".formatted(userId));
+        assertThat(cache.remove(simpSessionId)).isNull();
     }
 
     @Test
@@ -326,12 +319,10 @@ class RedisSessionCacheUnitTest {
     }
 
     @Test
-    void removeSubscriptions_userAbsent_throws() {
+    void removeSubscriptions_userAbsent_false() {
         String simpSessionId = "session1";
         doReturn(null).when(usersOps).get(userId);
 
-        assertThatThrownBy(() -> cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, "sub1")))
-                .isInstanceOf(CacheException.class)
-                .hasMessage("User=%s is not online".formatted(userId));
+        assertThat(cache.remove(userId, simpSessionId, new StompSubscription(StompSubscription.Type.CHAT, "sub1"))).isFalse();
     }
 }

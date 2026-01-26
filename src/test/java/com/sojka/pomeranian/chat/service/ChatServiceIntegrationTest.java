@@ -131,10 +131,11 @@ class ChatServiceIntegrationTest {
                         .metadata(Collections.emptyMap())
                         .build());
 
-        assertThat(conversationsRepository.findAll()).containsExactly(
-                createReadConversation(new Conversation.Id(user1Id, user2Id), saveResult.getCreatedAt(), content),
-                createUnreadConversation(new Conversation.Id(user2Id, user1Id), saveResult.getCreatedAt(), content)
-        );
+        Conversation readConversation = createReadConversation(new Conversation.Id(user1Id, user2Id), saveResult.getCreatedAt(), content);
+        Conversation unreadConversation = createUnreadConversation(new Conversation.Id(user2Id, user1Id), saveResult.getCreatedAt(), content);
+        readConversation.setIsLastMessageFromUser(true);
+        unreadConversation.setIsLastMessageFromUser(false);
+        assertThat(conversationsRepository.findAll()).containsExactly(readConversation, unreadConversation);
     }
 
     @Test
@@ -326,10 +327,12 @@ class ChatServiceIntegrationTest {
                         .metadata(Collections.emptyMap())
                         .build());
         // Verify conversations
-        assertThat(conversationsRepository.findAll()).containsExactlyInAnyOrder(
-                createReadConversation(new Conversation.Id(user1Id, user2Id), toInstant(saved.message().getCreatedAt()), content),
-                createUnreadConversation(new Conversation.Id(user2Id, user1Id), toInstant(saved.message().getCreatedAt()), content)
-        );
+
+        Conversation readConversation = createReadConversation(new Conversation.Id(user1Id, user2Id), toInstant(saved.message().getCreatedAt()), content);
+        Conversation unreadConversation = createUnreadConversation(new Conversation.Id(user2Id, user1Id), toInstant(saved.message().getCreatedAt()), content);
+        readConversation.setIsLastMessageFromUser(true);
+        unreadConversation.setIsLastMessageFromUser(false);
+        assertThat(conversationsRepository.findAll()).containsExactlyInAnyOrder(readConversation, unreadConversation);
     }
 
     @Test
