@@ -36,5 +36,6 @@ public class ChatMessage {
     public static class Resource {
         private UUID id;
         private String type;
+        private UUID thumbnailId;
     }
 }

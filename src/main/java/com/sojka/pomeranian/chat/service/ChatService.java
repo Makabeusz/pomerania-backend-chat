@@ -87,6 +87,7 @@ public class ChatService {
                 .recipientProfileId(recipientId)
                 .resourceId(chatMessage.getResource() != null ? chatMessage.getResource().getId() : null)
                 .resourceType(chatMessage.getResource() != null ? chatMessage.getResource().getType() : null)
+                .thumbnailId(chatMessage.getResource() != null ? chatMessage.getResource().getThumbnailId() : null)
                 .recipientUsername(chatMessage.getRecipient().username())
                 .content(chatMessage.getContent())
                 .readAt(isRecipientOnline ? now : null)
