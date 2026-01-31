@@ -177,12 +177,11 @@ class ChatServiceIntegrationTest {
         conversationsRepository.save(createReadConversation(new Conversation.Id(userY, userX), message3.getCreatedAt(), "Message 3"));
         conversationsRepository.save(createReadConversation(new Conversation.Id(userZ, userX), message0.getCreatedAt(), "Message 0"));
 
-        ResultsPage<ConversationDto> response = chatService.getConversations(userX, NORMAL, pagination);
+        var response = chatService.getConversations(userX, NORMAL, pagination);
 
-        assertEquals(2, response.getResults().size());
-        assertEquals("Message 2", response.getResults().get(0).getContent()); // most recent on top
-        assertEquals("Message 1", response.getResults().get(1).getContent());
-        assertNull(response.getNextPageState()); // No more pages
+        assertEquals(2, response.size());
+        assertEquals("Message 2", response.get(0).getContent()); // most recent on top
+        assertEquals("Message 1", response.get(1).getContent());
     }
 
     static Stream<Arguments> conversationHeadersSource() {
@@ -226,14 +225,13 @@ class ChatServiceIntegrationTest {
             conversationsRepository.saveAll(List.of(senderConversation, recipientConversation));
         }
 
-        ResultsPage<ConversationDto> response = chatService.getConversations(user1Id, NORMAL, new Pagination(0, 10));
+        var response = chatService.getConversations(user1Id, NORMAL, new Pagination(0, 10));
 
-        assertEquals(4, response.getResults().size());
-        assertNull(response.getNextPageState()); // Assuming pagination
-        assertThat(response.getResults().get(0).getContent()).isEqualTo("Message 12");
-        assertThat(response.getResults().get(1).getContent()).isEqualTo("Message 11");
-        assertThat(response.getResults().get(2).getContent()).isEqualTo("Message 10");
-        assertThat(response.getResults().get(3).getContent()).isEqualTo("Message 9");
+        assertEquals(4, response.size());
+        assertThat(response.get(0).getContent()).isEqualTo("Message 12");
+        assertThat(response.get(1).getContent()).isEqualTo("Message 11");
+        assertThat(response.get(2).getContent()).isEqualTo("Message 10");
+        assertThat(response.get(3).getContent()).isEqualTo("Message 9");
     }
 
 //    @Test

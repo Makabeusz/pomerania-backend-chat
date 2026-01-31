@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -42,13 +43,14 @@ public class MessageController {
 
     @GetMapping("/headers")
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<ConversationDto>> getConversations(
+    public ResponseEntity<List<ConversationDto>> getConversations(
             @AuthenticationPrincipal User user,
             @RequestParam int pageNumber,
             @RequestParam int pageSize,
             @RequestParam ConversationFlag flag
     ) {
-        return ResponseEntity.ok(chatService.getConversations(user.getId(), flag, new Pagination(pageNumber, pageSize)));
+        var conversations = chatService.getConversations(user.getId(), flag, new Pagination(pageNumber, pageSize));
+        return ResponseEntity.ok(conversations);
     }
 
     // TODO: rename those "headers" to conversations everywhere

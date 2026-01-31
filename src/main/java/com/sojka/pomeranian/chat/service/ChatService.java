@@ -166,7 +166,7 @@ public class ChatService {
         );
     }
 
-    public ResultsPage<ConversationDto> getConversations(
+    public List<ConversationDto> getConversations(
             UUID userId, @NonNull ConversationFlag flag, Pagination pagination
     ) {
         log.trace("getConversations input: userId={}, flag={}, pagination={}", userId, flag, pagination);
@@ -181,10 +181,7 @@ public class ChatService {
             conversations = conversationsRepository.findByUserIdAndFlag(userId, flag, pageRequest);
         }
 
-        return new ResultsPage<>(
-                conversations.stream().map(ConversationMapper::toDto).toList(),
-                createPageState(conversations.size(), pagination)
-        );
+        return conversations.stream().map(ConversationMapper::toDto).toList();
     }
 
     public Long getConversationsCount(UUID userId, ConversationFlag flag) {
