@@ -28,33 +28,49 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
     @Query(value = """
             SELECT COUNT(*) FROM conversations c
             WHERE c.user_id = :userId
-            AND c.flag = ?#{#flag.name()}""", nativeQuery = true)
+              AND c.flag = ?#{#flag.name()}""", nativeQuery = true)
     Long countAllByIdUserIdAndFlag(UUID userId, ConversationFlag flag);
 
     @Query(value = """
             SELECT COUNT(*) FROM conversations c
             WHERE c.user_id = :userId
-            AND (c.flag = ?#{#flag1.name()}
-            OR c.flag = ?#{#flag2.name()})""", nativeQuery = true)
+              AND (c.flag = ?#{#flag1.name()}
+              OR c.flag = ?#{#flag2.name()})""", nativeQuery = true)
     Long countAllByIdUserIdAndFlagOrFlag(UUID userId, ConversationFlag flag1, ConversationFlag flag2);
 
     @Query(value = """
-            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user
+            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192,
+                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user,
+                COALESCE(ARRAY_AGG(e.gender ORDER BY e.pair_order), ARRAY[]::VARCHAR[]) AS gender,
+                COALESCE(ARRAY_AGG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.birthdate))::INTEGER ORDER BY e.pair_order), ARRAY[]::INTEGER[]) AS age,
+                p.last_login_at, o.city_name, o.country
             FROM conversations c
-            LEFT JOIN profiles p ON c.recipient_id = p.id
+            JOIN profiles p ON c.recipient_id = p.id
+            JOIN personal e ON p.id = e.profile_id
+            LEFT JOIN osmcities o ON o.id = p.city_id
             WHERE c.user_id = :userId
-            AND (c.flag = ?#{#flag1.name()}
-            OR c.flag = ?#{#flag2.name()})""", nativeQuery = true)
+              AND (c.flag = ?#{#flag1.name()}
+              OR c.flag = ?#{#flag2.name()})
+            GROUP BY p.id, p.username, p.image_192, c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, 
+              c.is_last_message_from_user, p.last_login_at, o.city_name, o.country
+            ORDER BY last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findByUserIdAndFlags(UUID userId, ConversationFlag flag1, ConversationFlag flag2, Pageable pageable);
 
     @Query(value = """
-            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user
+            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192,
+                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user,
+                COALESCE(ARRAY_AGG(e.gender ORDER BY e.pair_order), ARRAY[]::VARCHAR[]) AS gender,
+                COALESCE(ARRAY_AGG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.birthdate))::INTEGER ORDER BY e.pair_order), ARRAY[]::INTEGER[]) AS age,
+                p.last_login_at, o.city_name, o.country
             FROM conversations c
-            LEFT JOIN profiles p ON c.recipient_id = p.id
+            JOIN profiles p ON c.recipient_id = p.id
+            JOIN personal e ON p.id = e.profile_id
+            LEFT JOIN osmcities o ON o.id = p.city_id
             WHERE c.user_id = :userId
-            AND c.flag = ?#{#flag.name()}""", nativeQuery = true)
+              AND c.flag = ?#{#flag.name()}
+            GROUP BY p.id, p.username, p.image_192, c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, 
+              c.is_last_message_from_user, p.last_login_at, o.city_name, o.country
+            ORDER BY last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findByUserIdAndFlag(UUID userId, ConversationFlag flag, Pageable pageable);
 
     @Modifying
@@ -79,7 +95,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
             FROM conversations c
             LEFT JOIN profiles p ON p.id = c.recipient_id
             WHERE c.user_id = :userId
-            AND c.unread_count > 0""", nativeQuery = true)
+              AND c.unread_count > 0""", nativeQuery = true)
     List<ConversationProjection> findNotifications(UUID userId, Pageable pageable);
 
 }

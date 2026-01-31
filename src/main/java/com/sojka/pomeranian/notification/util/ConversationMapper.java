@@ -35,6 +35,11 @@ public final class ConversationMapper {
                 .contentType(projection.getContentType())
                 .unreadCount(projection.getUnreadCount())
                 .isLastMessageFromUser(projection.getIsLastMessageFromUser())
+                .gender(projection.getGender())
+                .age(projection.getAge())
+                .lastLoginAt(projection.getLastLoginAt())
+                .cityName(projection.getCityName())
+                .country(projection.getCountry())
                 .build();
     }
 }

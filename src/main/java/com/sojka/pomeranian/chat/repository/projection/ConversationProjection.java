@@ -1,6 +1,7 @@
 package com.sojka.pomeranian.chat.repository.projection;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public interface ConversationProjection {
@@ -22,4 +23,14 @@ public interface ConversationProjection {
     Integer getUnreadCount();
 
     Boolean getIsLastMessageFromUser();
+
+    List<String> getGender();
+
+    List<Integer> getAge();
+
+    Instant getLastLoginAt();
+
+    String getCityName();
+
+    String getCountry();
 }
