@@ -2,7 +2,7 @@ package com.sojka.pomeranian.chat.controller;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.service.ChatService;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class ChatNotificationController {
 
     @GetMapping
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<NotificationDto>> getNotifications(
+    public ResponseEntity<ResultsPage<Notification>> getNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState
     ) {

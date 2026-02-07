@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 
 @Slf4j
 @Repository
@@ -32,9 +33,10 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     private static final String READ_NOTIFICATIONS_TABLE = "read_notifications";
 
     private static final String INSERT = """
-            INSERT INTO %s.%s ( \
-            profile_id, created_at, type, read_at, related_id, related_type, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
+            INSERT INTO %s.%s (
+               profile_id, created_at, type, read_at, body,
+               sender_id, sender_username, sender_image_192, sender_gender, sender_role
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
     private static final String SELECT_ALL = QueryConstants.SELECT_ALL_BY_PROFILE_ID
             .formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
@@ -57,8 +59,10 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
             String dml = INSERT + USING_TTL.formatted(ttl);
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
-                            notification.getType().name(), notification.getReadAt(), notification.getRelatedId(),
-                            notification.getRelatedType(), notification.getContent(), notification.getMetadata())
+                            notification.getType().name(), notification.getReadAt(), notification.getBody(),
+                            notification.getSenderId(), notification.getSenderUsername(),
+                            notification.getSenderImage192(), notification.getSenderGender(),
+                            getNameOrNull(notification.getSenderRole()))
                     .build();
 
             var session = connector.getSession();
@@ -75,8 +79,10 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
             var list = notifications.stream()
                     .map(n -> SimpleStatement.builder(INSERT + USING_TTL.formatted(ttl))
                             .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
-                                    n.getType().name(), n.getReadAt(), n.getRelatedId(),
-                                    n.getRelatedType(), n.getContent(), n.getMetadata())
+                                    n.getType().name(), n.getReadAt(), n.getBody(),
+                                    n.getSenderId(), n.getSenderUsername(),
+                                    n.getSenderImage192(), n.getSenderGender(),
+                                    getNameOrNull(n.getSenderRole()))
                             .build())
                     .toList();
 

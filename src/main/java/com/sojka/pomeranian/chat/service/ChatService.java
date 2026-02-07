@@ -4,10 +4,8 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
-import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.MessageSaveResult;
 import com.sojka.pomeranian.chat.dto.MessageType;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
@@ -17,7 +15,7 @@ import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.ConversationFlag;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.Pagination;
 import com.sojka.pomeranian.lib.dto.R2BucketDeleteRequest;
 import com.sojka.pomeranian.notification.util.ConversationMapper;
@@ -72,29 +70,29 @@ public class ChatService {
      * message notification.
      *
      * @param chatMessage The message got from the user chat
-     * @return {@link ChatMessagePersisted}
+     * @return createdAt in string
      */
-    public MessageSaveResult saveMessage(ChatMessage chatMessage, String roomId, boolean isRecipientOnline) {
+    public String processMessage(ChatMessage chatMessage, String roomId, boolean isRecipientOnline) {
         log.trace("saveMessage input: message={}, roomId={}, isOnline={}", chatMessage, roomId, isRecipientOnline);
         var now = getCurrentInstant();
-        var recipientId = chatMessage.getRecipient().id();
-        var senderId = chatMessage.getSender().id();
+        var recipientId = chatMessage.getRecipient().getId();
+        var senderId = chatMessage.getSender().getId();
         var message = Message.builder()
                 .roomId(roomId)
                 .createdAt(now)
                 .profileId(senderId)
-                .username(chatMessage.getSender().username())
+                .username(chatMessage.getSender().getUsername())
                 .recipientProfileId(recipientId)
                 .resourceId(chatMessage.getResource() != null ? chatMessage.getResource().getId() : null)
                 .resourceType(chatMessage.getResource() != null ? chatMessage.getResource().getType() : null)
                 .thumbnailId(chatMessage.getResource() != null ? chatMessage.getResource().getThumbnailId() : null)
-                .recipientUsername(chatMessage.getRecipient().username())
+                .recipientUsername(chatMessage.getRecipient().getUsername())
                 .content(chatMessage.getContent())
                 .readAt(isRecipientOnline ? now : null)
                 .build();
 
         var savedMessage = MessageMapper.toDto(messageRepository.save(message));
-        savedMessage.addMetadata("senderImage192", chatMessage.getSender().image192() + "");
+        savedMessage.addMetadata("senderImage192", chatMessage.getSender().getImage192() + "");
 
         // Update both users chat
         messagingTemplate.convertAndSendToUser(roomId, DM_DESTINATION, new ChatResponse<>(savedMessage));
@@ -116,9 +114,7 @@ public class ChatService {
         conversationsRepository.save(recipientConversation);
         log.trace("Updated recipient conversation: {}", recipientConversation);
 
-        return new MessageSaveResult(savedMessage, ConversationMapper.toDto(recipientConversation, new ChatUser(
-                chatMessage.getRecipient().id(), chatMessage.getRecipient().username(), chatMessage.getRecipient().image192()
-        )));
+        return savedMessage.getCreatedAt();
     }
 
     private Conversation getExistingOrNewConversation(
@@ -209,7 +205,7 @@ public class ChatService {
         return count;
     }
 
-    public ResultsPage<NotificationDto> getMessageNotifications(UUID userId, String pageState) {
+    public ResultsPage<Notification> getMessageNotifications(UUID userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         var headers = conversationsRepository.findNotifications(userId, PageRequest.of(
@@ -218,7 +214,7 @@ public class ChatService {
 
         pageState = createPageState(headers.size(), pagination);
         var results = headers.stream()
-                .map(NotificationMapper::toDto)
+                .map(NotificationMapper::toNotification)
                 .toList();
 
         return new ResultsPage<>(results, pageState);

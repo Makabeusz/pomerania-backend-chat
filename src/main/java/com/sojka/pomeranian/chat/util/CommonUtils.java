@@ -8,7 +8,9 @@ public final class CommonUtils {
      * @see com.sojka.pomeranian.lib.util.CommonUtils#generateRoomId(String, String)
      */
     public static String generateRoomId(ChatMessage chatMessage) {
-        return com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId(chatMessage.getSender().id(), chatMessage.getRecipient().id());
+        return com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId(
+                chatMessage.getSender().getId(), chatMessage.getRecipient().getId()
+        );
     }
 
 }

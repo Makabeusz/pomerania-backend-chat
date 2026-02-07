@@ -1,92 +1,93 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.9'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.9'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.sojka'
 version = '0.0.1-SNAPSHOT'
 
 ext {
-	repsyUsername = project.hasProperty('repsyUser') ? project.repsyUser : System.getenv('REPSY_USERNAME');
-	repsyPassword = project.hasProperty('repsyPass') ? project.repsyPass : System.getenv('REPSY_PASSWORD');
-	repsyPassword2 = project.hasProperty('repsyPass2') ? project.repsyPass2 : System.getenv('REPSY_PASSWORD2');
-	repsyUrl = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-security'
-	repsyUrl2 = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-astra'
+    repsyUsername = project.hasProperty('repsyUser') ? project.repsyUser : System.getenv('REPSY_USERNAME');
+    repsyPassword = project.hasProperty('repsyPass') ? project.repsyPass : System.getenv('REPSY_PASSWORD');
+    repsyPassword2 = project.hasProperty('repsyPass2') ? project.repsyPass2 : System.getenv('REPSY_PASSWORD2');
+    repsyUrl = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-security'
+    repsyUrl2 = 'https://repo.repsy.io/mvn/' + repsyUsername + '/pomeranian-astra'
 }
 
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 
-	maven {
-		url repsyUrl
-		credentials {
-			username repsyUsername
-			password repsyPassword
-		}
-	}
+    maven {
+        url repsyUrl
+        credentials {
+            username repsyUsername
+            password repsyPassword
+        }
+    }
 
-	maven {
-		url repsyUrl2
-		credentials {
-			username repsyUsername
-			password repsyPassword2
-		}
-	}
+    maven {
+        url repsyUrl2
+        credentials {
+            username repsyUsername
+            password repsyPassword2
+        }
+    }
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-json'
 
     implementation 'io.projectreactor.netty:reactor-netty:1.1.25'
 
-	// Pomeranian
-	implementation 'com.sojka:Pomeranian-Security:0.4.69'
-	implementation 'com.sojka:pomeranian-astra:0.2.17'
+    // Pomeranian
+    implementation 'com.sojka:Pomeranian-Security:0.4.80'
+    implementation 'com.sojka:pomeranian-astra:0.2.17'
 
-	// GCP
-	implementation platform('com.google.cloud:libraries-bom:26.61.0')
-	implementation 'com.google.cloud:google-cloud-pubsub'
+    // GCP
+    implementation platform('com.google.cloud:libraries-bom:26.61.0')
+    implementation 'com.google.cloud:google-cloud-pubsub'
     implementation("com.google.cloud:spring-cloud-gcp-starter-sql-postgresql")
 
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.testcontainers:cassandra:1.20.1'
-	testImplementation 'org.testcontainers:postgresql:1.21.0'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:cassandra:1.20.1'
+    testImplementation 'org.testcontainers:postgresql:1.21.0'
 //	testImplementation 'org.testcontainers:cassandra'
 //	testImplementation 'org.testcontainers:junit-jupiter'
 //	testImplementation 'org.testcontainers:r2dbc'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
     imports {
-        mavenBom 'com.google.cloud:spring-cloud-gcp-dependencies:7.4.2'  // Use the latest version from https://github.com/GoogleCloudPlatform/spring-cloud-gcp
+        mavenBom 'com.google.cloud:spring-cloud-gcp-dependencies:7.4.2'
+        // Use the latest version from https://github.com/GoogleCloudPlatform/spring-cloud-gcp
     }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

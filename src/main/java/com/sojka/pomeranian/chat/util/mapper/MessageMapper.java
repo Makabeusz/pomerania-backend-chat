@@ -2,8 +2,8 @@ package com.sojka.pomeranian.chat.util.mapper;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
-import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.model.Message;
+import com.sojka.pomeranian.lib.dto.UserData;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
@@ -17,8 +17,8 @@ public final class MessageMapper {
                 .roomId(message.getRoomId())
                 .createdAt(toDateString(message.getCreatedAt()))
                 // TODO: check if valid - hardcoded null image192
-                .sender(new ChatUser(message.getProfileId(), message.getUsername(), null))
-                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername(), null))
+                .sender(new UserData(message.getProfileId(), message.getUsername(), null))
+                .recipient(new UserData(message.getRecipientProfileId(), message.getRecipientUsername(), null))
                 .content(message.getContent())
                 .resourceId(message.getResourceId())
                 .resourceType(message.getResourceType())

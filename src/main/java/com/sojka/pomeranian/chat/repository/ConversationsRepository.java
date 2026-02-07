@@ -90,12 +90,35 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
     Long findUnreadCountByIdUserIdAndIdRecipientId(UUID userId, UUID recipientId);
 
     @Query(value = """
-            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192, \
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user
+            SELECT
+                p.id AS recipient_id,
+                p.username AS recipient_username,
+                p.image_192 AS recipient_image192,
+                c.flag,
+                c.last_message_at,
+                c.content,
+                c.content_type,
+                c.unread_count,
+                c.is_last_message_from_user,
+                COALESCE(
+                    (SELECT STRING_AGG(pe.gender, '-' ORDER BY pe.gender)
+                     FROM personal pe
+                     WHERE pe.profile_id = p.id),
+                    ''
+                ) AS gender,
+                COALESCE(
+                    (SELECT ur.role_id
+                     FROM user_roles ur
+                     WHERE ur.user_id = p.id
+                     ORDER BY ur.role_id DESC
+                     LIMIT 1),
+                    NULL
+                ) AS role_id
             FROM conversations c
             LEFT JOIN profiles p ON p.id = c.recipient_id
             WHERE c.user_id = :userId
-              AND c.unread_count > 0""", nativeQuery = true)
+              AND c.unread_count > 0
+            ORDER BY c.last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findNotifications(UUID userId, Pageable pageable);
 
 }

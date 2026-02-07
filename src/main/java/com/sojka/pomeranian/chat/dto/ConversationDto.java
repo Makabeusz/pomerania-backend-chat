@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.dto;
 
+import com.sojka.pomeranian.lib.dto.UserData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ConversationDto {
 
-    private ChatUser recipient;
+    private UserData recipient;
     private String flag;
     private Instant lastMessageAt;
     private String content;

@@ -8,8 +8,9 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
-import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationType;
+import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +35,10 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
 
     private static final String NOTIFICATIONS_TABLE = "notifications";
     private static final String INSERT = """
-            INSERT INTO %s.%s ( \
-            profile_id, created_at, type, related_id, related_type, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+            INSERT INTO %s.%s (
+               profile_id, created_at, type, body,
+               sender_id, sender_username, sender_image_192, sender_gender, sender_role
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String USING_TTL = " USING TTL %s";
     private static final String SELECT_BY_PRIMARY_KEY = """
             SELECT * FROM %s.%s \
@@ -55,7 +57,6 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     private static final String DELETE_BY_PROFILE_ID = """
             DELETE FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
 
-
     private final Connector connector;
 
     @Override
@@ -64,13 +65,16 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public Notification save(Notification notification, int ttl) {
+    public NotificationModel save(NotificationModel notification, int ttl) {
         return execute(() -> {
             String dml = INSERT + (ttl > 0 ? USING_TTL.formatted(ttl) : "");
             var statement = SimpleStatement.builder(dml)
-                    .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
-                            notification.getType().name(), notification.getRelatedId(),
-                            notification.getRelatedType(), notification.getContent(), notification.getMetadata())
+                    .addPositionalValues(
+                            notification.getProfileId(), notification.getCreatedAt(),
+                            notification.getType().name(), notification.getBody(),
+                            notification.getSenderId(), notification.getSenderUsername(),
+                            notification.getSenderImage192(), notification.getSenderGender(),
+                            getNameOrNull(notification.getSenderRole()))
                     .build();
 
             var session = connector.getSession();
@@ -81,12 +85,12 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public Notification save(Notification notification) {
+    public NotificationModel save(NotificationModel notification) {
         return save(notification, -1);
     }
 
     @Override
-    public Optional<Notification> findById(UUID profileId, Instant createdAt, NotificationDto.Type type) {
+    public Optional<NotificationModel> findById(UUID profileId, Instant createdAt, NotificationType type) {
         return execute(() -> {
             var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
                     .addPositionalValues(profileId, createdAt, type.name())
@@ -100,7 +104,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public ResultsPage<Notification> findAllBy(UUID profileId, String pageState, int pageSize) {
+    public ResultsPage<NotificationModel> findAllBy(UUID profileId, String pageState, int pageSize) {
         return execute(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
@@ -118,7 +122,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public void deleteAll(List<NotificationDto> notifications) {
+    public void deleteAll(List<Notification> notifications) {
         execute(() -> {
             List<SimpleStatement> deleteStatements = notifications.stream()
                     .map(n -> SimpleStatement.builder(DELETE_BY)

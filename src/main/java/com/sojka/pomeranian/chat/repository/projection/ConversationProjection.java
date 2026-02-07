@@ -33,4 +33,6 @@ public interface ConversationProjection {
     String getCityName();
 
     String getCountry();
+
+    Integer getRoleId();
 }

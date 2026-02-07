@@ -4,11 +4,11 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.sojka.pomeranian.TestcontainersConfiguration;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
-import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.util.TestUtils;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.util.DateTimeUtils;
-import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.lib.util.JsonUtils;
+import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
 import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;
@@ -25,11 +25,12 @@ import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static com.sojka.pomeranian.lib.dto.NotificationDto.Type.FOLLOW;
+import static com.sojka.pomeranian.lib.dto.NotificationType.FOLLOW;
 import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Import({TestcontainersConfiguration.class})
 @SpringBootTest
-class NotificationServiceIntegrationTest {
+class NotificationModelServiceIntegrationTest {
 
     @Autowired
     NotificationService notificationService;
@@ -64,48 +65,49 @@ class NotificationServiceIntegrationTest {
 
     @Test
     void publish_notification_savedAndSentIfOnline() {
-        NotificationDto notification = NotificationDto.builder()
+        Notification notification = Notification.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("New follow!")
+                .body(JsonUtils.writeToString(Map.of("content", "New follow!")))
                 .build();
 
-        NotificationResponse<NotificationDto> response = notificationService.publish(notification);
+        notificationService.publish(notification);
 
         // Verify notification in notifications table
-        Notification saved = TestUtils.getNotification(connector, notification.getProfileId(),
-                DateTimeUtils.toInstant(response.getData().getCreatedAt()), getNameOrNull(notification.getType())
+        NotificationModel saved = TestUtils.getNotification(connector, notification.getProfileId(),
+                DateTimeUtils.toInstant(notification.getCreatedAt()), getNameOrNull(notification.getType())
         );
         assertThat(saved).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("createdAt")
-                .isEqualTo(Notification.builder()
+                .isEqualTo(NotificationModel.builder()
                         .profileId(user1)
                         .type(FOLLOW)
-                        .content("New follow!")
+                        .body(JsonUtils.writeToString(Map.of("content", "New follow!")))
                         .build());
 
         assertThat(saved).usingRecursiveComparison(new RecursiveComparisonConfiguration())
                 .ignoringFields("createdAt", "type")
                 .isEqualTo(notification);
-        assertThat(response.getType()).isEqualTo(FOLLOW);
+        assertThat(notification.getType()).isEqualTo(FOLLOW);
     }
 
     @Test
     void markRead_validNotifications_readAtUpdatedAndMovedToRead() {
-        Notification notification = Notification.builder()
+        var body = JsonUtils.writeToString(Map.of("content", "Followed!"));
+        NotificationModel notification = NotificationModel.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("Followed!")
+                .body(body)
                 .createdAt(Instant.now())
                 .build();
         notificationRepository.save(notification);
-        NotificationDto dto = NotificationMapper.toDto(notification);
-        List<NotificationDto> notifications = List.of(dto);
+        Notification dto = NotificationMapper.toDto(notification);
+        List<Notification> notifications = List.of(dto);
 
         Instant readAt = notificationService.markRead(user1, notifications);
 
         // Verify notification deleted from notifications
-        Optional<Notification> notExisting = notificationRepository.findById(notification.getProfileId(),
+        Optional<NotificationModel> notExisting = notificationRepository.findById(notification.getProfileId(),
                 notification.getCreatedAt(), notification.getType());
         assertThat(notExisting).isEmpty();
 
@@ -118,45 +120,45 @@ class NotificationServiceIntegrationTest {
                 .isEqualTo(ReadNotification.builder()
                         .profileId(user1)
                         .type(FOLLOW)
-                        .content("Followed!")
+                        .body(JsonUtils.writeToString(Map.of("content", "Followed!")))
                         .build());
         assertThat(readNotification.getReadAt()).isEqualTo(readAt);
     }
 
     @Test
     void markRead_invalidUser_throwsSecurityException() {
-        NotificationDto otherUserNotification = NotificationDto.builder()
+        Notification otherUserNotification = Notification.builder()
                 .profileId(user2)
                 .type(FOLLOW)
-                .content("Followed!")
+                .body(JsonUtils.writeToString(Map.of("content", "Followed!")))
                 .build();
-        List<NotificationDto> notifications = List.of(otherUserNotification);
+        List<Notification> notifications = List.of(otherUserNotification);
 
         assertThrows(SecurityException.class, () -> notificationService.markRead(user1, notifications));
     }
 
     @Test
     void getUnread_fewNotifications_sortedByCreatedAtDesc() {
-        Notification notification1 = Notification.builder()
+        NotificationModel notification1 = NotificationModel.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("Old follow")
+                .body(JsonUtils.writeToString(Map.of("content", "Old follow")))
                 .createdAt(Instant.now().minusSeconds(10))
                 .build();
-        Notification notification2 = Notification.builder()
+        NotificationModel notification2 = NotificationModel.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("New follow")
+                .body(JsonUtils.writeToString(Map.of("content", "New follow")))
                 .createdAt(Instant.now())
                 .build();
         notificationRepository.save(notification1);
         notificationRepository.save(notification2);
 
-        ResultsPage<NotificationDto> response = notificationService.getUnread(user1, null, 10);
+        ResultsPage<Notification> response = notificationService.getUnread(user1, null, 10);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("New follow", response.getResults().get(0).getContent());
-        assertEquals("Old follow", response.getResults().get(1).getContent());
+        assertEquals("New follow", JsonUtils.readMap(response.getResults().get(0).getBody()).get("content"));
+        assertEquals("Old follow", JsonUtils.readMap(response.getResults().get(1).getBody()).get("content"));
         assertNull(response.getNextPageState());
     }
 
@@ -164,25 +166,25 @@ class NotificationServiceIntegrationTest {
     @MethodSource("paginationSource")
     void getUnread_manyNotifications_paginatedResults(boolean fetchNextPage) {
         for (int i = 1; i <= 15; i++) {
-            Notification notification = Notification.builder()
+            NotificationModel notification = NotificationModel.builder()
                     .profileId(user1)
                     .type(FOLLOW)
-                    .content("Notification " + i)
+                    .body(JsonUtils.writeToString(Map.of("content", "Notification " + i)))
                     .createdAt(Instant.now().minusSeconds(15 - i))
                     .build();
             notificationRepository.save(notification);
         }
 
-        ResultsPage<NotificationDto> response = notificationService.getUnread(user1, null, 10);
+        ResultsPage<Notification> response = notificationService.getUnread(user1, null, 10);
 
         if (fetchNextPage) {
             assertEquals(10, response.getResults().size());
-            assertEquals("Notification 15", response.getResults().getFirst().getContent());
+            assertEquals("Notification 15", JsonUtils.readMap(response.getResults().getFirst().getBody()).get("content"));
             assertNotNull(response.getNextPageState());
         } else {
             response = notificationService.getUnread(user1, response.getNextPageState(), 10);
             assertEquals(5, response.getResults().size());
-            assertEquals("Notification 5", response.getResults().getFirst().getContent());
+            assertEquals("Notification 5", JsonUtils.readMap(response.getResults().getFirst().getBody()).get("content"));
             assertNull(response.getNextPageState());
         }
     }
@@ -197,22 +199,22 @@ class NotificationServiceIntegrationTest {
     @Test
     void countUnreadNotifications_multipleNotifications_correctCount() {
         Instant now = Instant.now();
-        Notification notification1 = Notification.builder()
+        NotificationModel notification1 = NotificationModel.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("You have been followed by X")
+                .body(JsonUtils.writeToString(Map.of("content", "You have been followed by X")))
                 .createdAt(now)
                 .build();
-        Notification notification2 = Notification.builder()
+        NotificationModel notification2 = NotificationModel.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("You have been followed by Y")
+                .body(JsonUtils.writeToString(Map.of("content", "You have been followed by Y")))
                 .createdAt(now.plusMillis(1L))
                 .build();
-        Notification otherUserNotification = Notification.builder()
+        NotificationModel otherUserNotification = NotificationModel.builder()
                 .profileId(user2)
                 .type(FOLLOW)
-                .content("Message 3")
+                .body(JsonUtils.writeToString(Map.of("content", "Message 3")))
                 .createdAt(now)
                 .build();
         notificationRepository.save(notification1);
@@ -229,25 +231,25 @@ class NotificationServiceIntegrationTest {
         ReadNotification read1 = ReadNotification.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("Old read")
+                .body(JsonUtils.writeToString(Map.of("content", "Old read")))
                 .createdAt(Instant.now().minusSeconds(10))
                 .readAt(Instant.now())
                 .build();
         ReadNotification read2 = ReadNotification.builder()
                 .profileId(user1)
                 .type(FOLLOW)
-                .content("New read")
+                .body(JsonUtils.writeToString(Map.of("content", "New read")))
                 .createdAt(Instant.now())
                 .readAt(Instant.now())
                 .build();
         readNotificationRepository.save(read1, 2137);
         readNotificationRepository.save(read2, 2137);
 
-        ResultsPage<NotificationDto> response = notificationService.getRead(user1, null, 10);
+        ResultsPage<Notification> response = notificationService.getRead(user1, null, 10);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("New read", response.getResults().get(0).getContent());
-        assertEquals("Old read", response.getResults().get(1).getContent());
+        assertEquals("New read", JsonUtils.readMap(response.getResults().get(0).getBody()).get("content"));
+        assertEquals("Old read", JsonUtils.readMap(response.getResults().get(1).getBody()).get("content"));
         assertNull(response.getNextPageState());
     }
 }

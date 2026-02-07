@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.notification.controller;
 
 import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class NotificationController {
 
     @MessageMapping("/notification.read")
     public void readMessage(
-            @Payload List<NotificationDto> dto,
+            @Payload List<Notification> dto,
             StompHeaderAccessor headerAccessor
     ) {
         User user = authenticator.getUser(headerAccessor);

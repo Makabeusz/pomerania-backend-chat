@@ -3,14 +3,16 @@ package com.sojka.pomeranian.chat.util;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
-import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationType;
+import com.sojka.pomeranian.lib.util.JsonUtils;
+import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.UUID;
 
 public class TestUtils {
@@ -41,7 +43,7 @@ public class TestUtils {
         return message;
     }
 
-    public static Notification getNotification(Connector connector, UUID profileId, Instant createdAt, String type) {
+    public static NotificationModel getNotification(Connector connector, UUID profileId, Instant createdAt, String type) {
         SimpleStatement selectNotification = SimpleStatement.newInstance(
                 "SELECT * FROM notifications.notifications WHERE profile_id = ? AND created_at = ? AND type = ?",
                 profileId, createdAt, type
@@ -51,11 +53,11 @@ public class TestUtils {
             System.out.println("null result set");
             return null;
         }
-        return Notification.builder()
+        return NotificationModel.builder()
                 .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(NotificationDto.Type.valueOf(row.getString("type")))
-                .content(row.getString("content"))
+                .type(NotificationType.valueOf(row.getString("type")))
+                .body(JsonUtils.writeToString(Map.of("content", "content")))
                 .build();
     }
 
@@ -68,9 +70,9 @@ public class TestUtils {
         return ReadNotification.builder()
                 .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(NotificationDto.Type.valueOf(row.getString("type")))
+                .type(NotificationType.valueOf(row.getString("type")))
                 .readAt(row.getInstant("read_at"))
-                .content(row.getString("content"))
+                .body(row.getString("body"))
                 .build();
     }
 

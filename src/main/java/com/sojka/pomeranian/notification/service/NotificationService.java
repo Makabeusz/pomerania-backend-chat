@@ -1,11 +1,10 @@
 package com.sojka.pomeranian.notification.service;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.cache.SessionCache;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
-import com.sojka.pomeranian.notification.model.Notification;
+import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
 import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
@@ -33,27 +32,28 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final SessionCache cache;
 
-    // TODO: check comment preference, currently it's skipping prefs and publishing all
-    public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
-        Notification domain = NotificationMapper.toDomain(notification);
+    /**
+     * @return CreatedAt
+     */
+    public Instant publish(Notification notification) {
+        NotificationModel domain = NotificationMapper.toDomain(notification);
         domain.setCreatedAt(getCurrentInstant());
 
-        var saved = notificationRepository.save(domain);
-        var dto = new NotificationResponse<>(NotificationMapper.toDto(saved), saved.getType().name());
+        notificationRepository.save(domain);
+//        var dto = new NotificationResponse<>(notification, notification.getType().name());
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
-        log.trace("Is user with username={} and userID={} online? {}",
-                notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);
+//        log.trace("Is user with username={} and userID={} online? {}",
+//                notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);
         if (online) {
-            log.trace("Publishing: {}", dto);
-            messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, dto);
+            log.debug("Published notification type={} to userId={}, isOnline={}",
+                    notification.getType(), notification.getProfileId(), online);
+            messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, notification);
         }
 
-        log.info("Published notification: {}, isOnline={}", dto, online);
-
-        return dto;
+        return domain.getCreatedAt();
     }
 
-    public Instant markRead(UUID userId, List<NotificationDto> notifications) {
+    public Instant markRead(UUID userId, List<Notification> notifications) {
         boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
         if (!allAreUserNotifications) {
             throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"
@@ -71,8 +71,9 @@ public class NotificationService {
         return readAt;
     }
 
-    public ResultsPage<NotificationDto> getUnread(UUID profileId, String pageState, int pageSize) {
+    public ResultsPage<Notification> getUnread(UUID profileId, String pageState, int pageSize) {
         var resultsPage = notificationRepository.findAllBy(profileId, pageState, pageSize);
+        System.out.println(resultsPage);
         var notifications = resultsPage.getResults().stream()
                 .map(NotificationMapper::toDto)
                 .toList();
@@ -87,7 +88,7 @@ public class NotificationService {
         return count;
     }
 
-    public ResultsPage<NotificationDto> getRead(UUID profileId, String pageState, int pageSize) {
+    public ResultsPage<Notification> getRead(UUID profileId, String pageState, int pageSize) {
         var resultsPage = readNotificationRepository.findAllBy(profileId, pageState, pageSize);
         var notifications = resultsPage.getResults().stream()
                 .map(ReadNotificationMapper::toDto)

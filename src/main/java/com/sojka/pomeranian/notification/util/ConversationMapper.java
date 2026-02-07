@@ -1,9 +1,9 @@
 package com.sojka.pomeranian.notification.util;
 
-import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.ConversationDto;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
+import com.sojka.pomeranian.lib.dto.UserData;
 
 import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 
@@ -12,7 +12,7 @@ public final class ConversationMapper {
     private ConversationMapper() {
     }
 
-    public static ConversationDto toDto(Conversation model, ChatUser recipient) {
+    public static ConversationDto toDto(Conversation model, UserData recipient) {
         return ConversationDto.builder()
                 .recipient(recipient)
                 .flag(getNameOrNull(model.getFlag()))
@@ -26,7 +26,7 @@ public final class ConversationMapper {
 
     public static ConversationDto toDto(ConversationProjection projection) {
         return ConversationDto.builder()
-                .recipient(new ChatUser(
+                .recipient(new UserData(
                         projection.getRecipientId(), projection.getRecipientUsername(), projection.getRecipientImage192()
                 ))
                 .flag(projection.getFlag())

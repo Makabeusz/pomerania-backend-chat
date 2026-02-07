@@ -4,16 +4,14 @@ import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResponse;
-import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.dto.MessageKey;
-import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.ReadMessageDto;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.UserData;
 import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -44,19 +42,21 @@ public class ChatController {
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage, StompHeaderAccessor headerAccessor) {
         User user = authenticator.getUser(headerAccessor);
-        chatMessage.setSender(new ChatUser(user.getId(), user.getUsername(), chatMessage.getSender().image192()));
+        chatMessage.setSender(new UserData(user.getId(), user.getUsername(), chatMessage.getSender().getImage192()));
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
-        boolean isOnline = cache.isOnline(chatMessage.getRecipient().id(), new StompSubscription(StompSubscription.Type.CHAT, roomId));
-        var saved = chatService.saveMessage(chatMessage, roomId, isOnline);
+        boolean isOnline = cache.isOnline(
+                chatMessage.getRecipient().getId(), new StompSubscription(StompSubscription.Type.CHAT, roomId)
+        );
+        String createdAt = chatService.processMessage(chatMessage, roomId, isOnline);
 
         // Publish unread message notification
         if (!isOnline) {
-            var notificationDto = NotificationMapper.toDto(saved.notification());
-
-            messagingTemplate.convertAndSendToUser(saved.notification().getRecipient().id() + "", NOTIFY_DESTINATION,
-                    new NotificationResponse<>(notificationDto, NotificationDto.Type.MESSAGE));
-            log.trace("Sent message notification: {}", saved.notification());
+            var notification = NotificationMapper.toNotification(chatMessage, createdAt);
+            messagingTemplate.convertAndSendToUser(
+                    chatMessage.getRecipient().getId() + "", NOTIFY_DESTINATION, notification
+            );
+            log.trace("Sent message notification: {}", notification);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.sojka.pomeranian.chat.dto;
 
+import com.sojka.pomeranian.lib.dto.UserData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,15 +19,15 @@ public class ChatMessage {
 
     private String content;
     private Resource resource;
-    private ChatUser sender;
-    private ChatUser recipient;
+    private UserData sender;
+    private UserData recipient;
 
-    public ChatUser getSender() {
-        return sender == null ? ChatUser.getEmpty() : sender;
+    public UserData getSender() {
+        return sender == null ? UserData.getEmpty() : sender;
     }
 
-    public ChatUser getRecipient() {
-        return recipient == null ? ChatUser.getEmpty() : recipient;
+    public UserData getRecipient() {
+        return recipient == null ? UserData.getEmpty() : recipient;
     }
 
     @Data
