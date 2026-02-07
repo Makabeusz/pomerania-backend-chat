@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Map;
+
 @Slf4j
 @Controller
 @RequestMapping("/api/chat/notification")
@@ -39,7 +41,7 @@ public class ChatNotificationController {
 
     @GetMapping
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<Notification>> getNotifications(
+    public ResponseEntity<ResultsPage<Notification<Map<String, Object>>>> getNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState
     ) {

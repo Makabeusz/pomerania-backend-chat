@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
@@ -50,7 +51,7 @@ public class NotificationService {
         return domain.getCreatedAt();
     }
 
-    public Instant markRead(UUID userId, List<Notification> notifications) {
+    public Instant markRead(UUID userId, List<Notification<Map<String, Object>>> notifications) {
         boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
         if (!allAreUserNotifications) {
             throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"

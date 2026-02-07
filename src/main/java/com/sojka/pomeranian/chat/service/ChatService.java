@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -205,7 +206,7 @@ public class ChatService {
         return count;
     }
 
-    public ResultsPage<Notification> getMessageNotifications(UUID userId, String pageState) {
+    public ResultsPage<Notification<Map<String, Object>>> getMessageNotifications(UUID userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         var headers = conversationsRepository.findNotifications(userId, PageRequest.of(

@@ -8,6 +8,7 @@ import com.sojka.pomeranian.notification.model.NotificationModel;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,7 +38,7 @@ public interface NotificationRepository {
 
     ResultsPage<NotificationModel> findAllBy(UUID profileId, String pageState, int pageSize);
 
-    void deleteAll(List<Notification> notifications);
+    void deleteAll(List<Notification<Map<String, Object>>> notifications);
 
     Optional<Long> countByIdProfileId(UUID profileId);
 

@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.lib.dto.UserData;
+import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.security.model.Role;
 
@@ -26,7 +27,7 @@ public final class ReadNotificationMapper {
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
                 .readAt(toDateString(notification.getReadAt()))
-                .body(notification.getBody())
+                .body(JsonUtils.readMap(notification.getBody()))
                 .sender(UserData.builder()
                         .id(notification.getSenderId())
                         .username(notification.getSenderUsername())
@@ -46,7 +47,7 @@ public final class ReadNotificationMapper {
                 .createdAt(toInstant(notification.getCreatedAt()))
                 .type(notification.getType())
                 .readAt(readAt)
-                .body(notification.getBody())
+                .body(JsonUtils.writeToString(notification.getBody()))
                 .senderId(notification.getSender().getId())
                 .senderUsername(notification.getSender().getUsername())
                 .senderImage192(notification.getSender().getImage192())

@@ -21,30 +21,31 @@ public final class NotificationMapper {
     private NotificationMapper() {
     }
 
-    public static Notification toNotification(ChatMessage message, String createdAt) {
-        return Notification.builder()
-                .createdAt(createdAt)
-                .sender(message.getSender())
-                .type(NotificationType.MESSAGE)
-                .body(createMessageBody(message.getContent(), Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""))
-                .build();
+    public static Notification<Map<String, Object>> toNotification(ChatMessage message, String createdAt) {
+        var notification = new Notification<Map<String, Object>>();
+        notification.setCreatedAt(createdAt);
+        notification.setSender(message.getSender());
+        notification.setType(NotificationType.MESSAGE);
+        notification.setBody(createMessageBody(message.getContent(), Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""));
+        return notification;
     }
 
-    public static Notification toNotification(ConversationProjection projection) {
-        return Notification.builder()
-                .sender(UserData.builder()
-                        .id(projection.getRecipientId())
-                        .image192(projection.getRecipientImage192())
-                        .username(projection.getRecipientUsername())
-                        .gender(projection.getGender())
-                        .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
-                        .build())
-                .createdAt(toDateString(projection.getLastMessageAt()))
-                .body(createMessageBody(projection.getContent(), projection.getContentType(), projection.getUnreadCount()))
-                .build();
+    public static Notification<Map<String, Object>> toNotification(ConversationProjection projection) {
+        var notification = new Notification<Map<String, Object>>();
+        notification.setCreatedAt(toDateString(projection.getLastMessageAt()));
+        notification.setSender(UserData.builder()
+                .id(projection.getRecipientId())
+                .image192(projection.getRecipientImage192())
+                .username(projection.getRecipientUsername())
+                .gender(projection.getGender())
+                .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
+                .build());
+//        notification.setType(NotificationType.MESSAGE);
+        notification.setBody(createMessageBody(projection.getContent(), projection.getContentType(), projection.getUnreadCount()));
+        return notification;
     }
 
-    public static Notification toNotification(CommentStompRequest request) {
+    public static Notification<Object> toNotification(CommentStompRequest request) {
         var body = new HashMap<>(Map.of(
                 "id", request.getId(),
                 "element", request.getElement(),
@@ -69,17 +70,16 @@ public final class NotificationMapper {
                 .build();
     }
 
-    private static String createMessageBody(String content, String type) {
+    private static Map<String, Object> createMessageBody(String content, String type) {
         return createMessageBody(content, type, null);
     }
 
-    private static String createMessageBody(String content, String type, Integer unreadCount) {
-        Map<String, Object> body = Map.of(
+    private static Map<String, Object> createMessageBody(String content, String type, Integer unreadCount) {
+        return Map.of(
                 "content", sliceDescription(content, 200),
                 "type", type,
                 "unreadCount", (unreadCount == null ? 0 : unreadCount) + ""
         );
-        return JsonUtils.writeToString(body);
     }
 
 }
