@@ -31,7 +31,7 @@ public class NotificationSubscriber {
             log.trace("Received message id={}", message.getMessageId());
             var notification = JsonUtils.readObject(message.getData().toByteArray(), Notification.class);
             log.debug("Received notification={}", notification);
-            notificationService.publish(notification);
+            notificationService.process(notification);
             consumer.ack();
 
 

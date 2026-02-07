@@ -12,9 +12,7 @@ import com.sojka.pomeranian.security.model.Role;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
-import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 import static com.sojka.pomeranian.lib.util.CommonUtils.sliceDescription;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
@@ -47,21 +45,24 @@ public final class NotificationMapper {
     }
 
     public static Notification toNotification(CommentStompRequest request) {
-        var body = new HashMap<String, String>();
-        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(idOrUsername -> body.put("relatedLocationId", idOrUsername));
-        body.put("content", request.getContent());
-        body.put("relatedId", request.getRelatedId() + "");
-        body.put("relatedType", getNameOrNull(request.getRelatedType()));
+        var body = new HashMap<>(Map.of(
+                "id", request.getId(),
+                "element", request.getElement(),
+                "content", request.getContent()
+        ));
+        if (request.getCommenterId() != null) {
+            body.put("commenter", Map.of(
+                    "id", request.getCommenterId(),
+                    "name", request.getCommenterName())
+            );
+        }
+        if (request.getUpdatedAt() != null) {
+            body.put("updatedAt", request.getUpdatedAt());
+        }
 
         return Notification.builder()
-                .profileId(request.getRelatedProfileId())
-                .sender(UserData.builder()
-                        .id(request.getProfileId())
-                        .image192(Optional.ofNullable(request.getImage192()).map(UUID::fromString).orElse(null))
-                        .username(request.getUsername())
-//                        .gender()
-//                        .role()
-                        .build())
+                .profileId(request.getElement().getOwner().getId())
+                .sender(request.getSender())
                 .createdAt(request.getCreatedAt())
                 .type(NotificationType.COMMENT)
                 .body(JsonUtils.writeToString(body))

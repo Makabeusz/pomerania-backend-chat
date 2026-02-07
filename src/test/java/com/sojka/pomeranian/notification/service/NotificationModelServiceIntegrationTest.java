@@ -71,7 +71,7 @@ class NotificationModelServiceIntegrationTest {
                 .body(JsonUtils.writeToString(Map.of("content", "New follow!")))
                 .build();
 
-        notificationService.publish(notification);
+        notificationService.process(notification);
 
         // Verify notification in notifications table
         NotificationModel saved = TestUtils.getNotification(connector, notification.getProfileId(),

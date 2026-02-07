@@ -35,15 +35,12 @@ public class NotificationService {
     /**
      * @return CreatedAt
      */
-    public Instant publish(Notification notification) {
+    public Instant process(Notification notification) {
         NotificationModel domain = NotificationMapper.toDomain(notification);
         domain.setCreatedAt(getCurrentInstant());
 
         notificationRepository.save(domain);
-//        var dto = new NotificationResponse<>(notification, notification.getType().name());
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
-//        log.trace("Is user with username={} and userID={} online? {}",
-//                notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);
         if (online) {
             log.debug("Published notification type={} to userId={}, isOnline={}",
                     notification.getType(), notification.getProfileId(), online);
