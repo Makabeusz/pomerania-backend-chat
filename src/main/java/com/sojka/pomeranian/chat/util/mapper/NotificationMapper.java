@@ -12,6 +12,7 @@ import com.sojka.pomeranian.security.model.Role;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 import static com.sojka.pomeranian.lib.util.CommonUtils.sliceDescription;
@@ -46,20 +47,21 @@ public final class NotificationMapper {
     }
 
     public static Notification toNotification(CommentStompRequest request) {
-        Map<String, Object> sender = new HashMap<>();
-        Optional.ofNullable(request.getImage192()).ifPresent(image192 -> sender.put("image192", image192));
-        Optional.ofNullable(request.getProfileId()).ifPresent(id -> sender.put("id", id + ""));
-        Optional.ofNullable(request.getUsername()).ifPresent(username -> sender.put("username", username));
-
         var body = new HashMap<String, String>();
         Optional.ofNullable(request.getRelatedLocationId()).ifPresent(idOrUsername -> body.put("relatedLocationId", idOrUsername));
         body.put("content", request.getContent());
         body.put("relatedId", request.getRelatedId() + "");
         body.put("relatedType", getNameOrNull(request.getRelatedType()));
-        body.put("sender", JsonUtils.writeToString(sender));
 
         return Notification.builder()
                 .profileId(request.getRelatedProfileId())
+                .sender(UserData.builder()
+                        .id(request.getProfileId())
+                        .image192(Optional.ofNullable(request.getImage192()).map(UUID::fromString).orElse(null))
+                        .username(request.getUsername())
+//                        .gender()
+//                        .role()
+                        .build())
                 .createdAt(request.getCreatedAt())
                 .type(NotificationType.COMMENT)
                 .body(JsonUtils.writeToString(body))
