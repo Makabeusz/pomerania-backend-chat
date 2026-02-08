@@ -261,13 +261,13 @@ public class ChatService {
         return conversationsRepository.findUnreadCountByIdUserIdAndIdRecipientId(userId, recipientId);
     }
 
-    public boolean deleteMessageResource(String roomId, String createdAt, UUID profileId, UUID userId) {
-        var message = messageRepository.findById(roomId, createdAt, profileId)
+    public boolean deleteMessageResource(String roomId, String createdAt, UUID userId) {
+        var message = messageRepository.findById(roomId, createdAt, userId)
                 .orElseThrow(noSuchElementException(
-                        "Message", new MessageRepository.IdState(roomId, createdAt, profileId).toString())
+                        "Message", new MessageRepository.IdState(roomId, createdAt, userId).toString())
                 );
         if (message.getResourceId() == null) {
-            throw noSuchElementException("ResourceId", new MessageRepository.IdState(roomId, createdAt, profileId).toString()).get();
+            throw noSuchElementException("ResourceId", new MessageRepository.IdState(roomId, createdAt, userId).toString()).get();
         }
         deletePublisher.publish(new R2BucketDeleteRequest(message.getResourceId(), userId));
 

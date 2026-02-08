@@ -80,10 +80,9 @@ public class MessageController {
     public ResponseEntity<Boolean> deleteResource(
             @AuthenticationPrincipal User user,
             @RequestParam String roomId,
-            @RequestParam String createdAt,
-            @RequestParam UUID profileId
+            @RequestParam String createdAt
     ) {
-        return ResponseEntity.ok(chatService.deleteMessageResource(roomId, createdAt, profileId, user.getId()));
+        return ResponseEntity.ok(chatService.deleteMessageResource(roomId, createdAt, user.getId()));
     }
 
 }
