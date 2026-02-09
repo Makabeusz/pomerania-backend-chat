@@ -39,37 +39,67 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
     Long countAllByIdUserIdAndFlagOrFlag(UUID userId, ConversationFlag flag1, ConversationFlag flag2);
 
     @Query(value = """
-            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192,
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user,
-                COALESCE(ARRAY_AGG(e.gender ORDER BY e.pair_order), ARRAY[]::VARCHAR[]) AS gender,
-                COALESCE(ARRAY_AGG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.birthdate))::INTEGER ORDER BY e.pair_order), ARRAY[]::INTEGER[]) AS age,
-                p.last_login_at, o.city_name, o.country
+            SELECT
+                p.id AS recipient_id,
+                p.username AS recipient_username,
+                p.image_192 AS recipient_image192,
+                c.flag,
+                c.last_message_at,
+                c.content,
+                c.content_type,
+                c.unread_count,
+                c.is_last_message_from_user,
+                (SELECT ARRAY_AGG(pe.gender ORDER BY pe.pair_order)
+                    FROM personal pe
+                    WHERE pe.profile_id = p.id
+                ) AS gender,
+                (SELECT ARRAY_AGG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, pe.birthdate))::INTEGER ORDER BY pe.pair_order)
+                    FROM personal pe
+                    WHERE pe.profile_id = p.id
+                ) AS age,
+                p.last_login_at,
+                o.city_name,
+                o.country,
+                ro.role_id
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
-            JOIN personal e ON p.id = e.profile_id
+            JOIN user_roles ro ON ro.user_id = p.id
             LEFT JOIN osmcities o ON o.id = p.city_id
             WHERE c.user_id = :userId
               AND (c.flag = ?#{#flag1.name()}
               OR c.flag = ?#{#flag2.name()})
-            GROUP BY p.id, p.username, p.image_192, c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, 
-              c.is_last_message_from_user, p.last_login_at, o.city_name, o.country
             ORDER BY last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findByUserIdAndFlags(UUID userId, ConversationFlag flag1, ConversationFlag flag2, Pageable pageable);
 
     @Query(value = """
-            SELECT p.id AS recipient_id, p.username AS recipient_username, p.image_192 AS recipient_image192,
-                c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, c.is_last_message_from_user,
-                COALESCE(ARRAY_AGG(e.gender ORDER BY e.pair_order), ARRAY[]::VARCHAR[]) AS gender,
-                COALESCE(ARRAY_AGG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.birthdate))::INTEGER ORDER BY e.pair_order), ARRAY[]::INTEGER[]) AS age,
-                p.last_login_at, o.city_name, o.country
+            SELECT
+                p.id AS recipient_id,
+                p.username AS recipient_username,
+                p.image_192 AS recipient_image192,
+                c.flag,
+                c.last_message_at,
+                c.content,
+                c.content_type,
+                c.unread_count,
+                c.is_last_message_from_user,
+                (SELECT ARRAY_AGG(pe.gender ORDER BY pe.pair_order)
+                    FROM personal pe
+                    WHERE pe.profile_id = p.id
+                ) AS gender,
+                (SELECT ARRAY_AGG(EXTRACT(YEAR FROM AGE(CURRENT_DATE, pe.birthdate))::INTEGER ORDER BY pe.pair_order)
+                    FROM personal pe
+                    WHERE pe.profile_id = p.id
+                ) AS age,
+                p.last_login_at,
+                o.city_name,
+                o.country,
+                ro.role_id
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
-            JOIN personal e ON p.id = e.profile_id
+            JOIN user_roles ro ON ro.user_id = p.id
             LEFT JOIN osmcities o ON o.id = p.city_id
             WHERE c.user_id = :userId
               AND c.flag = ?#{#flag.name()}
-            GROUP BY p.id, p.username, p.image_192, c.flag, c.last_message_at, c.content, c.content_type, c.unread_count, 
-              c.is_last_message_from_user, p.last_login_at, o.city_name, o.country
             ORDER BY last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findByUserIdAndFlag(UUID userId, ConversationFlag flag, Pageable pageable);
 

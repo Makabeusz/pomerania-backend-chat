@@ -22,12 +22,9 @@ public class ConversationDto {
     private String contentType;
     private Integer unreadCount;
     private Boolean isLastMessageFromUser;
-    private List<String> gender;
     private List<Integer> age;
     private Instant lastLoginAt;
     private OsmCityDto location;
-    private String cityName;
-    private String country;
 
     public record OsmCityDto(
             String cityName, String country

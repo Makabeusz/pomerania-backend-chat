@@ -34,12 +34,17 @@ public class DeleteAccountSubscriber {
                     var request = JsonUtils.readObject(message.getData().toByteArray(), DeleteAccountRequest.class);
                     log.info("Received delete account request, id={}", request.id());
 
-                    chatService.deleteUserInactiveRooms(request.id());
-                    chatService.deleteUserConversations(request.id());
+                    try {
+                        chatService.deleteUserInactiveRooms(request.id());
+                        chatService.deleteUserConversations(request.id());
 
-                    notificationService.deleteUserNotifications(request.id());
-                    notificationService.deleteUserReadNotifications(request.id());
+                        notificationService.deleteUserNotifications(request.id());
+                        notificationService.deleteUserReadNotifications(request.id());
 
+                        log.info("Successfully deleted user={}", request.id());
+                    } catch (Exception e) {
+                        log.error("Failed to delete user={}", request.id(), e);
+                    }
                     consumer.ack();
 
 
