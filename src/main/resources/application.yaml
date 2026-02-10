@@ -57,6 +57,11 @@ logging:
 
 pomeranian:
   chat:
+    notification:
+      read:
+        ttl: ${NOTIFICATION_READ_TTL:2592000}
+      unread:
+        ttl: ${NOTIFICATION_UNREAD_TTL:31536000}
     redis-enabled: false
     cache:
       write-timeout-ms: 2000

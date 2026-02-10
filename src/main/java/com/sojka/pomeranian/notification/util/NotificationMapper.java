@@ -16,7 +16,7 @@ public final class NotificationMapper {
     private NotificationMapper() {
     }
 
-    public static Notification toDto(NotificationModel notification) {
+    public static Notification<Object> toDto(NotificationModel notification) {
         if (notification == null) {
             return null;
         }
@@ -36,7 +36,7 @@ public final class NotificationMapper {
                 .build();
     }
 
-    public static NotificationModel toDomain(Notification notification) {
+    public static NotificationModel toDomain(Notification<Object> notification) {
         if (notification == null) {
             return null;
         }

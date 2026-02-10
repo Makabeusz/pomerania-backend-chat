@@ -18,7 +18,7 @@ public final class ReadNotificationMapper {
     private ReadNotificationMapper() {
     }
 
-    public static Notification toDto(ReadNotification notification) {
+    public static Notification<Object> toDto(ReadNotification notification) {
         if (notification == null) {
             return null;
         }
@@ -38,7 +38,7 @@ public final class ReadNotificationMapper {
                 .build();
     }
 
-    public static ReadNotification toReadNotificationDomain(Notification notification, Instant readAt) {
+    public static ReadNotification toReadNotificationDomain(Notification<Object> notification, Instant readAt) {
         if (notification == null) {
             return null;
         }

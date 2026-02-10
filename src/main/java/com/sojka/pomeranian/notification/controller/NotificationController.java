@@ -12,7 +12,6 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Controller
@@ -24,7 +23,7 @@ public class NotificationController {
 
     @MessageMapping("/notification.read")
     public void readMessage(
-            @Payload List<Notification<Map<String, Object>>> dto,
+            @Payload List<Notification<Object>> dto,
             StompHeaderAccessor headerAccessor
     ) {
         User user = authenticator.getUser(headerAccessor);

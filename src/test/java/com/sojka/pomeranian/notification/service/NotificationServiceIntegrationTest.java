@@ -12,7 +12,6 @@ import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
-import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,14 +38,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Import({TestcontainersConfiguration.class})
 @SpringBootTest
-class NotificationModelServiceIntegrationTest {
+class NotificationServiceIntegrationTest {
 
     @Autowired
     NotificationService notificationService;
     @Autowired
-    NotificationRepository notificationRepository;
+    NotificationRepository<NotificationModel> notificationRepository;
     @Autowired
-    ReadNotificationRepository readNotificationRepository;
+    NotificationRepository<ReadNotification> readNotificationRepository;
     @Autowired
     AstraTestcontainersConnector connector;
 
@@ -64,7 +63,7 @@ class NotificationModelServiceIntegrationTest {
 
     @Test
     void publish_notification_savedAndSentIfOnline() {
-        Notification notification = Notification.builder()
+        Notification<Object> notification = Notification.builder()
                 .profileId(user1)
                 .createdAt(DateTimeUtils.getCurrentInstantString())
                 .sender(UserData.builder().id(UUID.randomUUID()).build())
@@ -129,7 +128,7 @@ class NotificationModelServiceIntegrationTest {
 
     @Test
     void markRead_invalidUser_throwsSecurityException() {
-        Notification<Map<String, Object>> otherUserNotification = new Notification<>();
+        Notification<Object> otherUserNotification = new Notification<>();
         otherUserNotification.setProfileId(user2);
         otherUserNotification.setType(FOLLOW);
         otherUserNotification.setBody(Map.of("content", "Followed!"));
@@ -155,7 +154,7 @@ class NotificationModelServiceIntegrationTest {
         notificationRepository.save(notification1);
         notificationRepository.save(notification2);
 
-        ResultsPage<Notification> response = notificationService.getUnread(user1, null, 10);
+        ResultsPage<Notification<Object>> response = notificationService.getUnread(user1, null, 10);
 
         assertEquals(2, response.getResults().size());
         assertEquals("New follow", JsonUtils.readMap(response.getResults().get(0).getBody() + "").get("content"));
@@ -176,7 +175,7 @@ class NotificationModelServiceIntegrationTest {
             notificationRepository.save(notification);
         }
 
-        ResultsPage<Notification> response = notificationService.getUnread(user1, null, 10);
+        ResultsPage<Notification<Object>> response = notificationService.getUnread(user1, null, 10);
 
         if (fetchNextPage) {
             assertEquals(10, response.getResults().size());
@@ -243,10 +242,10 @@ class NotificationModelServiceIntegrationTest {
                 .createdAt(Instant.now())
                 .readAt(Instant.now())
                 .build();
-        readNotificationRepository.save(read1, 2137);
-        readNotificationRepository.save(read2, 2137);
+        readNotificationRepository.save(read1);
+        readNotificationRepository.save(read2);
 
-        ResultsPage<Notification> response = notificationService.getRead(user1, null, 10);
+        ResultsPage<Notification<Object>> response = notificationService.getRead(user1, null, 10);
 
         assertEquals(2, response.getResults().size());
         assertEquals("New read", JsonUtils.readMap(response.getResults().get(0).getBody() + "").get("content"));
