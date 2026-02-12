@@ -41,7 +41,7 @@ public class ChatNotificationController {
 
     @GetMapping
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<Notification<Map<String, Object>>>> getNotifications(
+    public ResponseEntity<ResultsPage<Notification<Object>>> getNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState
     ) {

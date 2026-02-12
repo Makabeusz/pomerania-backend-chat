@@ -6,7 +6,6 @@ import com.sojka.pomeranian.lib.dto.CommentStompRequest;
 import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.lib.dto.UserData;
-import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.security.model.Role;
 
 import java.util.HashMap;
@@ -21,8 +20,8 @@ public final class NotificationMapper {
     private NotificationMapper() {
     }
 
-    public static Notification<Map<String, Object>> toNotification(ChatMessage message, String createdAt) {
-        var notification = new Notification<Map<String, Object>>();
+    public static Notification<Object> toNotification(ChatMessage message, String createdAt) {
+        var notification = new Notification<>();
         notification.setCreatedAt(createdAt);
         notification.setSender(message.getSender());
         notification.setType(NotificationType.MESSAGE);
@@ -30,8 +29,8 @@ public final class NotificationMapper {
         return notification;
     }
 
-    public static Notification<Map<String, Object>> toNotification(ConversationProjection projection) {
-        var notification = new Notification<Map<String, Object>>();
+    public static Notification<Object> toNotification(ConversationProjection projection) {
+        var notification = new Notification<>();
         notification.setCreatedAt(toDateString(projection.getLastMessageAt()));
         notification.setSender(UserData.builder()
                 .id(projection.getRecipientId())
@@ -66,15 +65,15 @@ public final class NotificationMapper {
                 .sender(request.getSender())
                 .createdAt(request.getCreatedAt())
                 .type(NotificationType.COMMENT)
-                .body(JsonUtils.writeToString(body))
+                .body(body)
                 .build();
     }
 
-    private static Map<String, Object> createMessageBody(String content, String type) {
+    private static Object createMessageBody(String content, String type) {
         return createMessageBody(content, type, null);
     }
 
-    private static Map<String, Object> createMessageBody(String content, String type, Integer unreadCount) {
+    private static Object createMessageBody(String content, String type, Integer unreadCount) {
         return Map.of(
                 "content", sliceDescription(content, 200),
                 "type", type,

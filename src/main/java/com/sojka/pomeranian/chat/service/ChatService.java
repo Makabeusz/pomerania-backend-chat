@@ -206,7 +206,7 @@ public class ChatService {
         return count;
     }
 
-    public ResultsPage<Notification<Map<String, Object>>> getMessageNotifications(UUID userId, String pageState) {
+    public ResultsPage<Notification<Object>> getMessageNotifications(UUID userId, String pageState) {
         Pagination pagination = pageStateToPagination(pageState, 10);
 
         var headers = conversationsRepository.findNotifications(userId, PageRequest.of(

@@ -7,10 +7,12 @@ import com.sojka.pomeranian.lib.dto.UserData;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.security.model.Role;
+import lombok.extern.slf4j.Slf4j;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
+@Slf4j
 public final class NotificationMapper {
 
     private NotificationMapper() {
@@ -21,11 +23,20 @@ public final class NotificationMapper {
             return null;
         }
 
+        Object body = null;
+        if (notification.getBody() != null && !notification.getBody().isEmpty()) {
+            try {
+                body = JsonUtils.readMap(notification.getBody());
+            } catch (Exception e) {
+                log.error("Notification body failed to map: message={}, rawBody={}", e.getMessage(), notification.getBody());
+            }
+        }
+
         return Notification.builder()
                 .profileId(notification.getProfileId())
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
-                .body(JsonUtils.readMap(notification.getBody()))
+                .body(body)
                 .sender(UserData.builder()
                         .id(notification.getSenderId())
                         .username(notification.getSenderUsername())
@@ -45,7 +56,7 @@ public final class NotificationMapper {
                 .profileId(notification.getProfileId())
                 .createdAt(toInstant(notification.getCreatedAt()))
                 .type(notification.getType())
-                .body(JsonUtils.writeToString(notification.getBody()))
+                .body(JsonUtils.writeToString(notification.getBody()).trim())
                 .senderId(notification.getSender().getId())
                 .senderUsername(notification.getSender().getUsername())
                 .senderImage192(notification.getSender().getImage192())
