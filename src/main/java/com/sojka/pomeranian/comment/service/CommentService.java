@@ -4,6 +4,7 @@ import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import com.sojka.pomeranian.chat.util.mapper.NotificationMapper;
 import com.sojka.pomeranian.lib.dto.CommentStompRequest;
 import com.sojka.pomeranian.notification.service.NotificationService;
+import com.sojka.pomeranian.security.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.dto.StompSubscription.Type.POST_COMMENTS;
@@ -51,6 +53,8 @@ public class CommentService {
         private String username;
         private UUID image192;
         private PairCommenter commenter;
+        private Role.PomeranianRole role;
+        private List<String> gender;
 
         private UUID relatedId;
 
@@ -67,6 +71,8 @@ public class CommentService {
                     .updatedAt(request.getUpdatedAt())
                     .username(request.getSender().getUsername())
                     .image192(request.getSender().getImage192())
+                    .role(request.getSender().getRole())
+                    .gender(request.getSender().getGender())
                     .commenter(commenter)
                     .relatedId(request.getElement().getId())
                     .build();
