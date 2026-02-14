@@ -21,27 +21,30 @@ public final class NotificationMapper {
     }
 
     public static Notification<Object> toNotification(ChatMessage message, String createdAt) {
-        var notification = new Notification<>();
-        notification.setCreatedAt(createdAt);
-        notification.setSender(message.getSender());
-        notification.setType(NotificationType.MESSAGE);
-        notification.setBody(createMessageBody(message.getContent(), Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""));
-        return notification;
+        return Notification.builder()
+                .createdAt(createdAt)
+                .sender(message.getSender())
+                .type(NotificationType.MESSAGE)
+                .body(createMessageBody(
+                        message.getContent(),
+                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""
+                ))
+                .build();
     }
 
     public static Notification<Object> toNotification(ConversationProjection projection) {
-        var notification = new Notification<>();
-        notification.setCreatedAt(toDateString(projection.getLastMessageAt()));
-        notification.setSender(UserData.builder()
-                .id(projection.getRecipientId())
-                .image192(projection.getRecipientImage192())
-                .username(projection.getRecipientUsername())
-                .gender(projection.getGender())
-                .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
-                .build());
-//        notification.setType(NotificationType.MESSAGE);
-        notification.setBody(createMessageBody(projection.getContent(), projection.getContentType(), projection.getUnreadCount()));
-        return notification;
+        return Notification.builder()
+                .createdAt(toDateString(projection.getLastMessageAt()))
+                .sender(UserData.builder()
+                        .id(projection.getRecipientId())
+                        .image192(projection.getRecipientImage192())
+                        .username(projection.getRecipientUsername())
+                        .gender(projection.getGender())
+                        .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
+                        .build())
+                .type(NotificationType.MESSAGE)
+                .body(createMessageBody(projection.getContent(), projection.getContentType(), projection.getUnreadCount()))
+                .build();
     }
 
     public static Notification<Object> toNotification(CommentStompRequest request) {
