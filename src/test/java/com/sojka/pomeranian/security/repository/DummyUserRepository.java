@@ -42,6 +42,11 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByUsernameIgnoreCase(String username) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Optional<User> findByEmail(String email) {
         throw new UnsupportedOperationException();
     }

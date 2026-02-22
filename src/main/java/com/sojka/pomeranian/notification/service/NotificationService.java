@@ -113,7 +113,7 @@ public class NotificationService {
     @Transactional
     public long deleteUserReadNotifications(UUID userId) {
         var deletedUserNotifications = notificationRepository.countByIdProfileId(userId).orElseThrow();
-        notificationRepository.deleteAllByIdProfileId(userId);
+        readNotificationRepository.deleteAllByIdProfileId(userId);
         log.info("Removed {} read notifications of userID={}", deletedUserNotifications, userId);
         return deletedUserNotifications;
     }
