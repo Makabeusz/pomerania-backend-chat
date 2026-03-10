@@ -4,7 +4,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.lib.dto.NotificationType;
-import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 
@@ -12,7 +11,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.UUID;
 
 public class TestUtils {
@@ -53,11 +51,12 @@ public class TestUtils {
             System.out.println("null result set");
             return null;
         }
+        var rawBody = row.getString("body");
         return NotificationModel.builder()
                 .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
                 .type(NotificationType.valueOf(row.getString("type")))
-                .body(JsonUtils.writeToString(Map.of("content", "content")))
+                .body("null".equals(rawBody) ? null : rawBody)
                 .build();
     }
 

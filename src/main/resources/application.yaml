@@ -17,9 +17,16 @@ spring:
         instance-connection-name: ${INSTANCE_CONNECTION_NAME}
   application:
     name: pomeranian-chat
-  redis:
-    host: ${REDIS_HOST:localhost}  # Default local, override in GCP env vars
-    port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+  data:
+    redis:
+      database: 0
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2s
+      connect-timeout: 2s
 #    username: ${REDIS_USERNAME:}   # Optional, if auth enabled
 #    password: ${REDIS_PASSWORD:}   # Optional
 

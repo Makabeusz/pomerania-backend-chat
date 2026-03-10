@@ -7,7 +7,6 @@ import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.util.TestUtils;
 import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.UserData;
-import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
@@ -65,29 +64,23 @@ class NotificationServiceIntegrationTest {
     void publish_notification_savedAndSentIfOnline() {
         Notification<Object> notification = Notification.builder()
                 .profileId(user1)
-                .createdAt(DateTimeUtils.getCurrentInstantString())
                 .sender(UserData.builder().id(UUID.randomUUID()).build())
                 .type(FOLLOW)
-                .body(JsonUtils.writeToString(Map.of("content", "New follow!")))
                 .build();
 
-        notificationService.process(notification);
+        var createdAt = notificationService.process(notification);
 
         // Verify notification in notifications table
         NotificationModel saved = TestUtils.getNotification(connector, notification.getProfileId(),
-                DateTimeUtils.toInstant(notification.getCreatedAt()), getNameOrNull(notification.getType())
+                createdAt, getNameOrNull(notification.getType())
         );
         assertThat(saved).usingRecursiveComparison(new RecursiveComparisonConfiguration())
-                .ignoringFields("createdAt")
                 .isEqualTo(NotificationModel.builder()
                         .profileId(user1)
                         .type(FOLLOW)
-                        .body(JsonUtils.writeToString(Map.of("content", "New follow!")))
+                        .createdAt(createdAt)
                         .build());
 
-        assertThat(saved).usingRecursiveComparison(new RecursiveComparisonConfiguration())
-                .ignoringFields("createdAt", "type")
-                .isEqualTo(notification);
         assertThat(notification.getType()).isEqualTo(FOLLOW);
     }
 
@@ -157,8 +150,8 @@ class NotificationServiceIntegrationTest {
         ResultsPage<Notification<Object>> response = notificationService.getUnread(user1, null, 10);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("New follow", JsonUtils.readMap(response.getResults().get(0).getBody() + "").get("content"));
-        assertEquals("Old follow", JsonUtils.readMap(response.getResults().get(1).getBody() + "").get("content"));
+        assertEquals("New follow", ((Map) response.getResults().get(0).getBody()).get("content"));
+        assertEquals("Old follow", ((Map) response.getResults().get(1).getBody()).get("content"));
         assertNull(response.getNextPageState());
     }
 
@@ -179,12 +172,12 @@ class NotificationServiceIntegrationTest {
 
         if (fetchNextPage) {
             assertEquals(10, response.getResults().size());
-            assertEquals("Notification 15", JsonUtils.readMap(response.getResults().getFirst().getBody() + "").get("content"));
+            assertEquals("Notification 15", ((Map) response.getResults().getFirst().getBody()).get("content"));
             assertNotNull(response.getNextPageState());
         } else {
             response = notificationService.getUnread(user1, response.getNextPageState(), 10);
             assertEquals(5, response.getResults().size());
-            assertEquals("Notification 5", JsonUtils.readMap(response.getResults().getFirst().getBody() + "").get("content"));
+            assertEquals("Notification 5", ((Map) response.getResults().getFirst().getBody()).get("content"));
             assertNull(response.getNextPageState());
         }
     }
@@ -248,8 +241,8 @@ class NotificationServiceIntegrationTest {
         ResultsPage<Notification<Object>> response = notificationService.getRead(user1, null, 10);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("New read", JsonUtils.readMap(response.getResults().get(0).getBody() + "").get("content"));
-        assertEquals("Old read", JsonUtils.readMap(response.getResults().get(1).getBody() + "").get("content"));
+        assertEquals("New read", ((Map) response.getResults().get(0).getBody()).get("content"));
+        assertEquals("Old read", ((Map) response.getResults().get(1).getBody()).get("content"));
         assertNull(response.getNextPageState());
     }
 }

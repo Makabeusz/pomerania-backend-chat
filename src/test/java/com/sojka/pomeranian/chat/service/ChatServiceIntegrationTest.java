@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -409,8 +410,8 @@ class ChatServiceIntegrationTest {
         var response = chatService.getMessageNotifications(userX, null);
 
         assertEquals(2, response.getResults().size());
-        assertEquals("New message", JsonUtils.readMap(response.getResults().get(0).getBody().toString()).get("content"));
-        assertEquals("Old message", JsonUtils.readMap(response.getResults().get(1).getBody().toString()).get("content"));
+        assertEquals("New message", ((Map) response.getResults().get(0).getBody()).get("content"));
+        assertEquals("Old message", ((Map) response.getResults().get(1).getBody()).get("content"));
         assertNull(response.getNextPageState());
     }
 
