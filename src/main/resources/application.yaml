@@ -27,8 +27,8 @@ spring:
       password: ${REDIS_PASSWORD}
       timeout: 2s
       connect-timeout: 2s
-#    username: ${REDIS_USERNAME:}   # Optional, if auth enabled
-#    password: ${REDIS_PASSWORD:}   # Optional
+      ssl:
+        enabled: true
 
 logging:
   level:
@@ -69,7 +69,7 @@ pomeranian:
         ttl: ${NOTIFICATION_READ_TTL:2592000}
       unread:
         ttl: ${NOTIFICATION_UNREAD_TTL:31536000}
-    redis-enabled: false
+    redis-enabled: true
     cache:
       write-timeout-ms: 2000
     purge:
