@@ -23,7 +23,7 @@ import static com.sojka.pomeranian.security.util.SecurityConstants.USERS_CACHE_V
 @Configuration
 @EnableCaching
 @ConditionalOnProperty(
-        prefix = "pomeranian",
+        prefix = "pomeranian.chat",
         name = "redis-enabled",
         havingValue = "true"
 )

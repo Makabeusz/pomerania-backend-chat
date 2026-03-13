@@ -22,13 +22,13 @@ spring:
   data:
     redis:
       database: 0
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD}
-      timeout: 2s
-      connect-timeout: 2s
+      timeout: 10s
+      connect-timeout: 10s
       ssl:
-        enabled: true
+        enabled: ${REDIS_SSL_ENABLED:false}
 
 logging:
   level:
@@ -61,6 +61,9 @@ logging:
             service:
               CommentService: INFO
               SessionTracker: INFO
+          security:
+            config:
+              JwtAuthenticationFilter: INFO
 
 pomeranian:
   chat:
