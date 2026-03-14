@@ -57,7 +57,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     @Override
     public ReadNotification save(ReadNotification notification) {
         int ttl = config.getNotification().getRead().getTtl();
-        return execute(() -> {
+        return handle(() -> {
             String dml = INSERT.formatted(ttl);
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
@@ -77,7 +77,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     @Override
     public List<ReadNotification> saveAll(List<ReadNotification> notifications) {
         int ttl = config.getNotification().getRead().getTtl();
-        return execute(() -> {
+        return handle(() -> {
             var list = notifications.stream()
                     .map(n -> SimpleStatement.builder(INSERT.formatted(ttl))
                             .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
@@ -103,7 +103,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
 
     @Override
     public ResultsPage<ReadNotification> findAllBy(UUID profileId, String pageState, int pageSize) {
-        return execute(() -> {
+        return handle(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
             var statement = SimpleStatement.builder(SELECT_ALL)
@@ -126,7 +126,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
 
     @Override
     public Optional<Long> countByIdProfileId(UUID profileId) {
-        return execute(() -> {
+        return handle(() -> {
             var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
             var session = connector.getSession();
@@ -139,7 +139,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     @Override
     public void deleteAllByIdProfileId(UUID profileId) {
         log.trace("deleteAllByIdProfileId input: profileId={}", profileId);
-        execute(() -> {
+        handle(() -> {
             var statement = SimpleStatement.builder(DELETE_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
             var session = connector.getSession();

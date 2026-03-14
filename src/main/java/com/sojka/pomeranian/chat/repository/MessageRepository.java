@@ -52,7 +52,7 @@ public class MessageRepository extends AstraPageableRepository {
     public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {
         var id = new RoomIdState(roomId, pageState, pageSize);
         log.trace("findByRoomId input: {}", id);
-        return execute(() -> {
+        return handle(() -> {
             var select = QueryBuilder.selectFrom(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .all()
                     .whereColumn("room_id")
@@ -84,7 +84,7 @@ public class MessageRepository extends AstraPageableRepository {
             throw new IllegalArgumentException("No content or resource in the message: " + message);
         }
 
-        return execute(() -> {
+        return handle(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageInsert = QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
@@ -109,7 +109,7 @@ public class MessageRepository extends AstraPageableRepository {
 
     public Instant markRead(MessageKey key) {
         log.trace("markRead input: {}", key);
-        return execute(() -> {
+        return handle(() -> {
             var readTime = getCurrentInstant();
             var update = key.createdAt().stream()
                     // todo: to plain text query
@@ -139,7 +139,7 @@ public class MessageRepository extends AstraPageableRepository {
 
     public boolean deleteRoom(String roomId) {
         log.trace("deleteRoom input: roomId={}", roomId);
-        return execute(() -> {
+        return handle(() -> {
             var statement = new SimpleStatementBuilder(deleteAllRoomMessages).addPositionalValue(roomId).build();
             connector.getSession().execute(statement);
             return true;
@@ -148,7 +148,7 @@ public class MessageRepository extends AstraPageableRepository {
 
     public void delete(String roomId, String createdAt, UUID profileId) {
         log.trace("delete input: roomId={}, createdAt={}, profileId={}", roomId, createdAt, profileId);
-        execute(() -> {
+        handle(() -> {
             var statement = new SimpleStatementBuilder(DELETE_MESSAGE)
                     .addPositionalValue(roomId)
                     .addPositionalValue(toInstant(createdAt))
@@ -162,7 +162,7 @@ public class MessageRepository extends AstraPageableRepository {
     public Optional<Message> findById(String roomId, String createdAt, UUID profileId) {
         var id = new IdState(roomId, createdAt, profileId);
         log.trace("findById input: {}", id);
-        return execute(() -> {
+        return handle(() -> {
             var statement = new SimpleStatementBuilder(FIND_MESSAGE)
                     .addPositionalValue(roomId)
                     .addPositionalValue(toInstant(createdAt))
@@ -184,7 +184,7 @@ public class MessageRepository extends AstraPageableRepository {
     public Message update(@Valid Message message) {
         log.trace("update input: {}", message);
 
-        return execute(() -> {
+        return handle(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageUpdate = QueryBuilder.update(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .setColumn("username", literal(message.getUsername()))
