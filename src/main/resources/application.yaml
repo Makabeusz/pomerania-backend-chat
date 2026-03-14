@@ -117,6 +117,6 @@ gcp:
     block-user:
       subscriber:
         subscription-name: ${PUBSUB_BLOCK_USER_SUB:block-user-dev}
-    user-presence:
-      publisher:
-        topic-name: ${PUBSUB_USER_PRESENCE_TOPIC:user-presence-dev}
+#    user-presence:
+#      publisher:
+#        topic-name: ${PUBSUB_USER_PRESENCE_TOPIC:user-presence-dev}

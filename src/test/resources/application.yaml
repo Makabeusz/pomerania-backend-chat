@@ -70,6 +70,6 @@ gcp:
     block-user:
       subscriber:
         subscription-name: 'block-user'
-    user-presence:
-      publisher:
-        topic-name: 'user-presence'
+#    user-presence:
+#      publisher:
+#        topic-name: 'user-presence'

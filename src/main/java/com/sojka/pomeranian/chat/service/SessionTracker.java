@@ -3,11 +3,10 @@ package com.sojka.pomeranian.chat.service;
 import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.cache.SessionCache;
-import com.sojka.pomeranian.lib.dto.UserPresenceRequest;
 import com.sojka.pomeranian.lib.util.DateTimeUtils;
-import com.sojka.pomeranian.pubsub.UserPresencePublisher;
 import com.sojka.pomeranian.security.model.Role;
 import com.sojka.pomeranian.security.model.User;
+import com.sojka.pomeranian.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -29,9 +28,9 @@ import java.util.Map;
 public class SessionTracker {
 
     private final SessionCache cache;
-    private final UserPresencePublisher publisher;
     private final StompRequestAuthenticator requestAuthenticator;
     private final StompRequestAuthenticator authenticator;
+    private final UserRepository userRepository;
 
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
@@ -41,7 +40,7 @@ public class SessionTracker {
             User user = requestAuthenticator.getUser(event);
             boolean isCreated = cache.create(user.getId(), simpSessionId);
             if (isCreated) {
-                publisher.publish(new UserPresenceRequest(user.getId(), true, DateTimeUtils.getCurrentInstant()));
+                userRepository.updateLastLoginAtAndIsOnline(user.getId(), DateTimeUtils.getCurrentInstant(), true);
                 log.debug("Online: userId={}", user.getId());
             } else {
                 log.debug("Already online: userId={}", user.getId());
@@ -57,7 +56,7 @@ public class SessionTracker {
         try {
             var userId = cache.remove(event.getSessionId());
             if (userId != null) {
-                publisher.publish(new UserPresenceRequest(userId, false, DateTimeUtils.getCurrentInstant()));
+                userRepository.updateLastLoginAtAndIsOnline(userId, DateTimeUtils.getCurrentInstant(), false);
                 log.debug("Offline: userId={}", userId);
             } else {
                 log.debug("SessionId={} already online", event.getSessionId());
