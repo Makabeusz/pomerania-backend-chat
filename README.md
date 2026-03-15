@@ -3,16 +3,22 @@
 
 # Build and deployment
 
+### Env
+CHAT_IMAGE_VERSION="0.1.0"
+CHAT_IMAGE_REGISTRY="europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat"
+
 ### Build
-docker build --platform linux/amd64 -t pomeranian-backend-chat:latest .
+docker build --platform linux/amd64 -t ${CHAT_IMAGE_REGISTRY}:latest -t ${CHAT_IMAGE_REGISTRY}:${CHAT_IMAGE_VERSION} .
 
 ### Tag for Artifact Registry (replace placeholders)
-docker tag pomeranian-backend-chat:latest europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat:latest
+docker tag pomeranian-backend-chat:latest ${CHAT_IMAGE_REGISTRY}:latest
+docker tag pomeranian-backend-chat:${CHAT_IMAGE_VERSION} ${CHAT_IMAGE_REGISTRY}:${CHAT_IMAGE_VERSION}
 
 ### Authenticate (only initially)
 gcloud auth configure-docker europe-west1-docker.pkg.dev
 
 ### Push
-docker push europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat:latest
+docker push ${CHAT_IMAGE_REGISTRY}:latest
+docker push ${CHAT_IMAGE_REGISTRY}:${CHAT_IMAGE_VERSION}
 
 

@@ -99,8 +99,7 @@ astra:
 #  keyspace: 'messages' # using 2 keyspaces with a single connection, specifying keyspace for each query
 
 gcp:
-  project-id: 'pomeranian-463011'
-  region: 'europe-central2' # Warsaw
+  region: ${PUBSUB_REGION:europe-central2} # Warsaw locally
   pubsub:
     chat-resources:
       publisher:
