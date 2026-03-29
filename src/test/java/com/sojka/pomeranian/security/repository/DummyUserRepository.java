@@ -4,6 +4,7 @@ import com.sojka.pomeranian.security.model.User;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,8 +108,12 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
+    public void updateLastLoginAtAndIsOnline(UUID profileId, Instant lastLoginAt, Boolean isOnline) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void deleteAll() {
         db.clear();
     }
-
 }

@@ -70,7 +70,7 @@ public class R2BucketDeletePublisher {
     // TODO: move to lib
     ByteString toData(Object object) {
         try {
-            return ByteString.copyFrom(JsonUtils.getWriter().writeValueAsBytes(object));
+            return ByteString.copyFrom(JsonUtils.getMapper().writeValueAsBytes(object));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
