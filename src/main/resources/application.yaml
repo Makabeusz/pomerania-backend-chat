@@ -91,6 +91,7 @@ pomeranian:
       cache-size: 100
       fields: DeviceClass, DeviceName, OperatingSystemName, AgentClass, AgentName
       warmup: false
+      whitelisted:
 
 astra:
   connectionBundleFilePath: ${ASTRA_CONNECTION_BUNDLE}

@@ -4,11 +4,11 @@
 # Build and deployment
 
 ### Env
-CHAT_IMAGE_VERSION="0.1.2"
+CHAT_IMAGE_VERSION="0.1.3"
 CHAT_IMAGE_REGISTRY="europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat"
 
-### Build
-docker build --platform linux/amd64 -t ${CHAT_IMAGE_REGISTRY}:latest -t ${CHAT_IMAGE_REGISTRY}:${CHAT_IMAGE_VERSION} .
+### Build (with MacOs caffeinate during the build)
+caffeinate -i docker build --platform linux/amd64 -t ${CHAT_IMAGE_REGISTRY}:latest -t ${CHAT_IMAGE_REGISTRY}:${CHAT_IMAGE_VERSION} .
 
 ### Authenticate (only initially)
 gcloud auth configure-docker europe-central2-docker.pkg.dev
