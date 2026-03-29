@@ -4,7 +4,7 @@
 # Build and deployment
 
 ### Env
-CHAT_IMAGE_VERSION="0.1.3"
+CHAT_IMAGE_VERSION="0.1.4"
 CHAT_IMAGE_REGISTRY="europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat"
 
 ### Build (with MacOs caffeinate during the build)

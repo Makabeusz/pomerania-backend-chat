@@ -62,7 +62,7 @@ dependencies {
 
     // Pomeranian
     implementation 'com.sojka:Pomeranian-Security:0.6.8'
-    implementation 'com.sojka:pomeranian-astra:0.3.1'
+    implementation 'com.sojka:pomeranian-astra:0.3.2'
 
     // GCP
     implementation platform('com.google.cloud:libraries-bom:26.61.0')
@@ -76,9 +76,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:cassandra:1.20.1'
     testImplementation 'org.testcontainers:postgresql:1.21.0'
-//	testImplementation 'org.testcontainers:cassandra'
-//	testImplementation 'org.testcontainers:junit-jupiter'
-//	testImplementation 'org.testcontainers:r2dbc'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
