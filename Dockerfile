@@ -1,7 +1,6 @@
 # Multi-stage Dockerfile for Spring Boot app built with Gradle (Groovy DSL only)
-# No Kotlin DSL support needed
 
-FROM eclipse-temurin:25-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine-3.23 AS build
 WORKDIR /app
 
 # Copy Gradle wrapper
@@ -20,24 +19,16 @@ COPY src ./src
 # Build the executable JAR (skip tests; remove -x test if you want to run them)
 RUN ./gradlew --no-daemon clean bootJar -x test
 
-# Runtime stage
-FROM eclipse-temurin:25-jre-alpine
-
-# Create non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# === RUNTIME STAGE – DISTROLESS (recommended) ===
+FROM gcr.io/distroless/java25-debian13:nonroot
 
 WORKDIR /opt/app
 
-# Copy the built JAR
+# Copy the built JAR (non-root user is already set by the base image)
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Fix ownership
-RUN chown appuser:appgroup app.jar
+# Expose port (updated to your new port)
+EXPOSE 8081
 
-# Expose port
-EXPOSE 8080
-
-# Run as non-root
-USER appuser
-
+# Keep your JVM flags + run the JAR
 ENTRYPOINT ["java", "-XX:+UseCompactObjectHeaders", "-jar", "app.jar"]
