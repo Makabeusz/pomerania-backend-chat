@@ -50,8 +50,8 @@ logging:
               ChatService: TRACE
               SessionTracker: WARN
             controller:
-              ChatController: TRACE
-              MessageController: TRACE
+              ChatController: INFO
+              MessageController: INFO
               StompSubscriptionController: DEBUG
               GlobalExceptionHandler: DEBUG
           pubsub:

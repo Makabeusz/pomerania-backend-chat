@@ -63,7 +63,7 @@ public class Conversation {
     }
 
     public enum ContentType {
-        MESSAGE, IMAGE, VIDEO, MESSAGE_IMAGE, MESSAGE_VIDEO;
+        MESSAGE, PHOTO, VIDEO, MESSAGE_PHOTO, MESSAGE_VIDEO;
 
         // TODO: move ResourceType to lib from main and use here
         public static ContentType getTypeByMessageData(Message message) {
@@ -71,12 +71,12 @@ public class Conversation {
                 return MESSAGE;
             } else if (StringUtils.hasText(message.getContent()) && message.getResourceId() != null) {
                 if ("PHOTO".equals(message.getResourceType())) {
-                    return MESSAGE_IMAGE;
+                    return MESSAGE_PHOTO;
                 } else if ("VIDEO".equals(message.getResourceType())) {
                     return MESSAGE_VIDEO;
                 }
             } else if ("PHOTO".equals(message.getResourceType())) {
-                return IMAGE;
+                return PHOTO;
             } else if ("VIDEO".equals(message.getResourceType())) {
                 return VIDEO;
             }

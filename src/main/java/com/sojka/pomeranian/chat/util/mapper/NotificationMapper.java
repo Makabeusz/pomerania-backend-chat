@@ -27,7 +27,8 @@ public final class NotificationMapper {
                 .type(NotificationType.MESSAGE)
                 .body(createMessageBody(
                         message.getContent(),
-                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""
+                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + "",
+                        0
                 ))
                 .build();
     }
@@ -73,14 +74,14 @@ public final class NotificationMapper {
     }
 
     private static Object createMessageBody(String content, String type) {
-        return createMessageBody(content, type, null);
+        return createMessageBody(content, type, 0);
     }
 
     private static Object createMessageBody(String content, String type, Integer unreadCount) {
         return Map.of(
                 "content", sliceDescription(content, 200),
                 "type", type,
-                "unreadCount", (unreadCount == null ? 0 : unreadCount) + ""
+                "unreadCount", unreadCount // TODO frontend is handling read update, required through per bug
         );
     }
 
