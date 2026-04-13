@@ -27,6 +27,8 @@ public class Message {
     private UUID resourceId;
     // TODO: move ResourceType to lib from main and use here
     private String resourceType;
+    private Integer resourceHeight;
+    private Integer resourceWidth;
     private UUID thumbnailId;
     private String editedAt;
     private Instant readAt;

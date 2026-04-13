@@ -38,5 +38,7 @@ public class ChatMessage {
         private UUID id;
         private String type;
         private UUID thumbnailId;
+        private Integer height;
+        private Integer width;
     }
 }

@@ -96,6 +96,8 @@ public class MessageRepository extends AstraPageableRepository {
                     .value("content", literal(message.getContent()))
                     .value("resource_id", literal(message.getResourceId()))
                     .value("resource_type", literal(message.getResourceType()))
+                    .value("resource_height", literal(message.getResourceHeight()))
+                    .value("resource_width", literal(message.getResourceWidth()))
                     .value("edited_at", literal(message.getEditedAt()))
                     .value("read_at", literal(message.getReadAt()))
                     .value("metadata", literal(message.getMetadata()));
@@ -193,6 +195,8 @@ public class MessageRepository extends AstraPageableRepository {
                     .setColumn("content", literal(message.getContent()))
                     .setColumn("resource_id", literal(message.getResourceId()))
                     .setColumn("resource_type", literal(message.getResourceType()))
+                    .setColumn("resource_height", literal(message.getResourceHeight()))
+                    .setColumn("resource_width", literal(message.getResourceWidth()))
                     .setColumn("edited_at", literal(message.getEditedAt()))
                     //.setColumn("read_at", literal(message.getReadAt()))
                     .setColumn("metadata", literal(message.getMetadata()))

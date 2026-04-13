@@ -130,11 +130,9 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
                 c.content_type,
                 c.unread_count,
                 c.is_last_message_from_user,
-                COALESCE(
-                    (SELECT STRING_AGG(pe.gender, '-' ORDER BY pe.gender)
-                     FROM personal pe
-                     WHERE pe.profile_id = p.id),
-                    ''
+                (SELECT ARRAY_AGG(pe.gender ORDER BY pe.pair_order)
+                    FROM personal pe
+                    WHERE pe.profile_id = p.id
                 ) AS gender,
                 COALESCE(
                     (SELECT ur.role_id

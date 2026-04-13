@@ -35,7 +35,6 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,6 +85,8 @@ public class ChatService {
                 .recipientProfileId(recipientId)
                 .resourceId(chatMessage.getResource() != null ? chatMessage.getResource().getId() : null)
                 .resourceType(chatMessage.getResource() != null ? chatMessage.getResource().getType() : null)
+                .resourceHeight(chatMessage.getResource() != null ? chatMessage.getResource().getHeight() : null)
+                .resourceWidth(chatMessage.getResource() != null ? chatMessage.getResource().getWidth() : null)
                 .thumbnailId(chatMessage.getResource() != null ? chatMessage.getResource().getThumbnailId() : null)
                 .recipientUsername(chatMessage.getRecipient().getUsername())
                 .content(chatMessage.getContent())

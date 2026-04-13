@@ -42,16 +42,22 @@ public class ChatController {
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage, StompHeaderAccessor headerAccessor) {
         User user = authenticator.getUser(headerAccessor);
-        chatMessage.setSender(new UserData(user.getId(), user.getUsername(), chatMessage.getSender().getImage192()));
+        chatMessage.setSender(UserData.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .image192(chatMessage.getSender().getImage192())
+                .gender(chatMessage.getSender().getGender())
+                .role(chatMessage.getSender().getRole())
+                .build());
         String roomId = CommonUtils.generateRoomId(chatMessage);
 
-        boolean isOnline = cache.isOnline(
+        boolean hasChatOpen = cache.isOnline(
                 chatMessage.getRecipient().getId(), new StompSubscription(StompSubscription.Type.CHAT, roomId)
         );
-        String createdAt = chatService.processMessage(chatMessage, roomId, isOnline);
+        String createdAt = chatService.processMessage(chatMessage, roomId, hasChatOpen);
 
         // Publish unread message notification
-        if (!isOnline) {
+        if (!hasChatOpen) {
             var notification = NotificationMapper.toNotification(chatMessage, createdAt);
             messagingTemplate.convertAndSendToUser(
                     chatMessage.getRecipient().getId() + "", NOTIFY_DESTINATION, notification

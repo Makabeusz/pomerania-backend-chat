@@ -22,6 +22,8 @@ public class ChatMessagePersisted extends ChatMessage {
     private String createdAt;
     private UUID resourceId;
     private String resourceType;
+    private Integer resourceHeight;
+    private Integer resourceWidth;
     private UUID thumbnailId;
     private String editedAt;
     private String readAt;
@@ -30,11 +32,14 @@ public class ChatMessagePersisted extends ChatMessage {
     @Builder
     public ChatMessagePersisted(
             String content, UserData sender, UserData recipient,
-            String roomId, String createdAt, UUID resourceId, String resourceType, UUID thumbnailId,
-            String editedAt, Map<String, String> metadata, String readAt
+            String roomId, String createdAt, UUID resourceId, String resourceType, Integer resourceHeight, Integer resourceWidth,
+            UUID thumbnailId, String editedAt, Map<String, String> metadata, String readAt
     ) {
         super(
-                content, (resourceId != null && resourceType != null) ? new Resource(resourceId, resourceType, thumbnailId) : null,
+                content,
+                (resourceId != null && resourceType != null)
+                        ? new Resource(resourceId, resourceType, thumbnailId, resourceHeight, resourceWidth)
+                        : null,
                 sender, recipient
         );
         this.roomId = roomId;

@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     content TEXT,
     resource_id UUID,
     resource_type VARCHAR,
+    resource_height INT,
+    resource_width INT,
     edited_at VARCHAR,
     read_at TIMESTAMP,
     metadata MAP<VARCHAR, VARCHAR>,
