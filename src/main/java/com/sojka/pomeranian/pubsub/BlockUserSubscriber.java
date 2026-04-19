@@ -7,7 +7,6 @@ import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.sojka.pomeranian.chat.service.ChatService;
 import com.sojka.pomeranian.lib.dto.BlockUserRequest;
-import com.sojka.pomeranian.lib.dto.ConversationFlag;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.pubsub.config.GcpConfig;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +41,7 @@ public class BlockUserSubscriber {
                         chatService.updateConversationFlag(
                                 request.getBlockedProfileId(), request.getProfileId(), request.getFlag()
                         );
-                        // delete all the notifications from blocked profile
+                        // TODO: delete all the notifications from blocked profile
                     } catch (NoSuchElementException e) {
                         log.error("Error while blocking a user: {}", e.getMessage());
                     }
