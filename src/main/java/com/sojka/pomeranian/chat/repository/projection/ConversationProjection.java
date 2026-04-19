@@ -35,4 +35,16 @@ public interface ConversationProjection {
     String getCountry();
 
     Integer getRoleId();
+
+    /**
+     * Block profile status code, maps to:<pre>
+     * 1: You blocked the profile
+     * -1: The profile blocked you
+     * 0: no block exists
+     * </pre>
+     */
+    Integer getBlockStatusCode();
+
+    // TODO: AdminFlag enum from main
+    String getValidationStatus();
 }
