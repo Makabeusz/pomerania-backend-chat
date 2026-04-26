@@ -40,4 +40,8 @@ public class ChatResponse<T> {
     public ChatResponse(@NonNull T data) {
         this(List.of(data));
     }
+
+    public ChatResponse(@NonNull MessageType type) {
+        this.type = type;
+    }
 }
