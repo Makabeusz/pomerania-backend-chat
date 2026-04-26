@@ -25,6 +25,9 @@ public class ConversationDto {
     private List<Integer> age;
     private Instant lastLoginAt;
     private OsmCityDto location;
+    private BlockStatus blockStatus;
+    // TODO: AdminFlag enum from main
+    private String validationStatus;
 
     public record OsmCityDto(
             String cityName, String country

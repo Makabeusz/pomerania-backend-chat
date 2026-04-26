@@ -60,7 +60,23 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
                 p.last_login_at,
                 o.city_name,
                 o.country,
-                ro.role_id
+                ro.role_id,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM settings_blocked_users b
+                        WHERE b.profile_id = :userId
+                          AND b.blocked_user_id = p.id
+                    ) THEN 1
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM settings_blocked_users b
+                        WHERE b.profile_id = p.id
+                          AND b.blocked_user_id = :userId
+                    ) THEN -1
+                    ELSE 0
+                    END AS block_status_code,
+                p.validation_status
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
             JOIN user_roles ro ON ro.user_id = p.id
@@ -93,7 +109,23 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
                 p.last_login_at,
                 o.city_name,
                 o.country,
-                ro.role_id
+                ro.role_id,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM settings_blocked_users b
+                        WHERE b.profile_id = :userId
+                          AND b.blocked_user_id = p.id
+                    ) THEN 1
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM settings_blocked_users b
+                        WHERE b.profile_id = p.id
+                          AND b.blocked_user_id = :userId
+                    ) THEN -1
+                    ELSE 0
+                    END AS block_status_code,
+                p.validation_status
             FROM conversations c
             JOIN profiles p ON c.recipient_id = p.id
             JOIN user_roles ro ON ro.user_id = p.id

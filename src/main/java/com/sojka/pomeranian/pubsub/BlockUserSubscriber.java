@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.NoSuchElementException;
 
+import static com.sojka.pomeranian.lib.util.CommonUtils.generateRoomId;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -38,6 +40,12 @@ public class BlockUserSubscriber {
                         chatService.updateConversationFlag(
                                 request.getProfileId(), request.getBlockedProfileId(), request.getFlag()
                         );
+                        chatService.updateConversationFlag(
+                                request.getBlockedProfileId(), request.getProfileId(), request.getFlag()
+                        );
+                        chatService.processRefreshRequest(generateRoomId(request.getProfileId(), request.getBlockedProfileId()));
+
+                        // TODO: delete all the notifications from blocked profile
                     } catch (NoSuchElementException e) {
                         log.error("Error while blocking a user: {}", e.getMessage());
                     }

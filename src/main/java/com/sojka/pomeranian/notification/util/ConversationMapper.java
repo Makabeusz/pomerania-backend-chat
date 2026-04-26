@@ -1,28 +1,14 @@
 package com.sojka.pomeranian.notification.util;
 
+import com.sojka.pomeranian.chat.dto.BlockStatus;
 import com.sojka.pomeranian.chat.dto.ConversationDto;
-import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
 import com.sojka.pomeranian.lib.dto.UserData;
 import com.sojka.pomeranian.security.model.Role;
 
-import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
-
 public final class ConversationMapper {
 
     private ConversationMapper() {
-    }
-
-    public static ConversationDto toDto(Conversation model, UserData recipient) {
-        return ConversationDto.builder()
-                .recipient(recipient)
-                .flag(getNameOrNull(model.getFlag()))
-                .lastMessageAt(model.getLastMessageAt())
-                .content(model.getContent())
-                .contentType(getNameOrNull(model.getContentType()))
-                .unreadCount(model.getUnreadCount())
-//                .isLastMessageFromUser(false)
-                .build();
     }
 
     public static ConversationDto toDto(ConversationProjection projection) {
@@ -45,6 +31,20 @@ public final class ConversationMapper {
                 .location(projection.getCityName() == null ? null : new ConversationDto.OsmCityDto(
                         projection.getCityName(), projection.getCountry()
                 ))
+                .blockStatus(getBlockStatus(projection.getBlockStatusCode()))
+                .validationStatus(projection.getValidationStatus())
                 .build();
+    }
+
+    // TODO: duplicated with main
+    private static BlockStatus getBlockStatus(Integer code) {
+        if (code == null) {
+            return null;
+        }
+        return switch (code) {
+            case -1 -> BlockStatus.BLOCKED_YOU;
+            case 1 -> BlockStatus.BLOCKED_BY_YOU;
+            default -> null;
+        };
     }
 }

@@ -85,8 +85,8 @@ pomeranian:
       secure: ${SECURITY_COOKIE_SECURE}
     jwt:
       secret: ${JWT_SECRET}
-      expiration: 86400000
-      refresh-expiration: 172800000 # 48 hours # 7776000000 # 90 days
+      expiration: 86400000 # 24 hours
+      refresh-expiration: 2592000000 # 30 days
     user-agent:
       cache-size: 100
       fields: DeviceClass, DeviceName, OperatingSystemName, AgentClass, AgentName

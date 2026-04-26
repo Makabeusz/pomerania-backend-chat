@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.sojka.pomeranian.chat.dto.MessageType.REVALIDATE;
 import static com.sojka.pomeranian.chat.util.Constants.DM_DESTINATION;
 import static com.sojka.pomeranian.lib.dto.ConversationFlag.NORMAL;
 import static com.sojka.pomeranian.lib.dto.ConversationFlag.STARRED;
@@ -117,6 +118,10 @@ public class ChatService {
         log.trace("Updated recipient conversation: {}", recipientConversation);
 
         return savedMessage.getCreatedAt();
+    }
+
+    public void processRefreshRequest(String roomId) {
+        messagingTemplate.convertAndSendToUser(roomId, DM_DESTINATION, new ChatResponse<>(REVALIDATE));
     }
 
     private Conversation getExistingOrNewConversation(

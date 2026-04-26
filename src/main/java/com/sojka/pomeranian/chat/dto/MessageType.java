@@ -5,5 +5,6 @@ public enum MessageType {
     JOIN,
     LEAVE,
     READ,
-    UPDATE
+    UPDATE,
+    REVALIDATE,
 }
