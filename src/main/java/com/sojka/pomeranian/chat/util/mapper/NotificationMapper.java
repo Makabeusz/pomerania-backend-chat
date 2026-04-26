@@ -1,15 +1,18 @@
 package com.sojka.pomeranian.chat.util.mapper;
 
-import com.sojka.pomeranian.chat.dto.NotificationHeader;
-import com.sojka.pomeranian.chat.model.MessageNotification;
+import com.sojka.pomeranian.chat.dto.ChatMessage;
+import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
 import com.sojka.pomeranian.lib.dto.CommentStompRequest;
-import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationType;
+import com.sojka.pomeranian.lib.dto.UserData;
+import com.sojka.pomeranian.security.model.Role;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
+import static com.sojka.pomeranian.lib.util.CommonUtils.sliceDescription;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
 public final class NotificationMapper {
@@ -17,50 +20,69 @@ public final class NotificationMapper {
     private NotificationMapper() {
     }
 
-    public static NotificationDto toDto(MessageNotification notification) {
-        return NotificationDto.builder()
-                .profileId(notification.getId().getProfileId())
-                .createdAt(toDateString(notification.getId().getCreatedAt()))
-                .content(notification.getContent())
-                .metadata(new HashMap<>(Map.of(
-                        "senderId", notification.getId().getSenderId() + "",
-                        "senderUsername", notification.getSenderUsername()
-                )))
+    public static Notification<Object> toNotification(ChatMessage message, String createdAt) {
+        return Notification.builder()
+                .createdAt(createdAt)
+                .sender(message.getSender())
+                .type(NotificationType.MESSAGE)
+                .body(createMessageBody(
+                        message.getContent(),
+                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + "",
+                        0
+                ))
                 .build();
     }
 
-    public static NotificationDto toDto(NotificationHeader notification) {
-        return NotificationDto.builder()
-                .profileId(notification.getProfileId())
-                .createdAt(toDateString(notification.getCreatedAt().toLocalDateTime()))
-                .content(notification.getContent())
-                .metadata(new HashMap<>(Map.of(
-                        "senderId", notification.getSenderId() + "",
-                        "senderUsername", notification.getSenderUsername(),
-                        "image192", notification.getSenderImage192() + "",
-                        "count", notification.getCount() >= Integer.MAX_VALUE
-                                ? Integer.MAX_VALUE + ""
-                                : notification.getCount().toString()
-                )))
+    public static Notification<Object> toNotification(ConversationProjection projection) {
+        return Notification.builder()
+                .createdAt(toDateString(projection.getLastMessageAt()))
+                .sender(UserData.builder()
+                        .id(projection.getRecipientId())
+                        .image192(projection.getRecipientImage192())
+                        .username(projection.getRecipientUsername())
+                        .gender(projection.getGender())
+                        .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
+                        .build())
+                .type(NotificationType.MESSAGE)
+                .body(createMessageBody(projection.getContent(), projection.getContentType(), projection.getUnreadCount()))
                 .build();
     }
 
-    public static NotificationDto toDto(CommentStompRequest request) {
-        var metadata = new HashMap<String, String>();
-        Optional.ofNullable(request.getImage192()).ifPresent(image192 -> metadata.put("image192", image192));
-        Optional.ofNullable(request.getProfileId()).ifPresent(id -> metadata.put("senderId", id + ""));
-        Optional.ofNullable(request.getUsername()).ifPresent(username -> metadata.put("senderUsername", username));
-        Optional.ofNullable(request.getRelatedLocationId()).ifPresent(idOrUsername -> metadata.put("relatedLocationId", idOrUsername));
+    public static Notification<Object> toNotification(CommentStompRequest request) {
+        var body = new HashMap<>(Map.of(
+                "id", request.getId(),
+                "element", request.getElement(),
+                "content", request.getContent()
+        ));
+        if (request.getCommenterId() != null) {
+            body.put("commenter", Map.of(
+                    "id", request.getCommenterId(),
+                    "name", request.getCommenterName())
+            );
+        }
+        if (request.getUpdatedAt() != null) {
+            body.put("updatedAt", request.getUpdatedAt());
+        }
 
-        return NotificationDto.builder()
-                .profileId(request.getRelatedProfileId())
+        return Notification.builder()
+                .profileId(request.getElement().getOwner().getId())
+                .sender(request.getSender())
                 .createdAt(request.getCreatedAt())
-                .type(NotificationDto.Type.COMMENT)
-                .content(request.getContent())
-                .relatedId(request.getRelatedId())
-                .relatedType(getNameOrNull(request.getRelatedType()))
-                .metadata(metadata)
+                .type(NotificationType.COMMENT)
+                .body(body)
                 .build();
+    }
+
+    private static Object createMessageBody(String content, String type) {
+        return createMessageBody(content, type, 0);
+    }
+
+    private static Object createMessageBody(String content, String type, Integer unreadCount) {
+        return Map.of(
+                "content", sliceDescription(content, 200),
+                "type", type,
+                "unreadCount", unreadCount // TODO frontend is handling read update, required through per bug
+        );
     }
 
 }

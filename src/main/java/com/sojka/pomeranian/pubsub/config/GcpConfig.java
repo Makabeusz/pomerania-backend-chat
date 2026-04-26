@@ -22,7 +22,7 @@ public class GcpConfig {
     UserPresenceConfig userPresenceConfig;
 
     public GcpConfig(
-            @Value("${gcp.project-id}") String projectId,
+            @Value("${spring.cloud.gcp.project-id}") String projectId,
             @Value("${gcp.region}") String region,
             NotificationsConfig notificationsConfig,
             CommentsConfig commentsConfig,

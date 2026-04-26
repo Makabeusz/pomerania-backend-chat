@@ -15,17 +15,18 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReadNotification {
+public class NotificationModel {
 
     private UUID profileId;
     private Instant createdAt;
     private NotificationType type;
-    private Instant readAt;
     private String body;
 
+    // map to UserData sender
     private UUID senderId;
     private String senderUsername;
     private UUID senderImage192;
     private List<String> senderGender;
     private Role.PomeranianRole senderRole;
+
 }

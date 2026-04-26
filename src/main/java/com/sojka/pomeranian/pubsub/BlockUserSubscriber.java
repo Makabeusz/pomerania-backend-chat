@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.NoSuchElementException;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -32,9 +34,13 @@ public class BlockUserSubscriber {
                     var request = JsonUtils.readObject(message.getData().toByteArray(), BlockUserRequest.class);
                     log.trace("Received {}", request);
 
-                    chatService.updateConversationFlag(
-                            request.getProfileId(), request.getBlockedProfileId(), request.getFlag()
-                    );
+                    try {
+                        chatService.updateConversationFlag(
+                                request.getProfileId(), request.getBlockedProfileId(), request.getFlag()
+                        );
+                    } catch (NoSuchElementException e) {
+                        log.error("Error while blocking a user: {}", e.getMessage());
+                    }
 
                     consumer.ack();
 

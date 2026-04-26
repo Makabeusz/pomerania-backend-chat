@@ -12,12 +12,12 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     content TEXT,
     resource_id UUID,
     resource_type VARCHAR,
-    thread_id UUID,
+    resource_height INT,
+    resource_width INT,
     edited_at VARCHAR,
-    deleted_at VARCHAR,
-    pinned BOOLEAN,
     read_at TIMESTAMP,
     metadata MAP<VARCHAR, VARCHAR>,
+    thumbnail_id UUID,
     PRIMARY KEY (room_id, created_at, profile_id)
 ) WITH CLUSTERING ORDER BY (created_at DESC, profile_id ASC);
 
@@ -26,10 +26,12 @@ CREATE TABLE IF NOT EXISTS notifications.notifications (
     profile_id UUID,
     created_at TIMESTAMP,
     type VARCHAR,
-    related_id UUID,
-    related_type VARCHAR,
-    content VARCHAR,
-    metadata MAP<VARCHAR, VARCHAR>,
+    body TEXT,
+    sender_id UUID,
+    sender_username VARCHAR,
+    sender_image_192 UUID,
+    sender_gender LIST<VARCHAR>,
+    sender_role VARCHAR,
     PRIMARY KEY (profile_id, created_at, type)
 ) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);
 
@@ -39,9 +41,11 @@ CREATE TABLE IF NOT EXISTS notifications.read_notifications (
     created_at TIMESTAMP,
     type VARCHAR,
     read_at TIMESTAMP,
-    related_id UUID,
-    related_type VARCHAR,
-    content VARCHAR,
-    metadata MAP<VARCHAR, VARCHAR>,
+    body TEXT,
+    sender_id UUID,
+    sender_username VARCHAR,
+    sender_image_192 UUID,
+    sender_gender LIST<VARCHAR>,
+    sender_role VARCHAR,
     PRIMARY KEY (profile_id, created_at, type)
 ) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);

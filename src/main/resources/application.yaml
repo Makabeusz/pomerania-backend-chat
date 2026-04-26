@@ -4,17 +4,31 @@ server:
 spring:
   # required for security - change to some custom stuff and leave spring configuration alone
   datasource:
-    url: jdbc:postgresql://localhost:5432/mydb
-    username: myuser
-    password: secret
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
+  cloud:
+    gcp:
+      project-id: ${PROJECT_ID}
+      sql:
+        enabled: ${DB_GCP_SQL_ENABLED}
+        database-name: ${DB_NAME}
+        instance-connection-name: ${INSTANCE_CONNECTION_NAME}
   application:
     name: pomeranian-chat
-  redis:
-    host: ${REDIS_HOST:localhost}  # Default local, override in GCP env vars
-    port: ${REDIS_PORT:6379}
-#    username: ${REDIS_USERNAME:}   # Optional, if auth enabled
-#    password: ${REDIS_PASSWORD:}   # Optional
+  cache:
+    type: redis
+  data:
+    redis:
+      database: 0
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 10s
+      connect-timeout: 10s
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
 
 logging:
   level:
@@ -33,9 +47,11 @@ logging:
             repository:
               MessageRepository: INFO
             service:
-              ChatService: INFO
+              ChatService: TRACE
+              SessionTracker: WARN
             controller:
-              MessageController: TRACE
+              ChatController: INFO
+              MessageController: INFO
               StompSubscriptionController: DEBUG
               GlobalExceptionHandler: DEBUG
           pubsub:
@@ -45,54 +61,62 @@ logging:
             service:
               CommentService: INFO
               SessionTracker: INFO
+          security:
+            config:
+              JwtAuthenticationFilter: INFO
 
 pomeranian:
   chat:
-    redis-enabled: false
+    notification:
+      read:
+        ttl: ${NOTIFICATION_READ_TTL:2592000}
+      unread:
+        ttl: ${NOTIFICATION_UNREAD_TTL:31536000}
+    redis-enabled: true
     cache:
       write-timeout-ms: 2000
     purge:
       batch-size: 1000
-  #  security:
-  #    public-paths: /auth/login, /auth/register, /auth/verify-email, /api/city/hint, /auth/resend-email
   security:
-    allowed-origins: http://localhost:3000
+    allowed-origins: ${ALLOWED_ORIGINS}
     roles: ADMIN, USER, SOFT_BAN, DEACTIVATED, HARD_BAN
-    public-paths:
+    public-paths: ${PUBLIC_PATHS}
+    cookie:
+      secure: ${SECURITY_COOKIE_SECURE}
     jwt:
-      secret: "{bcrypt}$2a$12$00c6HrxoyeHFvFtEAJKj1.wFy4QtdB0Fr6vJ2bOp.OhycvuRG.202"
+      secret: ${JWT_SECRET}
       expiration: 86400000
       refresh-expiration: 172800000 # 48 hours # 7776000000 # 90 days
     user-agent:
       cache-size: 100
       fields: DeviceClass, DeviceName, OperatingSystemName, AgentClass, AgentName
       warmup: false
+      whitelisted:
 
 astra:
-  connectionBundleFilePath: '/Users/shitty/IdeaProjects/pomerania-backend-chat/src/main/resources/db/secure-connect-pomeranian.zip'
+  connectionBundleFilePath: ${ASTRA_CONNECTION_BUNDLE}
   clientId: ${ASTRA_CLIENT_ID}
   clientSecret: ${ASTRA_SECRET}
 #  keyspace: 'messages' # using 2 keyspaces with a single connection, specifying keyspace for each query
 
 gcp:
-  project-id: 'pomeranian-463011'
-  region: 'europe-central2' # Warsaw
+  region: ${PUBSUB_REGION:europe-central2} # Warsaw locally
   pubsub:
     chat-resources:
       publisher:
-        topic-name: 'r2-dev'
+        topic-name: ${PUBSUB_CHAT_RESOURCES_TOPIC:r2-bucket-dev}
     notifications:
       subscriber:
-        subscription-name: 'notifications-dev'
+        subscription-name: ${PUBSUB_NOTIFICATIONS_SUB:notifications-dev}
     comments:
       subscriber:
-        subscription-name: 'comments-dev'
+        subscription-name: ${PUBSUB_COMMENTS_SUB:comments-dev}
     delete-account:
       subscriber:
-        subscription-name: 'delete-account-dev'
+        subscription-name: ${PUBSUB_DELETE_ACCOUNT_SUB:delete-account-dev}
     block-user:
       subscriber:
-        subscription-name: 'block-user-dev'
-    user-presence:
-      publisher:
-        topic-name: 'user-presence-dev'
+        subscription-name: ${PUBSUB_BLOCK_USER_SUB:block-user-dev}
+#    user-presence:
+#      publisher:
+#        topic-name: ${PUBSUB_USER_PRESENCE_TOPIC:user-presence-dev}

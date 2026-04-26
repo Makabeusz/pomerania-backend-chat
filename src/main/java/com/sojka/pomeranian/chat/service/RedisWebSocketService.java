@@ -3,6 +3,7 @@ package com.sojka.pomeranian.chat.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sojka.pomeranian.chat.config.RedisPubSubConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessagingException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
+@Primary
 @ConditionalOnProperty(
         prefix = "pomeranian.chat",
         name = "redis-enabled",

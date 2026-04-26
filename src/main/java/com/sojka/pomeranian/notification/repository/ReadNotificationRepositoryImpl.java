@@ -7,8 +7,9 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
+import com.sojka.pomeranian.chat.config.ChatConfig;
+import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,19 +24,21 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFICATIONS_KEYSPACE;
+import static com.sojka.pomeranian.lib.util.CommonUtils.getNameOrNull;
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class ReadNotificationRepositoryImpl extends AstraPageableRepository implements ReadNotificationRepository {
+public class ReadNotificationRepositoryImpl extends AstraPageableRepository implements NotificationRepository<ReadNotification> {
 
     private static final String READ_NOTIFICATIONS_TABLE = "read_notifications";
 
     private static final String INSERT = """
-            INSERT INTO %s.%s ( \
-            profile_id, created_at, type, read_at, related_id, related_type, content, metadata \
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
-    private static final String USING_TTL = " USING TTL %s";
+            INSERT INTO %s.%s (
+               profile_id, created_at, type, read_at, body,
+               sender_id, sender_username, sender_image_192, sender_gender, sender_role
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            USING TTL %s""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE, "%s");
     private static final String SELECT_ALL = QueryConstants.SELECT_ALL_BY_PROFILE_ID
             .formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
     private static final String COUNT_BY_PROFILE_ID = """
@@ -44,6 +47,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
             DELETE FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
 
     private final Connector connector;
+    private final ChatConfig config;
 
     @Override
     protected Logger getLogger() {
@@ -51,14 +55,16 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
-    public ReadNotification save(ReadNotification notification, int ttl) {
-        validateTtl(ttl);
-        return execute(() -> {
-            String dml = INSERT + USING_TTL.formatted(ttl);
+    public ReadNotification save(ReadNotification notification) {
+        int ttl = config.getNotification().getRead().getTtl();
+        return handle(() -> {
+            String dml = INSERT.formatted(ttl);
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
-                            notification.getType().name(), notification.getReadAt(), notification.getRelatedId(),
-                            notification.getRelatedType(), notification.getContent(), notification.getMetadata())
+                            notification.getType().name(), notification.getReadAt(), notification.getBody(),
+                            notification.getSenderId(), notification.getSenderUsername(),
+                            notification.getSenderImage192(), notification.getSenderGender(),
+                            getNameOrNull(notification.getSenderRole()))
                     .build();
 
             var session = connector.getSession();
@@ -69,14 +75,16 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
-    public List<ReadNotification> saveAll(List<ReadNotification> notifications, int ttl) {
-        validateTtl(ttl);
-        return execute(() -> {
+    public List<ReadNotification> saveAll(List<ReadNotification> notifications) {
+        int ttl = config.getNotification().getRead().getTtl();
+        return handle(() -> {
             var list = notifications.stream()
-                    .map(n -> SimpleStatement.builder(INSERT + USING_TTL.formatted(ttl))
+                    .map(n -> SimpleStatement.builder(INSERT.formatted(ttl))
                             .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
-                                    n.getType().name(), n.getReadAt(), n.getRelatedId(),
-                                    n.getRelatedType(), n.getContent(), n.getMetadata())
+                                    n.getType().name(), n.getReadAt(), n.getBody(),
+                                    n.getSenderId(), n.getSenderUsername(),
+                                    n.getSenderImage192(), n.getSenderGender(),
+                                    getNameOrNull(n.getSenderRole()))
                             .build())
                     .toList();
 
@@ -95,7 +103,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
 
     @Override
     public ResultsPage<ReadNotification> findAllBy(UUID profileId, String pageState, int pageSize) {
-        return execute(() -> {
+        return handle(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
 
             var statement = SimpleStatement.builder(SELECT_ALL)
@@ -111,15 +119,14 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
         }, "findAllBy", profileId);
     }
 
-    private void validateTtl(int ttl) {
-        if (ttl <= 0) {
-            throw new AstraException("TTL must be greater than 0");
-        }
+    @Override
+    public void deleteAll(List<Notification<Object>> notifications) {
+        throw new IllegalArgumentException("not implemented");
     }
 
     @Override
     public Optional<Long> countByIdProfileId(UUID profileId) {
-        return execute(() -> {
+        return handle(() -> {
             var statement = SimpleStatement.builder(COUNT_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
             var session = connector.getSession();
@@ -132,7 +139,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     @Override
     public void deleteAllByIdProfileId(UUID profileId) {
         log.trace("deleteAllByIdProfileId input: profileId={}", profileId);
-        execute(() -> {
+        handle(() -> {
             var statement = SimpleStatement.builder(DELETE_BY_PROFILE_ID).addPositionalValues(profileId).build();
 
             var session = connector.getSession();
