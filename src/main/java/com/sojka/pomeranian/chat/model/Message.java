@@ -23,14 +23,14 @@ public class Message {
     private String username;
     private UUID recipientProfileId;
     private String recipientUsername;
+    // @NotBlank
     private String content;
     private UUID resourceId;
-    // TODO: move ResourceType to lib from main and use here
     private String resourceType;
-    private Integer resourceHeight;
-    private Integer resourceWidth;
-    private UUID thumbnailId;
+    private UUID threadId;
     private String editedAt;
+    private String deletedAt;
+    private Boolean pinned;
     private Instant readAt;
     private Map<String, String> metadata;
 }

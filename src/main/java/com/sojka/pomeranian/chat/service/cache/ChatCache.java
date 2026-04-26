@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * TODO: Add docs here, implementation don't need too much docs.
  */
-public interface SessionCache {
+public interface ChatCache {
 
     /**
      * Checks if a user specific subscription is active.
@@ -47,9 +47,7 @@ public interface SessionCache {
      * @return {@code true} if the subscription was added, {@code false} if already online
      * @throws RuntimeException If user is not online
      */
-    boolean add(UUID userId, String simpSessionId, StompSubscription subscription);
-
-    boolean add(UUID userId, String simpSessionId, List<StompSubscription> subscriptions);
+    boolean put(UUID userId, StompSubscription subscription);
 
     /**
      * Adds a user to the active users cache, marking them as online.
@@ -60,15 +58,9 @@ public interface SessionCache {
      */
     boolean create(UUID userId, String simpSessionId);
 
-    /**
-     * Removes a user from the active users cache, marking them as offline.
-     *
-     * @return {@code userId} if successfully removed, {@code null} if user already not online.
-     * @throws NullPointerException if user don't exists
-     */
-    UUID remove(String simpSessionId) throws NullPointerException;
+    boolean remove(UUID userId);
 
-    boolean remove(UUID userId, String simpSessionId, StompSubscription subscription);
+    boolean remove(UUID userId, List<StompSubscription> subscription);
 
     void purge();
 }

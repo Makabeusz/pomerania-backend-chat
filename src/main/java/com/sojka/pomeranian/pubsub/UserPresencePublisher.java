@@ -10,7 +10,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-import com.sojka.pomeranian.chat.dto.R2BucketDeleteRequest;
+import com.sojka.pomeranian.lib.dto.UserPresenceRequest;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.pubsub.config.GcpConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -25,21 +25,23 @@ import java.io.IOException;
  */
 @Slf4j
 @Component
-public class R2BucketDeletePublisher {
+public class UserPresencePublisher {
 
     public static final String ENDPOINT_FORMAT = "%s-pubsub.googleapis.com:443";
 
     private final Publisher publisher;
 
-    public R2BucketDeletePublisher(GcpConfig gcpConfig) throws IOException {
-        TopicName topic = TopicName.of(gcpConfig.getProjectId(), gcpConfig.getChatResourcesConfig().getTopicName());
+    public UserPresencePublisher(GcpConfig gcpConfig) throws IOException {
+        TopicName topic = TopicName.of(gcpConfig.getProjectId(), gcpConfig.getUserPresenceConfig().getTopicName());
         this.publisher = Publisher.newBuilder(topic)
                 .setEndpoint(ENDPOINT_FORMAT.formatted(gcpConfig.getRegion()))
+                .setEnableMessageOrdering(true) // TODO: DIFFERENCE message ordering enabled
                 .build();
     }
 
-    public ApiFuture<String> publish(R2BucketDeleteRequest request) {
+    public ApiFuture<String> publish(UserPresenceRequest request) {
         var future = publisher.publish(PubsubMessage.newBuilder()
+                .setOrderingKey(request.userId().toString())// TODO: DIFFERENCE message ordering enabled
                 .setData(toData(request))
                 .build());
 

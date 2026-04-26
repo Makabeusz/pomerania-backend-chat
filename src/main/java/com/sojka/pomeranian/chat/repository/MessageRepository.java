@@ -52,7 +52,7 @@ public class MessageRepository extends AstraPageableRepository {
     public ResultsPage<Message> findByRoomId(String roomId, String pageState, int pageSize) {
         var id = new RoomIdState(roomId, pageState, pageSize);
         log.trace("findByRoomId input: {}", id);
-        return handle(() -> {
+        return execute(() -> {
             var select = QueryBuilder.selectFrom(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .all()
                     .whereColumn("room_id")
@@ -84,7 +84,7 @@ public class MessageRepository extends AstraPageableRepository {
             throw new IllegalArgumentException("No content or resource in the message: " + message);
         }
 
-        return handle(() -> {
+        return execute(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageInsert = QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .value("room_id", literal(message.getRoomId()))
@@ -96,9 +96,10 @@ public class MessageRepository extends AstraPageableRepository {
                     .value("content", literal(message.getContent()))
                     .value("resource_id", literal(message.getResourceId()))
                     .value("resource_type", literal(message.getResourceType()))
-                    .value("resource_height", literal(message.getResourceHeight()))
-                    .value("resource_width", literal(message.getResourceWidth()))
+                    .value("thread_id", literal(message.getThreadId()))
                     .value("edited_at", literal(message.getEditedAt()))
+                    .value("deleted_at", literal(message.getDeletedAt()))
+                    .value("pinned", literal(message.getPinned()))
                     .value("read_at", literal(message.getReadAt()))
                     .value("metadata", literal(message.getMetadata()));
 
@@ -111,16 +112,15 @@ public class MessageRepository extends AstraPageableRepository {
 
     public Instant markRead(MessageKey key) {
         log.trace("markRead input: {}", key);
-        return handle(() -> {
+        return execute(() -> {
             var readTime = getCurrentInstant();
             var update = key.createdAt().stream()
                     // todo: to plain text query
-                    .map(k -> QueryBuilder.update(MESSAGES_KEYSPACE, MESSAGES_TABLE)
-                            .setColumn("read_at", literal(readTime))
-                            .whereColumn("room_id").isEqualTo(literal(key.roomId()))
-                            .whereColumn("created_at").isEqualTo(literal(k))
-                            .whereColumn("profile_id").isEqualTo(literal(key.profileId()))
-                            .ifExists()
+                    .map(k -> QueryBuilder.insertInto(MESSAGES_KEYSPACE, MESSAGES_TABLE)
+                            .value("room_id", literal(key.roomId()))
+                            .value("created_at", literal(k))
+                            .value("profile_id", literal(key.profileId()))
+                            .value("read_at", literal(readTime))
                             .build())
                     .toList();
 
@@ -129,11 +129,9 @@ public class MessageRepository extends AstraPageableRepository {
                     .build();
 
             var session = connector.getSession();
-            var result = session.execute(statement);
-            if (!result.wasApplied()) {
-                log.warn("The mark-read not applied for {}", key);
-            }
-            log.trace("Marked messages as read: {}, read_at={}", key, readTime);
+            session.execute(statement);
+
+            log.trace("Marked message as read: {}, read_at={}", key, readTime);
 
             return readTime;
         }, "markRead", key);
@@ -141,7 +139,7 @@ public class MessageRepository extends AstraPageableRepository {
 
     public boolean deleteRoom(String roomId) {
         log.trace("deleteRoom input: roomId={}", roomId);
-        return handle(() -> {
+        return execute(() -> {
             var statement = new SimpleStatementBuilder(deleteAllRoomMessages).addPositionalValue(roomId).build();
             connector.getSession().execute(statement);
             return true;
@@ -150,7 +148,7 @@ public class MessageRepository extends AstraPageableRepository {
 
     public void delete(String roomId, String createdAt, UUID profileId) {
         log.trace("delete input: roomId={}, createdAt={}, profileId={}", roomId, createdAt, profileId);
-        handle(() -> {
+        execute(() -> {
             var statement = new SimpleStatementBuilder(DELETE_MESSAGE)
                     .addPositionalValue(roomId)
                     .addPositionalValue(toInstant(createdAt))
@@ -164,7 +162,7 @@ public class MessageRepository extends AstraPageableRepository {
     public Optional<Message> findById(String roomId, String createdAt, UUID profileId) {
         var id = new IdState(roomId, createdAt, profileId);
         log.trace("findById input: {}", id);
-        return handle(() -> {
+        return execute(() -> {
             var statement = new SimpleStatementBuilder(FIND_MESSAGE)
                     .addPositionalValue(roomId)
                     .addPositionalValue(toInstant(createdAt))
@@ -186,7 +184,7 @@ public class MessageRepository extends AstraPageableRepository {
     public Message update(@Valid Message message) {
         log.trace("update input: {}", message);
 
-        return handle(() -> {
+        return execute(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageUpdate = QueryBuilder.update(MESSAGES_KEYSPACE, MESSAGES_TABLE)
                     .setColumn("username", literal(message.getUsername()))
@@ -195,15 +193,15 @@ public class MessageRepository extends AstraPageableRepository {
                     .setColumn("content", literal(message.getContent()))
                     .setColumn("resource_id", literal(message.getResourceId()))
                     .setColumn("resource_type", literal(message.getResourceType()))
-                    .setColumn("resource_height", literal(message.getResourceHeight()))
-                    .setColumn("resource_width", literal(message.getResourceWidth()))
+                    .setColumn("thread_id", literal(message.getThreadId()))
                     .setColumn("edited_at", literal(message.getEditedAt()))
+                    .setColumn("deleted_at", literal(message.getDeletedAt()))
+                    .setColumn("pinned", literal(message.getPinned()))
                     //.setColumn("read_at", literal(message.getReadAt()))
                     .setColumn("metadata", literal(message.getMetadata()))
                     .whereColumn("room_id").isEqualTo(literal(message.getRoomId()))
                     .whereColumn("created_at").isEqualTo(literal(message.getCreatedAt()))
-                    .whereColumn("profile_id").isEqualTo(literal(message.getProfileId()))
-                    .ifExists();
+                    .whereColumn("profile_id").isEqualTo(literal(message.getProfileId()));
 
             var session = connector.getSession();
             session.execute(messageUpdate.build());

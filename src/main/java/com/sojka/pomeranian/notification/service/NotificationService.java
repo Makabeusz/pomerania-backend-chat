@@ -1,12 +1,14 @@
 package com.sojka.pomeranian.notification.service;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
+import com.sojka.pomeranian.chat.dto.NotificationResponse;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
-import com.sojka.pomeranian.chat.service.cache.SessionCache;
-import com.sojka.pomeranian.lib.dto.Notification;
-import com.sojka.pomeranian.notification.model.NotificationModel;
-import com.sojka.pomeranian.notification.model.ReadNotification;
+import com.sojka.pomeranian.chat.repository.MessageNotificationRepository;
+import com.sojka.pomeranian.chat.service.cache.ChatCache;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.notification.model.Notification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
+import com.sojka.pomeranian.notification.repository.ReadNotificationRepository;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,39 +29,32 @@ import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final NotificationRepository<NotificationModel> notificationRepository;
-    private final NotificationRepository<ReadNotification> readNotificationRepository;
+    private final NotificationRepository notificationRepository;
+    private final ReadNotificationRepository readNotificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final SessionCache cache;
+    private final ChatCache cache;
 
-    /**
-     * Save and public notification.<br>
-     * Unread TTL is 365 days by default = 31536000 s
-     *
-     * @return CreatedAt
-     */
-    public Instant process(Notification<Object> notification) {
-        NotificationModel domain = NotificationMapper.toDomain(notification);
+    // TODO: check comment preference, currently it's skipping prefs and publishing all
+    public NotificationResponse<NotificationDto> publish(NotificationDto notification) {
+        Notification domain = NotificationMapper.toDomain(notification);
         domain.setCreatedAt(getCurrentInstant());
 
-        notificationRepository.save(domain);
+        var saved = notificationRepository.save(domain);
+        var dto = new NotificationResponse<>(NotificationMapper.toDto(saved), saved.getType().name());
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
+        log.trace("Is user with username={} and userID={} online? {}",
+                notification.getMetadata() != null ? notification.getMetadata().get("senderId") : "null", notification.getProfileId(), online);
         if (online) {
-            messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, notification);
+            log.trace("Publishing: {}", dto);
+            messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, dto);
         }
-        log.debug("Published notification type={} to userId={}, isOnline={}",
-                notification.getType(), notification.getProfileId(), online);
 
-        return domain.getCreatedAt();
+        log.info("Published notification: {}, isOnline={}", dto, online);
+
+        return dto;
     }
 
-    /**
-     * Deletes unread and saves read notification.<br>
-     * Read TTL is 30 days by default = 2592000 s
-     *
-     * @return CreatedAt
-     */
-    public Instant markRead(UUID userId, List<Notification<Object>> notifications) {
+    public Instant markRead(UUID userId, List<NotificationDto> notifications) {
         boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
         if (!allAreUserNotifications) {
             throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"
@@ -70,14 +65,14 @@ public class NotificationService {
         notificationRepository.deleteAll(notifications);
         readNotificationRepository.saveAll(notifications.stream()
                 .map(n -> ReadNotificationMapper.toReadNotificationDomain(n, readAt))
-                .toList());
+                .toList(), 3600); // 30  days TTL = 155520000 todo: parametrise that
 
         log.info("Marked {} notifications as read", notifications);
 
         return readAt;
     }
 
-    public ResultsPage<Notification<Object>> getUnread(UUID profileId, String pageState, int pageSize) {
+    public ResultsPage<NotificationDto> getUnread(UUID profileId, String pageState, int pageSize) {
         var resultsPage = notificationRepository.findAllBy(profileId, pageState, pageSize);
         var notifications = resultsPage.getResults().stream()
                 .map(NotificationMapper::toDto)
@@ -93,7 +88,7 @@ public class NotificationService {
         return count;
     }
 
-    public ResultsPage<Notification<Object>> getRead(UUID profileId, String pageState, int pageSize) {
+    public ResultsPage<NotificationDto> getRead(UUID profileId, String pageState, int pageSize) {
         var resultsPage = readNotificationRepository.findAllBy(profileId, pageState, pageSize);
         var notifications = resultsPage.getResults().stream()
                 .map(ReadNotificationMapper::toDto)
@@ -113,7 +108,7 @@ public class NotificationService {
     @Transactional
     public long deleteUserReadNotifications(UUID userId) {
         var deletedUserNotifications = notificationRepository.countByIdProfileId(userId).orElseThrow();
-        readNotificationRepository.deleteAllByIdProfileId(userId);
+        notificationRepository.deleteAllByIdProfileId(userId);
         log.info("Removed {} read notifications of userID={}", deletedUserNotifications, userId);
         return deletedUserNotifications;
     }

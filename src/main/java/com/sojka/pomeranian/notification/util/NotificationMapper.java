@@ -1,86 +1,60 @@
 package com.sojka.pomeranian.notification.util;
 
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.sojka.pomeranian.lib.dto.Notification;
-import com.sojka.pomeranian.lib.dto.NotificationType;
-import com.sojka.pomeranian.lib.dto.UserData;
-import com.sojka.pomeranian.lib.util.JsonUtils;
-import com.sojka.pomeranian.notification.model.NotificationModel;
-import com.sojka.pomeranian.security.model.Role;
-import lombok.extern.slf4j.Slf4j;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
+import com.sojka.pomeranian.notification.model.Notification;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
-@Slf4j
 public final class NotificationMapper {
 
     private NotificationMapper() {
     }
 
-    public static Notification<Object> toDto(NotificationModel notification) {
+    public static NotificationDto toDto(Notification notification) {
         if (notification == null) {
             return null;
         }
-
-        Object body = null;
-        if (notification.getBody() != null && !notification.getBody().isEmpty()) {
-            try {
-                body = JsonUtils.readMap(notification.getBody());
-            } catch (Exception e) {
-                log.error("Notification body failed to map: message={}, rawBody={}", e.getMessage(), notification.getBody());
-            }
-        }
-
-        return Notification.builder()
+        return NotificationDto.builder()
                 .profileId(notification.getProfileId())
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
-                .body(body)
-                .sender(UserData.builder()
-                        .id(notification.getSenderId())
-                        .username(notification.getSenderUsername())
-                        .image192(notification.getSenderImage192())
-                        .gender(notification.getSenderGender())
-                        .role(notification.getSenderRole())
-                        .build())
+                .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
+                .content(notification.getContent())
+                .metadata(notification.getMetadata())
                 .build();
     }
 
-    public static NotificationModel toDomain(Notification<Object> notification) {
+    public static Notification toDomain(NotificationDto notification) {
         if (notification == null) {
             return null;
         }
-
-        return NotificationModel.builder()
+        return Notification.builder()
                 .profileId(notification.getProfileId())
                 .createdAt(toInstant(notification.getCreatedAt()))
                 .type(notification.getType())
-                .body(JsonUtils.writeToString(notification.getBody()).trim())
-                .senderId(notification.getSender().getId())
-                .senderUsername(notification.getSender().getUsername())
-                .senderImage192(notification.getSender().getImage192())
-                .senderGender(notification.getSender().getGender())
-                .senderRole(notification.getSender().getRole())
+                .relatedId(notification.getRelatedId())
+                .relatedType(notification.getRelatedType())
+                .content(notification.getContent())
+                .metadata(notification.getMetadata())
                 .build();
     }
 
-    public static NotificationModel fromAstraRow(Row row) {
+    public static Notification fromAstraRow(Row row) {
         if (row == null) {
             return null;
         }
         String typeValue = row.getString("type");
-        String role = row.getString("sender_role");
-        return NotificationModel.builder()
+        return Notification.builder()
                 .profileId(row.getUuid("profile_id"))
                 .createdAt(row.getInstant("created_at"))
-                .type(typeValue != null ? NotificationType.valueOf(typeValue) : null)
-                .body(row.getString("body"))
-                .senderId(row.getUuid("sender_id"))
-                .senderUsername(row.getString("sender_username"))
-                .senderImage192(row.getUuid("sender_image_192"))
-                .senderGender(row.getList("sender_gender", String.class))
-                .senderRole(role != null ? Role.PomeranianRole.valueOf(role) : null)
+                .type(typeValue != null ? NotificationDto.Type.valueOf(typeValue) : null)
+                .relatedId(row.getUuid("related_id"))
+                .relatedType(row.getString("related_type"))
+                .content(row.getString("content"))
+                .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
     }
 }

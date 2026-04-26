@@ -4,7 +4,6 @@ import com.sojka.pomeranian.security.model.User;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,27 +22,12 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean existsByUsernameIgnoreCase(String username) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public boolean existsByEmail(String email) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean existsByEmailIgnoreCase(String email) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Optional<User> findByUsername(String username) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Optional<User> findByUsernameIgnoreCase(String username) {
         throw new UnsupportedOperationException();
     }
 
@@ -108,12 +92,8 @@ public class DummyUserRepository implements UserRepository {
     }
 
     @Override
-    public void updateLastLoginAtAndIsOnline(UUID profileId, Instant lastLoginAt, Boolean isOnline) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void deleteAll() {
         db.clear();
     }
+
 }

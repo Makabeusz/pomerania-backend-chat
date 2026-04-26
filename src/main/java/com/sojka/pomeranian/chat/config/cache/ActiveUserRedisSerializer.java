@@ -29,27 +29,22 @@ public class ActiveUserRedisSerializer implements RedisSerializer<ActiveUser> {
                 // UUID userId
                 dos.writeLong(value.getUserId().getMostSignificantBits());
                 dos.writeLong(value.getUserId().getLeastSignificantBits());
-                // List<Session> sessions
-                List<ActiveUser.Session> sessions = value.getSessions();
-                dos.writeInt(sessions.size());
-                for (ActiveUser.Session session : sessions) {
-                    // Map<String, List<String>> subscriptions
-                    Map<String, List<String>> subs = session.getSubscriptions();
-                    dos.writeInt(subs.size());
-                    for (Map.Entry<String, List<String>> entry : subs.entrySet()) {
-                        dos.writeUTF(entry.getKey());
-                        List<String> list = entry.getValue();
-                        dos.writeInt(list.size());
-                        for (String s : list) {
-                            dos.writeUTF(s);
-                        }
+                // Map<String, List<String>> subscriptions
+                Map<String, List<String>> subs = value.getSubscriptions();
+                dos.writeInt(subs.size());
+                for (Map.Entry<String, List<String>> entry : subs.entrySet()) {
+                    dos.writeUTF(entry.getKey());
+                    List<String> list = entry.getValue();
+                    dos.writeInt(list.size());
+                    for (String s : list) {
+                        dos.writeUTF(s);
                     }
-                    // String simpSessionId
-                    dos.writeUTF(session.getSimpSessionId());
-                    // Instant createdAt
-                    dos.writeLong(session.getCreatedAt().getEpochSecond());
-                    dos.writeInt(session.getCreatedAt().getNano());
                 }
+                // String simpSessionId
+                dos.writeUTF(value.getSimpSessionId());
+                // Instant createdAt
+                dos.writeLong(value.getCreatedAt().getEpochSecond());
+                dos.writeInt(value.getCreatedAt().getNano());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -66,29 +61,23 @@ public class ActiveUserRedisSerializer implements RedisSerializer<ActiveUser> {
             try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
                 // UUID userId
                 UUID userId = new UUID(dis.readLong(), dis.readLong());
-                // List<Session> sessions
-                int listSize = dis.readInt();
-                List<ActiveUser.Session> sessions = new ArrayList<>(listSize);
-                for (int i = 0; i < listSize; i++) {
-                    // Map<String, List<String>> subscriptions
-                    int mapSize = dis.readInt();
-                    Map<String, List<String>> subs = new HashMap<>(mapSize);
-                    for (int j = 0; j < mapSize; j++) {
-                        String key = dis.readUTF();
-                        int subListSize = dis.readInt();
-                        List<String> list = new ArrayList<>(subListSize);
-                        for (int k = 0; k < subListSize; k++) {
-                            list.add(dis.readUTF());
-                        }
-                        subs.put(key, list);
+                // Map<String, List<String>> subscriptions
+                int mapSize = dis.readInt();
+                Map<String, List<String>> subs = new HashMap<>(mapSize);
+                for (int i = 0; i < mapSize; i++) {
+                    String key = dis.readUTF();
+                    int listSize = dis.readInt();
+                    List<String> list = new ArrayList<>(listSize);
+                    for (int j = 0; j < listSize; j++) {
+                        list.add(dis.readUTF());
                     }
-                    // String simpSessionId
-                    String simpSessionId = dis.readUTF();
-                    // Instant createdAt
-                    Instant createdAt = Instant.ofEpochSecond(dis.readLong(), dis.readInt());
-                    sessions.add(new ActiveUser.Session(subs, simpSessionId, createdAt));
+                    subs.put(key, list);
                 }
-                return new ActiveUser(userId, sessions);
+                // String simpSessionId
+                String simpSessionId = dis.readUTF();
+                // Instant createdAt
+                Instant createdAt = Instant.ofEpochSecond(dis.readLong(), dis.readInt());
+                return new ActiveUser(userId, subs, simpSessionId, createdAt);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

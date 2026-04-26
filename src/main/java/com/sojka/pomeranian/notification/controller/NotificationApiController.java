@@ -1,7 +1,7 @@
 package com.sojka.pomeranian.notification.controller;
 
 import com.sojka.pomeranian.astra.dto.ResultsPage;
-import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.security.model.User;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class NotificationApiController {
 
     @GetMapping("/unread")
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<Notification<Object>>> getUnreadNotifications(
+    public ResponseEntity<ResultsPage<NotificationDto>> getUnreadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState) {
         var results = notificationService.getUnread(user.getId(), nextPageState, 10);
@@ -33,7 +33,7 @@ public class NotificationApiController {
 
     @GetMapping("/read")
     @PreAuthorize("hasRole('SOFT_BAN')")
-    public ResponseEntity<ResultsPage<Notification<Object>>> getReadNotifications(
+    public ResponseEntity<ResultsPage<NotificationDto>> getReadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState) {
         var results = notificationService.getRead(user.getId(), nextPageState, 10);

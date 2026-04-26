@@ -11,7 +11,6 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "pomeranian.chat")
 public class ChatConfig {
 
-    private Notification notification;
     private Cache cache;
     private Purge purge;
 
@@ -29,21 +28,5 @@ public class ChatConfig {
     @Data
     public static class Purge {
         private int batchSize;
-    }
-
-    @Data
-    public static class Notification {
-        private Read read;
-        private Unread unread;
-
-        @Data
-        public static class Read {
-            private int ttl;
-        }
-
-        @Data
-        public static class Unread {
-            private int ttl;
-        }
     }
 }

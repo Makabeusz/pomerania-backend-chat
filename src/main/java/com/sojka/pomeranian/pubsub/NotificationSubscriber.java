@@ -5,7 +5,7 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationDto;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.service.NotificationService;
 import com.sojka.pomeranian.pubsub.config.GcpConfig;
@@ -29,9 +29,9 @@ public class NotificationSubscriber {
 
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             log.trace("Received message id={}", message.getMessageId());
-            var notification = JsonUtils.readObject(message.getData().toByteArray(), Notification.class);
+            var notification = JsonUtils.readObject(message.getData().toByteArray(), NotificationDto.class);
             log.debug("Received notification={}", notification);
-            notificationService.process(notification);
+            notificationService.publish(notification);
             consumer.ack();
 
 

@@ -2,10 +2,11 @@ package com.sojka.pomeranian.chat.util.mapper;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
+import com.sojka.pomeranian.chat.dto.ChatUser;
 import com.sojka.pomeranian.chat.model.Message;
-import com.sojka.pomeranian.lib.dto.UserData;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
+
 
 public final class MessageMapper {
 
@@ -17,15 +18,15 @@ public final class MessageMapper {
                 .roomId(message.getRoomId())
                 .createdAt(toDateString(message.getCreatedAt()))
                 // TODO: check if valid - hardcoded null image192
-                .sender(new UserData(message.getProfileId(), message.getUsername(), null))
-                .recipient(new UserData(message.getRecipientProfileId(), message.getRecipientUsername(), null))
+                .sender(new ChatUser(message.getProfileId(), message.getUsername(), null))
+                .recipient(new ChatUser(message.getRecipientProfileId(), message.getRecipientUsername(), null))
                 .content(message.getContent())
                 .resourceId(message.getResourceId())
                 .resourceType(message.getResourceType())
-                .resourceHeight(message.getResourceHeight())
-                .resourceWidth(message.getResourceWidth())
-                .thumbnailId(message.getThumbnailId())
+                .threadId(message.getThreadId())
                 .editedAt(message.getEditedAt())
+                .deletedAt(message.getDeletedAt())
+                .pinned(message.getPinned())
                 .readAt(toDateString(message.getReadAt()))
                 .metadata(message.getMetadata())
                 .build();
@@ -42,13 +43,16 @@ public final class MessageMapper {
                 .content(row.getString("content"))
                 .resourceId(row.getUuid("resource_id"))
                 .resourceType(row.getString("resource_type"))
-                .resourceHeight(row.getInt("resource_height"))
-                .resourceWidth(row.getInt("resource_width"))
-                .thumbnailId(row.getUuid("thumbnail_id"))
+                .threadId(row.getUuid("thread_id"))
                 .editedAt(row.getString("edited_at"))
+                .deletedAt(row.getString("deleted_at"))
+                .pinned(row.getBoolean("pinned"))
                 .readAt(row.getInstant("read_at"))
                 .metadata(row.getMap("metadata", String.class, String.class))
                 .build();
     }
 
+    public static String roomIdFromAstraRow(Row row) {
+        return row.getString("room_id");
+    }
 }

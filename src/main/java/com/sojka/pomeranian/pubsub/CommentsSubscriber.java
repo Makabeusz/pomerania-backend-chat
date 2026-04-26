@@ -32,7 +32,7 @@ public class CommentsSubscriber {
                     var notification = JsonUtils.readObject(message.getData().toByteArray(), CommentStompRequest.class);
                     log.trace("Received {}", notification);
 
-                    commentService.process(notification);
+                    commentService.publish(notification);
                     consumer.ack();
 
                     // todo

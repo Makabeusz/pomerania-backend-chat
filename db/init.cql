@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS messages.messages (
     recipient_username VARCHAR,
     content TEXT,
     resource_id UUID,
-    resource_type VARCHAR,
     thread_id UUID,
     edited_at VARCHAR,
     deleted_at VARCHAR,
@@ -27,7 +26,6 @@ CREATE TABLE IF NOT EXISTS notifications.notifications (
     created_at TIMESTAMP,
     type VARCHAR,
     related_id UUID,
-    related_type VARCHAR,
     content VARCHAR,
     metadata MAP<VARCHAR, VARCHAR>,
     PRIMARY KEY (profile_id, created_at, type)
@@ -40,7 +38,6 @@ CREATE TABLE IF NOT EXISTS notifications.read_notifications (
     type VARCHAR,
     read_at TIMESTAMP,
     related_id UUID,
-    related_type VARCHAR,
     content VARCHAR,
     metadata MAP<VARCHAR, VARCHAR>,
     PRIMARY KEY (profile_id, created_at, type)

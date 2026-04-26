@@ -14,14 +14,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReadNotification {
+public class Notification {
 
     private UUID profileId;
     private Instant createdAt;
     private NotificationDto.Type type;
-    private Instant readAt;
     private UUID relatedId;
     private String relatedType;
     private String content;
     private Map<String, String> metadata;
+
 }
