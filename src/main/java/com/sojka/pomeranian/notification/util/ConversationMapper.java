@@ -19,7 +19,8 @@ public final class ConversationMapper {
         var recipient = UserData.builder()
                 .id(projection.getRecipientId())
                 .username(projection.getRecipientUsername())
-                .role(role);
+                .role(role)
+                .gender(projection.getGender());
 
         var builder = ConversationDto.builder()
                 .flag(projection.getFlag())
@@ -32,8 +33,7 @@ public final class ConversationMapper {
                 .blockStatus(getBlockStatus(projection.getBlockStatusCode()));
 
         if (role != Role.PomeranianRole.DEACTIVATED) {
-            recipient = recipient.image192(projection.getRecipientImage192())
-                    .gender(projection.getGender());
+            recipient = recipient.image192(projection.getRecipientImage192());
             builder = builder
                     .age(projection.getAge())
                     .location(projection.getCityName() == null ? null : new ConversationDto.OsmCityDto(
