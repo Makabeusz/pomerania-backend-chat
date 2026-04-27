@@ -101,7 +101,7 @@ public class BlockUserSubscriber {
 
         // Start the subscriber.
         subscriber.startAsync().awaitRunning();
-        log.info("Listening for messages on {}", subscriptionName);
+        log.info("Listening for messages on {} 🦻", subscriptionName);
 
         return subscriber;
     }

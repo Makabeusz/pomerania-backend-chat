@@ -12,28 +12,37 @@ public final class ConversationMapper {
     }
 
     public static ConversationDto toDto(ConversationProjection projection) {
-        return ConversationDto.builder()
-                .recipient(UserData.builder()
-                        .id(projection.getRecipientId())
-                        .username(projection.getRecipientUsername())
-                        .image192(projection.getRecipientImage192())
-                        .gender(projection.getGender())
-                        .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
-                        .build())
+        var role = projection.getRoleId() == null
+                ? null
+                : Role.PomeranianRole.fromOrdinal(projection.getRoleId());
+
+        var recipient = UserData.builder()
+                .id(projection.getRecipientId())
+                .username(projection.getRecipientUsername())
+                .role(role);
+
+        var builder = ConversationDto.builder()
                 .flag(projection.getFlag())
                 .lastMessageAt(projection.getLastMessageAt())
                 .content(projection.getContent())
                 .contentType(projection.getContentType())
                 .unreadCount(projection.getUnreadCount())
                 .isLastMessageFromUser(projection.getIsLastMessageFromUser())
-                .age(projection.getAge())
                 .lastLoginAt(projection.getLastLoginAt())
-                .location(projection.getCityName() == null ? null : new ConversationDto.OsmCityDto(
-                        projection.getCityName(), projection.getCountry()
-                ))
-                .blockStatus(getBlockStatus(projection.getBlockStatusCode()))
-                .validationStatus(projection.getValidationStatus())
-                .build();
+                .blockStatus(getBlockStatus(projection.getBlockStatusCode()));
+
+        if (role != Role.PomeranianRole.DEACTIVATED) {
+            recipient = recipient.image192(projection.getRecipientImage192())
+                    .gender(projection.getGender());
+            builder = builder
+                    .age(projection.getAge())
+                    .location(projection.getCityName() == null ? null : new ConversationDto.OsmCityDto(
+                            projection.getCityName(), projection.getCountry()
+                    ))
+                    .validationStatus(projection.getValidationStatus());
+        }
+
+        return builder.recipient(recipient.build()).build();
     }
 
     // TODO: duplicated with main

@@ -38,6 +38,6 @@ public class PomeranianChatApplication {
         commentsSubscriber.subscribeAsync();
         deleteAccountSubscriber.subscribeAsync();
         blockUserSubscriber.subscribeAsync();
-        log.info("✅ Application is ready");
+        log.info("Application is ready ✅");
     }
 }
