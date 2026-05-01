@@ -45,6 +45,7 @@ pomeranian:
       cache-size: 100
       fields: DeviceClass, DeviceName, OperatingSystemName, AgentClass, AgentName
       warmup: false
+      whitelisted:
 #  security:
 #    public-paths: /auth/login, /auth/register, /api/city/hint
 #    jwt:
