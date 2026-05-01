@@ -39,7 +39,7 @@ logging:
       sojka:
         pomeranian:
           lib:
-            BaseExceptionHandler: DEBUG
+            BaseExceptionHandler: INFO
           notification:
             service:
               NotificationService: INFO
@@ -47,20 +47,19 @@ logging:
             repository:
               MessageRepository: INFO
             service:
-              ChatService: TRACE
-              SessionTracker: WARN
+              ChatService: INFO
+#              SessionTracker: DEBUG
             controller:
               ChatController: INFO
               MessageController: INFO
-              StompSubscriptionController: DEBUG
-              GlobalExceptionHandler: DEBUG
+              StompSubscriptionController: INFO
+              GlobalExceptionHandler: INFO
           pubsub:
             CommentsSubscriber: INFO
             NotificationSubscriber: INFO
           comment:
             service:
               CommentService: INFO
-              SessionTracker: INFO
           security:
             config:
               JwtAuthenticationFilter: INFO

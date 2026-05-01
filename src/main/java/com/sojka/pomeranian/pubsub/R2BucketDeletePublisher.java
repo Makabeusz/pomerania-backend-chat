@@ -51,15 +51,14 @@ public class R2BucketDeletePublisher {
                     public void onFailure(Throwable throwable) {
                         if (throwable instanceof ApiException apiException) {
                             // details on the API exception
-                            System.out.println(apiException.getStatusCode().getCode());
-                            System.out.println(apiException.isRetryable());
+                            log.error("ApiException: statusCode={}, isRetryable={}", apiException.getStatusCode().getCode(), apiException.isRetryable());
                         }
                         log.error("Error publishing error", throwable);
                     }
 
                     @Override
                     public void onSuccess(String messageId) {
-                        log.info("Published message ID: {}", messageId);
+                        log.debug("Published message ID: {}", messageId);
                     }
                 },
                 MoreExecutors.directExecutor());

@@ -47,8 +47,7 @@ public class NotificationService {
         if (online) {
             messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, notification);
         }
-        log.debug("Published notification type={} to userId={}, isOnline={}",
-                notification.getType(), notification.getProfileId(), online);
+        log.debug("Published notification type={} to userId={}, isOnline={}", notification.getType(), notification.getProfileId(), online);
 
         return domain.getCreatedAt();
     }

@@ -30,6 +30,6 @@ public class NotificationController {
 
         var readAt = notificationService.markRead(user.getId(), dto);
 
-        log.info("Marked {} notification as read_at={}", dto.size(), readAt);
+        log.debug("Marked {} notification as read_at={}", dto.size(), readAt);
     }
 }

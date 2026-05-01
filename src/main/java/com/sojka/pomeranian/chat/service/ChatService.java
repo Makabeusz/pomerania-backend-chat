@@ -203,6 +203,7 @@ public class ChatService {
         }
         conversation.setFlag(flag);
         conversationsRepository.save(conversation);
+        log.debug("User updated conversation flag: userId={}, recipientId={}, flag={}", userId, recipientId, flag);
         return true;
     }
 
@@ -278,6 +279,7 @@ public class ChatService {
         deletePublisher.publish(new R2BucketDeleteRequest(message.getResourceId(), userId));
 
         var now = getCurrentInstantString();
+        UUID deletedResourceId = message.getResourceId();
         message.setEditedAt(now);
         message.setResourceId(null);
         message.setResourceType(null);
@@ -289,6 +291,7 @@ public class ChatService {
         messagingTemplate.convertAndSendToUser(
                 saved.getRoomId(), DM_DESTINATION, new ChatResponse<>(saved, MessageType.UPDATE)
         );
+        log.info("User deleted chat-resource: userId={}, roomId={}, deletedResourceId={}", userId, roomId, deletedResourceId);
         return true;
     }
 

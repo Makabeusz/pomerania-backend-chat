@@ -32,7 +32,7 @@ public class DeleteAccountSubscriber {
         MessageReceiver receiver =
                 (PubsubMessage message, AckReplyConsumer consumer) -> {
                     var request = JsonUtils.readObject(message.getData().toByteArray(), DeleteAccountRequest.class);
-                    log.info("Received delete account request, id={}", request.id());
+                    log.info("Received delete account request, userId={}", request.id());
 
                     try {
                         chatService.deleteUserInactiveRooms(request.id());
@@ -41,9 +41,9 @@ public class DeleteAccountSubscriber {
                         notificationService.deleteUserNotifications(request.id());
                         notificationService.deleteUserReadNotifications(request.id());
 
-                        log.info("Successfully deleted user={}", request.id());
+                        log.info("Successfully deleted userId={}", request.id());
                     } catch (Exception e) {
-                        log.error("Failed to delete user={}", request.id(), e);
+                        log.error("Failed to delete userId={}", request.id(), e);
                     }
                     consumer.ack();
 
