@@ -40,7 +40,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     @Query(value = """
             SELECT
-                p.id AS recipient_id,
+                c.recipient_id,
                 p.username AS recipient_username,
                 p.image_192 AS recipient_image192,
                 c.flag,
@@ -64,18 +64,18 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
                 get_block_status(:userId, p.id) AS block_status_code,
                 p.validation_status
             FROM conversations c
-            JOIN profiles p ON c.recipient_id = p.id
-            JOIN user_roles ro ON ro.user_id = p.id
+            LEFT JOIN profiles p ON c.recipient_id = p.id
+            LEFT JOIN user_roles ro ON ro.user_id = p.id
             LEFT JOIN osmcities o ON o.id = p.city_id
             WHERE c.user_id = :userId
               AND (c.flag = ?#{#flag1.name()}
               OR c.flag = ?#{#flag2.name()})
-            ORDER BY last_message_at DESC""", nativeQuery = true)
+            ORDER BY c.last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findByUserIdAndFlags(UUID userId, ConversationFlag flag1, ConversationFlag flag2, Pageable pageable);
 
     @Query(value = """
             SELECT
-                p.id AS recipient_id,
+                c.recipient_id,
                 p.username AS recipient_username,
                 p.image_192 AS recipient_image192,
                 c.flag,
@@ -99,12 +99,12 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
                 get_block_status(:userId, p.id) AS block_status_code,
                 p.validation_status
             FROM conversations c
-            JOIN profiles p ON c.recipient_id = p.id
-            JOIN user_roles ro ON ro.user_id = p.id
+            LEFT JOIN profiles p ON c.recipient_id = p.id
+            LEFT JOIN user_roles ro ON ro.user_id = p.id
             LEFT JOIN osmcities o ON o.id = p.city_id
             WHERE c.user_id = :userId
               AND c.flag = ?#{#flag.name()}
-            ORDER BY last_message_at DESC""", nativeQuery = true)
+            ORDER BY c.last_message_at DESC""", nativeQuery = true)
     List<ConversationProjection> findByUserIdAndFlag(UUID userId, ConversationFlag flag, Pageable pageable);
 
     @Modifying
