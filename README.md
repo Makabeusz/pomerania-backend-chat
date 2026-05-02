@@ -5,7 +5,7 @@
 ### Env
 
 ```sh
-CHAT_IMAGE_VERSION="0.2.2"
+CHAT_IMAGE_VERSION="0.2.3"
 CHAT_IMAGE_REGISTRY="europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat"
 ```
 
