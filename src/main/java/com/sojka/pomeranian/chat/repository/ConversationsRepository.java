@@ -125,7 +125,7 @@ public interface ConversationsRepository extends CrudRepository<Conversation, Co
 
     @Query(value = """
             SELECT
-                p.id AS recipient_id,
+                c.recipient_id,
                 p.username AS recipient_username,
                 p.image_192 AS recipient_image192,
                 c.flag,
