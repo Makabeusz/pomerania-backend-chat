@@ -30,8 +30,10 @@ public class NotificationApiController {
     @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<Notification<Object>>> getUnreadNotifications(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState) {
-        var results = notificationService.getUnread(user.getId(), nextPageState, 10);
+            @RequestParam(required = false) String nextPageState,
+            @RequestParam Integer pageSize
+    ) {
+        var results = notificationService.getUnread(user.getId(), nextPageState, pageSize);
         return ResponseEntity.ok(results);
     }
 
@@ -39,8 +41,10 @@ public class NotificationApiController {
     @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<Notification<Object>>> getReadNotifications(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState) {
-        var results = notificationService.getRead(user.getId(), nextPageState, 10);
+            @RequestParam(required = false) String nextPageState,
+            @RequestParam Integer pageSize
+    ) {
+        var results = notificationService.getRead(user.getId(), nextPageState, pageSize);
         return ResponseEntity.ok(results);
     }
 
