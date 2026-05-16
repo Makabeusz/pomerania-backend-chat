@@ -4,6 +4,7 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.chat.dto.StompSubscription;
 import com.sojka.pomeranian.chat.service.cache.SessionCache;
 import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.repository.NotificationRepository;
@@ -54,7 +55,7 @@ public class NotificationService {
 
     /**
      * Deletes unread and saves read notification.<br>
-     * Read TTL is 30 days by default = 2592000 s
+     * Read TTL is 30 days by default = 2592000s
      *
      * @return CreatedAt
      */
@@ -115,6 +116,16 @@ public class NotificationService {
         readNotificationRepository.deleteAllByIdProfileId(userId);
         log.info("Removed {} read notifications of userID={}", deletedUserNotifications, userId);
         return deletedUserNotifications;
+    }
+
+    public void deleteRead(UUID userId, Instant createdAt, NotificationType type) {
+        readNotificationRepository.delete(userId, createdAt, type);
+        log.info("Removed single read notification: userId={} createdAt={}, type={}", userId, createdAt, type);
+    }
+
+    public void deleteUnread(UUID userId, Instant createdAt, NotificationType type) {
+        notificationRepository.delete(userId, createdAt, type);
+        log.info("Removed single unread notification: userId={} createdAt={}, type={}", userId, createdAt, type);
     }
 
 }

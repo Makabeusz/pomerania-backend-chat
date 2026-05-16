@@ -3,7 +3,9 @@ package com.sojka.pomeranian.notification.repository;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.exception.AstraException;
 import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationType;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,4 +30,6 @@ public interface NotificationRepository<N> {
     Optional<Long> countByIdProfileId(UUID profileId);
 
     void deleteAllByIdProfileId(UUID profileId);
+
+    void delete(UUID profileId, Instant createdAt, NotificationType type);
 }

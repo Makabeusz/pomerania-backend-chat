@@ -10,6 +10,7 @@ import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.config.ChatConfig;
 import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -55,6 +57,11 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
             SELECT COUNT(*) FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
     private static final String DELETE_BY_PROFILE_ID = """
             DELETE FROM %s.%s WHERE profile_id = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
+    private static final String DELETE_BY_PRIMARY_KEY = """
+            DELETE FROM %s.%s \
+            WHERE profile_id = ? \
+            AND created_at = ? \
+            AND type = ?""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE);
 
     private final Connector connector;
     private final ChatConfig config;
@@ -151,5 +158,19 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
 
             return true;
         }, "deleteAllByIdProfileId", profileId);
+    }
+
+    @Override
+    public void delete(UUID profileId, Instant createdAt, NotificationType type) {
+        log.trace("delete input: profileId={}, createdAt={}, type={}", profileId, createdAt, type);
+        handle(() -> {
+            var statement = SimpleStatement.builder(DELETE_BY_PRIMARY_KEY)
+                    .addPositionalValues(profileId, createdAt, getNameOrNull(type)).build();
+
+            var session = connector.getSession();
+            session.execute(statement);
+
+            return true;
+        }, "delete", profileId);
     }
 }

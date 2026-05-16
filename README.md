@@ -5,8 +5,8 @@
 ### Env
 
 ```sh
-CHAT_IMAGE_VERSION="0.2.3"
-CHAT_IMAGE_REGISTRY="europe-central2-docker.pkg.dev/pomeranian-463011/pomeranian-backend-chat/pomeranian-backend-chat"
+CHAT_IMAGE_VERSION="0.2.4"
+CHAT_IMAGE_REGISTRY="europe-west1-docker.pkg.dev/kwink3r/pomerania-backend-chat/20260503"
 ```
 
 ### Build (with MacOs caffeinate during the build)
@@ -18,7 +18,7 @@ caffeinate -i docker build --platform linux/amd64 -t ${CHAT_IMAGE_REGISTRY}:late
 ### Authenticate (only initially)
 
 ```sh
-gcloud auth configure-docker europe-central2-docker.pkg.dev
+gcloud auth configure-docker europe-west1-docker.pkg.dev
 ```
 
 ### Push
