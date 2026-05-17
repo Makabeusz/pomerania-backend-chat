@@ -5,13 +5,13 @@ import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.lib.dto.UserData;
 import com.sojka.pomeranian.lib.util.JsonUtils;
+import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.security.model.Role;
 
 import java.time.Instant;
 
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
-import static com.sojka.pomeranian.lib.util.DateTimeUtils.toInstant;
 
 public final class ReadNotificationMapper {
 
@@ -27,7 +27,7 @@ public final class ReadNotificationMapper {
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
                 .readAt(toDateString(notification.getReadAt()))
-                .body(JsonUtils.readMap(notification.getBody()))
+                .body(notification.getBody() == null ? null : JsonUtils.readMap(notification.getBody()))
                 .sender(UserData.builder()
                         .id(notification.getSenderId())
                         .username(notification.getSenderUsername())
@@ -38,21 +38,21 @@ public final class ReadNotificationMapper {
                 .build();
     }
 
-    public static ReadNotification toReadNotificationDomain(Notification<Object> notification, Instant readAt) {
+    public static ReadNotification toReadNotificationDomain(NotificationModel notification, Instant readAt) {
         if (notification == null) {
             return null;
         }
         return ReadNotification.builder()
                 .profileId(notification.getProfileId())
-                .createdAt(toInstant(notification.getCreatedAt()))
+                .createdAt(notification.getCreatedAt())
                 .type(notification.getType())
                 .readAt(readAt)
-                .body(JsonUtils.writeToString(notification.getBody()))
-                .senderId(notification.getSender().getId())
-                .senderUsername(notification.getSender().getUsername())
-                .senderImage192(notification.getSender().getImage192())
-                .senderGender(notification.getSender().getGender())
-                .senderRole(notification.getSender().getRole())
+                .body(notification.getBody())
+                .senderId(notification.getSenderId())
+                .senderUsername(notification.getSenderUsername())
+                .senderImage192(notification.getSenderImage192())
+                .senderGender(notification.getSenderGender())
+                .senderRole(notification.getSenderRole())
                 .build();
     }
 

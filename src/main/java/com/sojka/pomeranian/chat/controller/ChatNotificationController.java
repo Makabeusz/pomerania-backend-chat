@@ -43,9 +43,10 @@ public class ChatNotificationController {
     @PreAuthorize("hasRole('SOFT_BAN')")
     public ResponseEntity<ResultsPage<Notification<Object>>> getNotifications(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String nextPageState
+            @RequestParam(required = false) String nextPageState,
+            @RequestParam Integer pageSize
     ) {
-        return ResponseEntity.ok(chatService.getMessageNotifications(user.getId(), nextPageState));
+        return ResponseEntity.ok(chatService.getMessageNotifications(user.getId(), nextPageState, pageSize));
     }
 
 }

@@ -9,7 +9,7 @@ import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.config.ChatConfig;
-import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationPrimaryKey;
 import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.util.NotificationMapper;
@@ -98,6 +98,32 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
+    public Optional<NotificationModel> find(NotificationPrimaryKey key) {
+        return find(key.getProfileId(), toInstant(key.getCreatedAt()), key.getType());
+    }
+
+    @Override
+    public Optional<NotificationModel> find(UUID profileId, Instant createdAt, NotificationType type) {
+        return handle(() -> {
+            var statement = SimpleStatement.builder(SELECT_BY_PRIMARY_KEY)
+                    .addPositionalValues(profileId)
+                    .addPositionalValue(createdAt)
+                    .addPositionalValue(getNameOrNull(type))
+                    .build();
+
+            var session = connector.getSession();
+            ResultSet resultSet = session.execute(statement);
+
+            var results = resultsPage(resultSet, 1, NotificationMapper::fromAstraRow).getResults();
+            if (results.size() == 1) {
+                return Optional.of(results.getFirst());
+            } else {
+                return Optional.empty();
+            }
+        }, "findAllBy", profileId);
+    }
+
+    @Override
     public ResultsPage<NotificationModel> findAllBy(UUID profileId, String pageState, int pageSize) {
         return handle(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
@@ -116,7 +142,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public void deleteAll(List<Notification<Object>> notifications) {
+    public void deleteAll(List<? extends NotificationPrimaryKey> notifications) {
         handle(() -> {
             List<SimpleStatement> deleteStatements = notifications.stream()
                     .map(n -> SimpleStatement.builder(DELETE_BY)
@@ -172,5 +198,11 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
 
             return true;
         }, "delete", profileId);
+    }
+
+    @Override
+    public void delete(NotificationPrimaryKey key) {
+        log.info("delete input: key={}", key);
+        delete(key.getProfileId(), toInstant(key.getCreatedAt()), key.getType());
     }
 }

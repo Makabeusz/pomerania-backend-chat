@@ -213,8 +213,8 @@ public class ChatService {
         return count;
     }
 
-    public ResultsPage<Notification<Object>> getMessageNotifications(UUID userId, String pageState) {
-        Pagination pagination = pageStateToPagination(pageState, 10);
+    public ResultsPage<Notification<Object>> getMessageNotifications(UUID userId, String pageState, Integer pageSize) {
+        Pagination pagination = pageStateToPagination(pageState, pageSize);
 
         var headers = conversationsRepository.findNotifications(userId, PageRequest.of(
                 pagination.pageNumber(), pagination.pageSize(), Sort.by(Sort.Direction.DESC, "last_message_at")

@@ -56,7 +56,7 @@ public final class NotificationMapper {
                 .profileId(notification.getProfileId())
                 .createdAt(toInstant(notification.getCreatedAt()))
                 .type(notification.getType())
-                .body(JsonUtils.writeToString(notification.getBody()).trim())
+                .body(notification.getBody() == null ? null : JsonUtils.writeToString(notification.getBody()).trim())
                 .senderId(notification.getSender().getId())
                 .senderUsername(notification.getSender().getUsername())
                 .senderImage192(notification.getSender().getImage192())

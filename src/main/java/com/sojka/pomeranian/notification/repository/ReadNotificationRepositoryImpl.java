@@ -9,12 +9,13 @@ import com.sojka.pomeranian.astra.connection.Connector;
 import com.sojka.pomeranian.astra.dto.ResultsPage;
 import com.sojka.pomeranian.astra.repository.AstraPageableRepository;
 import com.sojka.pomeranian.chat.config.ChatConfig;
-import com.sojka.pomeranian.lib.dto.Notification;
+import com.sojka.pomeranian.lib.dto.NotificationPrimaryKey;
 import com.sojka.pomeranian.lib.dto.NotificationType;
 import com.sojka.pomeranian.notification.model.ReadNotification;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Repository;
 
@@ -109,6 +110,16 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
+    public Optional<ReadNotification> find(UUID profileId, Instant createdAt, NotificationType type) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Optional<ReadNotification> find(NotificationPrimaryKey key) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public ResultsPage<ReadNotification> findAllBy(UUID profileId, String pageState, int pageSize) {
         return handle(() -> {
             ByteBuffer pagingStateBuffer = decodePageState(pageState);
@@ -127,7 +138,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     }
 
     @Override
-    public void deleteAll(List<Notification<Object>> notifications) {
+    public void deleteAll(List<? extends NotificationPrimaryKey> notifications) {
         throw new IllegalArgumentException("not implemented");
     }
 
@@ -168,5 +179,10 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
 
             return true;
         }, "delete", profileId);
+    }
+
+    @Override
+    public void delete(NotificationPrimaryKey key) {
+        throw new IllegalArgumentException("not implemented");
     }
 }

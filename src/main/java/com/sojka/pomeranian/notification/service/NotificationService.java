@@ -17,10 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 import static com.sojka.pomeranian.chat.util.Constants.NOTIFY_DESTINATION;
+import static com.sojka.pomeranian.lib.util.CommonUtils.noSuchElementException;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 @Slf4j
@@ -40,17 +40,19 @@ public class NotificationService {
      * @return CreatedAt
      */
     public Instant process(Notification<Object> notification) {
-        NotificationModel domain = NotificationMapper.toDomain(notification);
-        domain.setCreatedAt(getCurrentInstant());
-
-        notificationRepository.save(domain);
+        Instant createdAt = getCurrentInstant();
+        if (notification.getType().isShouldPersist()) {
+            NotificationModel domain = NotificationMapper.toDomain(notification);
+            domain.setCreatedAt(createdAt);
+            notificationRepository.save(domain);
+        }
         boolean online = cache.isOnline(notification.getProfileId(), StompSubscription.Type.CHAT_NOTIFICATIONS);
         if (online) {
             messagingTemplate.convertAndSendToUser(notification.getProfileId() + "", NOTIFY_DESTINATION, notification);
         }
         log.debug("Published notification type={} to userId={}, isOnline={}", notification.getType(), notification.getProfileId(), online);
 
-        return domain.getCreatedAt();
+        return createdAt;
     }
 
     /**
@@ -59,20 +61,18 @@ public class NotificationService {
      *
      * @return CreatedAt
      */
-    public Instant markRead(UUID userId, List<Notification<Object>> notifications) {
-        boolean allAreUserNotifications = notifications.stream().allMatch(n -> userId.equals(n.getProfileId()));
-        if (!allAreUserNotifications) {
+    public Instant markRead(UUID userId, Notification.PrimaryKey key) {
+        if (!userId.equals(key.getProfileId())) {
             throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"
-                    .formatted(userId, notifications));
+                    .formatted(userId, key));
         }
         var readAt = getCurrentInstant();
 
-        notificationRepository.deleteAll(notifications);
-        readNotificationRepository.saveAll(notifications.stream()
-                .map(n -> ReadNotificationMapper.toReadNotificationDomain(n, readAt))
-                .toList());
+        var notification = notificationRepository.find(key).orElseThrow(noSuchElementException("unread notification", key));
+        notificationRepository.delete(key);
+        readNotificationRepository.save(ReadNotificationMapper.toReadNotificationDomain(notification, readAt));
 
-        log.info("Marked {} notifications as read", notifications);
+        log.debug("Marked notifications as read {}", key);
 
         return readAt;
     }

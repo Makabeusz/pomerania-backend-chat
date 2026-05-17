@@ -11,8 +11,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
-import java.util.List;
-
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -23,13 +21,13 @@ public class NotificationController {
 
     @MessageMapping("/notification.read")
     public void readMessage(
-            @Payload List<Notification<Object>> dto,
+            @Payload Notification.PrimaryKey dto,
             StompHeaderAccessor headerAccessor
     ) {
         User user = authenticator.getUser(headerAccessor);
 
         var readAt = notificationService.markRead(user.getId(), dto);
 
-        log.debug("Marked {} notification as read_at={}", dto.size(), readAt);
+        log.debug("Marked notification as read: {} read_at={}", dto, readAt);
     }
 }

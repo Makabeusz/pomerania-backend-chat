@@ -7,6 +7,7 @@ import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.util.TestUtils;
 import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.UserData;
+import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
@@ -22,7 +23,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -121,13 +121,8 @@ class NotificationServiceIntegrationTest {
 
     @Test
     void markRead_invalidUser_throwsSecurityException() {
-        Notification<Object> otherUserNotification = new Notification<>();
-        otherUserNotification.setProfileId(user2);
-        otherUserNotification.setType(FOLLOW);
-        otherUserNotification.setBody(Map.of("content", "Followed!"));
-        var notifications = List.of(otherUserNotification);
-
-        assertThrows(SecurityException.class, () -> notificationService.markRead(user1, notifications));
+        Notification.PrimaryKey otherUserNotification = new Notification.PrimaryKey(user2, DateTimeUtils.getCurrentInstantString(), FOLLOW);
+        assertThrows(SecurityException.class, () -> notificationService.markRead(user1, otherUserNotification));
     }
 
     @Test

@@ -407,7 +407,7 @@ class ChatServiceIntegrationTest {
         Conversation conversation2 = createUnreadConversation(new Conversation.Id(userX, user3Id), now, "New message");
         conversationsRepository.saveAll(List.of(conversation1, conversation2));
 
-        var response = chatService.getMessageNotifications(userX, null);
+        var response = chatService.getMessageNotifications(userX, null, 10);
 
         assertEquals(2, response.getResults().size());
         assertEquals("New message", ((Map) response.getResults().get(0).getBody()).get("content"));
