@@ -1,7 +1,5 @@
 package com.sojka.pomeranian.notification.repository;
 
-import com.datastax.oss.driver.api.core.cql.BatchStatement;
-import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -20,8 +18,6 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -93,11 +89,6 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     }
 
     @Override
-    public List<NotificationModel> saveAll(List<NotificationModel> notifications) {
-        throw new IllegalArgumentException("not implemented");
-    }
-
-    @Override
     public Optional<NotificationModel> find(NotificationPrimaryKey key) {
         return find(key.getProfileId(), toInstant(key.getCreatedAt()), key.getType());
     }
@@ -141,25 +132,25 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
         }, "findAllBy", profileId);
     }
 
-    @Override
-    public void deleteAll(List<? extends NotificationPrimaryKey> notifications) {
-        handle(() -> {
-            List<SimpleStatement> deleteStatements = notifications.stream()
-                    .map(n -> SimpleStatement.builder(DELETE_BY)
-                            .addPositionalValues(n.getProfileId(), toInstant(n.getCreatedAt()), getNameOrNull(n.getType()))
-                            .build())
-                    .toList();
-
-            var statement = BatchStatement.builder(BatchType.LOGGED)
-                    .addStatements(new ArrayList<>(deleteStatements))
-                    .build();
-
-            var session = connector.getSession();
-            session.execute(statement);
-
-            return true;
-        }, "deleteAll", notifications);
-    }
+//    @Override
+//    public void deleteAll(List<? extends NotificationPrimaryKey> notifications) {
+//        handle(() -> {
+//            List<SimpleStatement> deleteStatements = notifications.stream()
+//                    .map(n -> SimpleStatement.builder(DELETE_BY)
+//                            .addPositionalValues(n.getProfileId(), toInstant(n.getCreatedAt()), getNameOrNull(n.getType()))
+//                            .build())
+//                    .toList();
+//
+//            var statement = BatchStatement.builder(BatchType.LOGGED)
+//                    .addStatements(new ArrayList<>(deleteStatements))
+//                    .build();
+//
+//            var session = connector.getSession();
+//            session.execute(statement);
+//
+//            return true;
+//        }, "deleteAll", notifications);
+//    }
 
     @Override
     public Optional<Long> countByIdProfileId(UUID profileId) {

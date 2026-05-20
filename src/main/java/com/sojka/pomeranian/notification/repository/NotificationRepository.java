@@ -6,7 +6,6 @@ import com.sojka.pomeranian.lib.dto.NotificationPrimaryKey;
 import com.sojka.pomeranian.lib.dto.NotificationType;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,15 +20,11 @@ public interface NotificationRepository<N> {
      */
     N save(N notification);
 
-    List<N> saveAll(List<N> notifications);
-
     Optional<N> find(UUID profileId, Instant createdAt, NotificationType type);
 
     Optional<N> find(NotificationPrimaryKey key);
 
     ResultsPage<N> findAllBy(UUID profileId, String pageState, int pageSize);
-
-    void deleteAll(List<? extends NotificationPrimaryKey> notifications);
 
     Optional<Long> countByIdProfileId(UUID profileId);
 

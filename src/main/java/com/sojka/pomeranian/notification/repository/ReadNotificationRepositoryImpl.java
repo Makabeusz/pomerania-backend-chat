@@ -1,7 +1,5 @@
 package com.sojka.pomeranian.notification.repository;
 
-import com.datastax.oss.driver.api.core.cql.BatchStatement;
-import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -21,8 +19,6 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -82,32 +78,32 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
         }, "save", notification);
     }
 
-    @Override
-    public List<ReadNotification> saveAll(List<ReadNotification> notifications) {
-        int ttl = config.getNotification().getRead().getTtl();
-        return handle(() -> {
-            var list = notifications.stream()
-                    .map(n -> SimpleStatement.builder(INSERT.formatted(ttl))
-                            .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
-                                    n.getType().name(), n.getReadAt(), n.getBody(),
-                                    n.getSenderId(), n.getSenderUsername(),
-                                    n.getSenderImage192(), n.getSenderGender(),
-                                    getNameOrNull(n.getSenderRole()))
-                            .build())
-                    .toList();
-
-            var statement = BatchStatement.builder(BatchType.LOGGED)
-                    .addStatements(new ArrayList<>(list))
-                    .build();
-
-            var session = connector.getSession();
-            session.execute(statement);
-
-            log.info("Saved {} notifications, usingTtl={}", notifications.size(), ttl);
-
-            return null;
-        }, "saveAll", notifications.size() + " notifications");
-    }
+//    @Override
+//    public List<ReadNotification> saveAll(List<ReadNotification> notifications) {
+//        int ttl = config.getNotification().getRead().getTtl();
+//        return handle(() -> {
+//            var list = notifications.stream()
+//                    .map(n -> SimpleStatement.builder(INSERT.formatted(ttl))
+//                            .addPositionalValues(n.getProfileId(), n.getCreatedAt(),
+//                                    n.getType().name(), n.getReadAt(), n.getBody(),
+//                                    n.getSenderId(), n.getSenderUsername(),
+//                                    n.getSenderImage192(), n.getSenderGender(),
+//                                    getNameOrNull(n.getSenderRole()))
+//                            .build())
+//                    .toList();
+//
+//            var statement = BatchStatement.builder(BatchType.LOGGED)
+//                    .addStatements(new ArrayList<>(list))
+//                    .build();
+//
+//            var session = connector.getSession();
+//            session.execute(statement);
+//
+//            log.info("Saved {} notifications, usingTtl={}", notifications.size(), ttl);
+//
+//            return null;
+//        }, "saveAll", notifications.size() + " notifications");
+//    }
 
     @Override
     public Optional<ReadNotification> find(UUID profileId, Instant createdAt, NotificationType type) {
@@ -135,11 +131,6 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
 
             return resultsPage(resultSet, pageSize, ReadNotificationMapper::fromAstraRow);
         }, "findAllBy", profileId);
-    }
-
-    @Override
-    public void deleteAll(List<? extends NotificationPrimaryKey> notifications) {
-        throw new IllegalArgumentException("not implemented");
     }
 
     @Override
