@@ -7,7 +7,6 @@ import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.util.TestUtils;
 import com.sojka.pomeranian.lib.dto.Notification;
 import com.sojka.pomeranian.lib.dto.UserData;
-import com.sojka.pomeranian.lib.util.DateTimeUtils;
 import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.notification.model.NotificationModel;
 import com.sojka.pomeranian.notification.model.ReadNotification;
@@ -33,7 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Import({TestcontainersConfiguration.class})
 @SpringBootTest
@@ -118,12 +116,6 @@ class NotificationServiceIntegrationTest {
 //                        .build());
 //        assertThat(readNotification.getReadAt()).isEqualTo(readAt);
 //    }
-
-    @Test
-    void markRead_invalidUser_throwsSecurityException() {
-        Notification.PrimaryKey otherUserNotification = new Notification.PrimaryKey(user2, DateTimeUtils.getCurrentInstantString(), FOLLOW);
-        assertThrows(SecurityException.class, () -> notificationService.markRead(user1, otherUserNotification));
-    }
 
     @Test
     void getUnread_fewNotifications_sortedByCreatedAtDesc() {

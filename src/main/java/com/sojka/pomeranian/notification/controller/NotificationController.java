@@ -25,8 +25,8 @@ public class NotificationController {
             StompHeaderAccessor headerAccessor
     ) {
         User user = authenticator.getUser(headerAccessor);
-
-        var readAt = notificationService.markRead(user.getId(), dto);
+        dto.setProfileId(user.getId());
+        var readAt = notificationService.markRead(dto);
 
         log.debug("Marked notification as read: {} read_at={}", dto, readAt);
     }

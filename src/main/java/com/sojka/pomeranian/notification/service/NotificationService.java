@@ -61,11 +61,7 @@ public class NotificationService {
      *
      * @return CreatedAt
      */
-    public Instant markRead(UUID userId, Notification.PrimaryKey key) {
-        if (!userId.equals(key.getProfileId())) {
-            throw new SecurityException("User can mark as read only its own notifications. userId=%s, notifications=%s"
-                    .formatted(userId, key));
-        }
+    public Instant markRead(Notification.PrimaryKey key) {
         var readAt = getCurrentInstant();
 
         var notification = notificationRepository.find(key).orElseThrow(noSuchElementException("unread notification", key));

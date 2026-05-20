@@ -33,7 +33,7 @@ public final class NotificationMapper {
         }
 
         return Notification.builder()
-                .profileId(notification.getProfileId())
+//                .profileId(notification.getProfileId()) // it's always current user profile ID in front
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
                 .body(body)

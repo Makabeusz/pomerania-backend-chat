@@ -23,7 +23,7 @@ public final class ReadNotificationMapper {
             return null;
         }
         return Notification.builder()
-                .profileId(notification.getProfileId())
+//                .profileId(notification.getProfileId()) // it's always current user profile ID in front
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
                 .readAt(toDateString(notification.getReadAt()))
