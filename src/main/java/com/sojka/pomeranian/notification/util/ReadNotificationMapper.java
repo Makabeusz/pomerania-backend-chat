@@ -23,16 +23,12 @@ public final class ReadNotificationMapper {
             return null;
         }
         return Notification.builder()
-//                .profileId(notification.getProfileId()) // it's always current user profile ID in front
                 .createdAt(toDateString(notification.getCreatedAt()))
                 .type(notification.getType())
                 .readAt(toDateString(notification.getReadAt()))
                 .body(notification.getBody() == null ? null : JsonUtils.readMap(notification.getBody()))
                 .sender(UserData.builder()
                         .id(notification.getSenderId())
-                        .username(notification.getSenderUsername())
-                        .image192(notification.getSenderImage192())
-                        .gender(notification.getSenderGender())
                         .role(notification.getSenderRole())
                         .build())
                 .build();
@@ -49,9 +45,6 @@ public final class ReadNotificationMapper {
                 .readAt(readAt)
                 .body(notification.getBody())
                 .senderId(notification.getSenderId())
-                .senderUsername(notification.getSenderUsername())
-                .senderImage192(notification.getSenderImage192())
-                .senderGender(notification.getSenderGender())
                 .senderRole(notification.getSenderRole())
                 .build();
     }
@@ -69,9 +62,6 @@ public final class ReadNotificationMapper {
                 .readAt(row.getInstant("read_at"))
                 .body(row.getString("body"))
                 .senderId(row.getUuid("sender_id"))
-                .senderUsername(row.getString("sender_username"))
-                .senderImage192(row.getUuid("sender_image_192"))
-                .senderGender(row.getList("sender_gender", String.class))
                 .senderRole(role != null ? Role.PomeranianRole.valueOf(role) : null)
                 .build();
     }

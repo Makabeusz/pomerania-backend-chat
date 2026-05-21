@@ -35,8 +35,8 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
     private static final String INSERT = """
             INSERT INTO %s.%s (
                profile_id, created_at, type, read_at, body,
-               sender_id, sender_username, sender_image_192, sender_gender, sender_role
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               sender_id, sender_role
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
             USING TTL %s""".formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE, "%s");
     private static final String SELECT_ALL = QueryConstants.SELECT_ALL_BY_PROFILE_ID
             .formatted(NOTIFICATIONS_KEYSPACE, READ_NOTIFICATIONS_TABLE);
@@ -66,9 +66,7 @@ public class ReadNotificationRepositoryImpl extends AstraPageableRepository impl
             var statement = SimpleStatement.builder(dml)
                     .addPositionalValues(notification.getProfileId(), notification.getCreatedAt(),
                             notification.getType().name(), notification.getReadAt(), notification.getBody(),
-                            notification.getSenderId(), notification.getSenderUsername(),
-                            notification.getSenderImage192(), notification.getSenderGender(),
-                            getNameOrNull(notification.getSenderRole()))
+                            notification.getSenderId(), getNameOrNull(notification.getSenderRole()))
                     .build();
 
             var session = connector.getSession();

@@ -28,9 +28,6 @@ CREATE TABLE IF NOT EXISTS notifications.notifications (
     type VARCHAR,
     body TEXT,
     sender_id UUID,
-    sender_username VARCHAR,
-    sender_image_192 UUID,
-    sender_gender LIST<VARCHAR>,
     sender_role VARCHAR,
     PRIMARY KEY (profile_id, created_at, type)
 ) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);
@@ -43,9 +40,6 @@ CREATE TABLE IF NOT EXISTS notifications.read_notifications (
     read_at TIMESTAMP,
     body TEXT,
     sender_id UUID,
-    sender_username VARCHAR,
-    sender_image_192 UUID,
-    sender_gender LIST<VARCHAR>,
     sender_role VARCHAR,
     PRIMARY KEY (profile_id, created_at, type)
 ) WITH CLUSTERING ORDER BY (created_at DESC, type ASC);

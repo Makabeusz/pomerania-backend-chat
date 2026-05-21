@@ -34,8 +34,8 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
     private static final String INSERT = """
             INSERT INTO %s.%s (
                profile_id, created_at, type, body,
-               sender_id, sender_username, sender_image_192, sender_gender, sender_role
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+               sender_id, sender_role
+            ) VALUES (?, ?, ?, ?, ?, ?)
             USING TTL %s""".formatted(NOTIFICATIONS_KEYSPACE, NOTIFICATIONS_TABLE, "%s");
     private static final String SELECT_BY_PRIMARY_KEY = """
             SELECT * FROM %s.%s \
@@ -76,9 +76,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
                     .addPositionalValues(
                             notification.getProfileId(), notification.getCreatedAt(),
                             notification.getType().name(), notification.getBody(),
-                            notification.getSenderId(), notification.getSenderUsername(),
-                            notification.getSenderImage192(), notification.getSenderGender(),
-                            getNameOrNull(notification.getSenderRole()))
+                            notification.getSenderId(), getNameOrNull(notification.getSenderRole()))
                     .build();
 
             var session = connector.getSession();
@@ -193,7 +191,7 @@ public class NotificationRepositoryImpl extends AstraPageableRepository implemen
 
     @Override
     public void delete(NotificationPrimaryKey key) {
-        log.info("delete input: key={}", key);
+        log.trace("delete input: key={}", key);
         delete(key.getProfileId(), toInstant(key.getCreatedAt()), key.getType());
     }
 }

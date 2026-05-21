@@ -23,12 +23,11 @@ public final class NotificationMapper {
     public static Notification<Object> toNotification(ChatMessage message, String createdAt) {
         return Notification.builder()
                 .createdAt(createdAt)
-                .sender(message.getSender())
+                .sender(UserData.builder().id(message.getSender().getId()).build())
                 .type(NotificationType.MESSAGE)
                 .body(createMessageBody(
                         message.getContent(),
-                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + "",
-                        0
+                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""
                 ))
                 .build();
     }
@@ -38,9 +37,6 @@ public final class NotificationMapper {
                 .createdAt(toDateString(projection.getLastMessageAt()))
                 .sender(UserData.builder()
                         .id(projection.getRecipientId())
-                        .image192(projection.getRecipientImage192())
-                        .username(projection.getRecipientUsername())
-                        .gender(projection.getGender())
                         .role(projection.getRoleId() == null ? null : Role.PomeranianRole.fromOrdinal(projection.getRoleId()))
                         .build())
                 .type(NotificationType.MESSAGE)
@@ -66,7 +62,7 @@ public final class NotificationMapper {
 
         return Notification.builder()
                 .profileId(request.getElement().getOwner().getId())
-                .sender(request.getSender())
+                .sender(UserData.builder().id(request.getSender().getId()).build())
                 .createdAt(request.getCreatedAt())
                 .type(NotificationType.COMMENT)
                 .body(body)
