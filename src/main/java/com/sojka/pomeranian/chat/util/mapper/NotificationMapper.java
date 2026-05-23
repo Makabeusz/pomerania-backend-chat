@@ -1,6 +1,5 @@
 package com.sojka.pomeranian.chat.util.mapper;
 
-import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.repository.projection.ConversationProjection;
 import com.sojka.pomeranian.lib.dto.CommentStompRequest;
 import com.sojka.pomeranian.lib.dto.Notification;
@@ -10,7 +9,6 @@ import com.sojka.pomeranian.security.model.Role;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.sojka.pomeranian.lib.util.CommonUtils.sliceDescription;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
@@ -18,18 +16,6 @@ import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 public final class NotificationMapper {
 
     private NotificationMapper() {
-    }
-
-    public static Notification<Object> toNotification(ChatMessage message, String createdAt) {
-        return Notification.builder()
-                .createdAt(createdAt)
-                .sender(UserData.builder().id(message.getSender().getId()).build())
-                .type(NotificationType.MESSAGE)
-                .body(createMessageBody(
-                        message.getContent(),
-                        Optional.ofNullable(message.getResource()).orElse(new ChatMessage.Resource()).getType() + ""
-                ))
-                .build();
     }
 
     public static Notification<Object> toNotification(ConversationProjection projection) {
@@ -69,15 +55,11 @@ public final class NotificationMapper {
                 .build();
     }
 
-    private static Object createMessageBody(String content, String type) {
-        return createMessageBody(content, type, 0);
-    }
-
     private static Object createMessageBody(String content, String type, Integer unreadCount) {
         return Map.of(
                 "content", sliceDescription(content, 200),
                 "type", type,
-                "unreadCount", unreadCount // TODO frontend is handling read update, required through per bug
+                "unreadCount", unreadCount
         );
     }
 

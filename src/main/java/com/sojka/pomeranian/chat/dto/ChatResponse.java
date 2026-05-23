@@ -4,11 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-import java.util.List;
-
 /**
  * The general chat response DTO.<br>
  * The frontend will map a response objects based on assigned {@link MessageType}.
+ * TODO: create some interface for chat types instead of generic here
  *
  * @param <T> The type of the response data.
  */
@@ -16,29 +15,22 @@ import java.util.List;
 @NoArgsConstructor
 public class ChatResponse<T> {
 
-    private List<T> data;
+    private T data;
     private MessageType type;
 
-    public ChatResponse(@NonNull List<T> data) {
-        if (data.isEmpty()) {
-            throw new IllegalArgumentException("Response list cannot be empty");
-        }
+    public ChatResponse(@NonNull T data) {
         this.data = data;
 
-        this.type = switch (data.getFirst().getClass().getSimpleName()) {
+        this.type = switch (data.getClass().getSimpleName()) {
             case "ChatMessagePersisted" -> MessageType.CHAT;
             case "ChatRead" -> MessageType.READ;
-            default -> throw new RuntimeException("Unrecognized chat response type: " + data.get(0).getClass());
+            default -> throw new RuntimeException("Unrecognized chat response type: " + data.getClass());
         };
     }
 
     public ChatResponse(@NonNull T data, MessageType type) {
-        this.data = List.of(data);
+        this.data = data;
         this.type = type;
-    }
-
-    public ChatResponse(@NonNull T data) {
-        this(List.of(data));
     }
 
     public ChatResponse(@NonNull MessageType type) {

@@ -1,6 +1,5 @@
 package com.sojka.pomeranian.chat.dto;
 
-import com.sojka.pomeranian.lib.dto.UserData;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,7 +30,7 @@ public class ChatMessagePersisted extends ChatMessage {
 
     @Builder
     public ChatMessagePersisted(
-            String content, UserData sender, UserData recipient,
+            String content, UserId sender, UserId recipient,
             String roomId, String createdAt, UUID resourceId, String resourceType, Integer resourceHeight, Integer resourceWidth,
             UUID thumbnailId, String editedAt, Map<String, String> metadata, String readAt
     ) {

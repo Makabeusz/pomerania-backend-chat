@@ -90,9 +90,6 @@ public class MessageRepository extends AstraPageableRepository {
                     .value("room_id", literal(message.getRoomId()))
                     .value("created_at", literal(message.getCreatedAt()))
                     .value("profile_id", literal(message.getProfileId()))
-                    .value("username", literal(message.getUsername()))
-                    .value("recipient_profile_id", literal(message.getRecipientProfileId()))
-                    .value("recipient_username", literal(message.getRecipientUsername()))
                     .value("content", literal(message.getContent()))
                     .value("resource_id", literal(message.getResourceId()))
                     .value("resource_type", literal(message.getResourceType()))
@@ -189,9 +186,6 @@ public class MessageRepository extends AstraPageableRepository {
         return handle(() -> {
             // Insert into messages.messages todo: refactor to plain text query
             var messageUpdate = QueryBuilder.update(MESSAGES_KEYSPACE, MESSAGES_TABLE)
-                    .setColumn("username", literal(message.getUsername()))
-                    .setColumn("recipient_profile_id", literal(message.getRecipientProfileId()))
-                    .setColumn("recipient_username", literal(message.getRecipientUsername()))
                     .setColumn("content", literal(message.getContent()))
                     .setColumn("resource_id", literal(message.getResourceId()))
                     .setColumn("resource_type", literal(message.getResourceType()))
@@ -211,5 +205,4 @@ public class MessageRepository extends AstraPageableRepository {
             return message;
         }, "update", message);
     }
-
 }

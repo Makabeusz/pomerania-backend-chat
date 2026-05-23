@@ -82,20 +82,16 @@ public class ChatService {
                 .roomId(roomId)
                 .createdAt(now)
                 .profileId(senderId)
-                .username(chatMessage.getSender().getUsername())
-                .recipientProfileId(recipientId)
                 .resourceId(chatMessage.getResource() != null ? chatMessage.getResource().getId() : null)
                 .resourceType(chatMessage.getResource() != null ? chatMessage.getResource().getType() : null)
                 .resourceHeight(chatMessage.getResource() != null ? chatMessage.getResource().getHeight() : null)
                 .resourceWidth(chatMessage.getResource() != null ? chatMessage.getResource().getWidth() : null)
                 .thumbnailId(chatMessage.getResource() != null ? chatMessage.getResource().getThumbnailId() : null)
-                .recipientUsername(chatMessage.getRecipient().getUsername())
                 .content(chatMessage.getContent())
                 .readAt(isRecipientOnline ? now : null)
                 .build();
 
         var savedMessage = MessageMapper.toDto(messageRepository.save(message));
-        savedMessage.addMetadata("senderImage192", chatMessage.getSender().getImage192() + "");
 
         // Update both users chat
         messagingTemplate.convertAndSendToUser(roomId, DM_DESTINATION, new ChatResponse<>(savedMessage));
@@ -146,15 +142,15 @@ public class ChatService {
     }
 
     public Instant markRead(MessageKey keys) {
-        var readAt = messageRepository.markRead(keys);
-        UUID senderId = getRecipientIdFromRoomId(keys.roomId(), keys.profileId());
-        try {
-            conversationsRepository.updateUnreadCount(senderId, keys.profileId(), 0);
-        } catch (Exception e) {
-            log.warn("Mark read conversation update failed: {}", e.getMessage());
-        }
+        return messageRepository.markRead(keys);
+    }
 
-        return readAt;
+    public Long resetConversationUnreadCount(UUID userId, UUID recipientId) {
+        Long previousCount = conversationsRepository.findUnreadCountByIdUserIdAndIdRecipientId(userId, recipientId);
+        if (previousCount != null && previousCount > 0) {
+            conversationsRepository.updateUnreadCount(userId, recipientId, 0);
+        }
+        return previousCount;
     }
 
     public ResultsPage<ChatMessagePersisted> getConversationMessages(UUID userId, UUID otherProfileId, String pageState) {

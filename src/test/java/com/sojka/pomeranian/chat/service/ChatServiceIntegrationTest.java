@@ -8,14 +8,12 @@ import com.sojka.pomeranian.chat.db.AstraTestcontainersConnector;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.MessageKey;
+import com.sojka.pomeranian.chat.dto.UserId;
 import com.sojka.pomeranian.chat.model.Conversation;
 import com.sojka.pomeranian.chat.model.Message;
 import com.sojka.pomeranian.chat.repository.ConversationsRepository;
 import com.sojka.pomeranian.chat.repository.MessageRepository;
-import com.sojka.pomeranian.chat.util.CommonUtils;
 import com.sojka.pomeranian.chat.util.mapper.MessageMapper;
-import com.sojka.pomeranian.lib.dto.UserData;
-import com.sojka.pomeranian.lib.util.JsonUtils;
 import com.sojka.pomeranian.security.model.User;
 import com.sojka.pomeranian.security.repository.UserRepository;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
@@ -86,10 +84,10 @@ class ChatServiceIntegrationTest {
         UUID user2Id = UUID.randomUUID();
         ChatMessage chatMessage = ChatMessage.basicBuilder()
                 .content(content)
-                .sender(new UserData(user1Id, user1Id + "-username", null))
-                .recipient(new UserData(user2Id, user2Id + "-username", null))
+                .sender(new UserId(user1Id))
+                .recipient(new UserId(user2Id))
                 .build();
-        String roomId = CommonUtils.generateRoomId(chatMessage);
+        String roomId = generateRoomId(user1Id, user2Id);
 
         String createdAt = chatService.processMessage(chatMessage, roomId, false);
 
@@ -281,10 +279,10 @@ class ChatServiceIntegrationTest {
         String content = "Hey, you there?";
         ChatMessage chatMessage = ChatMessage.basicBuilder()
                 .content(content)
-                .sender(new UserData(user1Id, user1Id + "-username", null))
-                .recipient(new UserData(user2Id, user2Id + "-username", null))
+                .sender(new UserId(user1Id))
+                .recipient(new UserId(user2Id))
                 .build();
-        String roomId = CommonUtils.generateRoomId(chatMessage);
+        String roomId = generateRoomId(user1Id, user2Id);
 
         String createdAt = chatService.processMessage(chatMessage, roomId, false);
 

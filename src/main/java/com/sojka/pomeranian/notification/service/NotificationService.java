@@ -41,7 +41,7 @@ public class NotificationService {
      */
     public Instant process(Notification<Object> notification) {
         Instant createdAt = getCurrentInstant();
-        if (notification.getType().isShouldPersist()) {
+        if (notification.getType().isPersistable()) {
             NotificationModel domain = NotificationMapper.toDomain(notification);
             domain.setCreatedAt(createdAt);
             notificationRepository.save(domain);
