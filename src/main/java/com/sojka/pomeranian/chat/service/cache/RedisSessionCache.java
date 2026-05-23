@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.sojka.pomeranian.chat.config.cache.RedisConfig.ACTIVE_USER_PREFIX;
+import static com.sojka.pomeranian.chat.config.cache.RedisConfig.SESSION_USER_PREFIX;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.getCurrentInstant;
 
 @Slf4j
@@ -41,7 +42,7 @@ public class RedisSessionCache implements SessionCache {
 
     @Override
     public boolean isOnline(UUID userId, StompSubscription subscription) {
-        ActiveUser activeUser = users.opsForValue().get(userId);
+        ActiveUser activeUser = getCachedUser(userId);
         if (activeUser != null) {
             return activeUser.isOnline(subscription);
         }
@@ -50,7 +51,7 @@ public class RedisSessionCache implements SessionCache {
 
     @Override
     public boolean isOnline(UUID userId, StompSubscription.Type type) {
-        ActiveUser activeUser = users.opsForValue().get(userId);
+        ActiveUser activeUser = getCachedUser(userId);
         if (activeUser != null) {
             if (type == StompSubscription.Type.CHAT_NOTIFICATIONS) {
                 return true;
@@ -62,7 +63,7 @@ public class RedisSessionCache implements SessionCache {
 
     @Override
     public Optional<ActiveUser> get(UUID userId) {
-        return Optional.ofNullable(users.opsForValue().get(userId));
+        return Optional.ofNullable(getCachedUser(userId));
     }
 
     @Override
@@ -73,7 +74,7 @@ public class RedisSessionCache implements SessionCache {
 
     @Override
     public boolean add(UUID userId, String simpSessionId, List<StompSubscription> subscriptions) {
-        ActiveUser activeUser = users.opsForValue().get(userId);
+        ActiveUser activeUser = getCachedUser(userId);
         if (activeUser == null) {
             return false;
         }
@@ -97,7 +98,7 @@ public class RedisSessionCache implements SessionCache {
                         sessionSubscriptions.put(subscription.type().name(), ids);
                     }
                 }
-                users.opsForValue().set(userId, activeUser);
+                setCachedUser(userId, activeUser);
                 return result;
             }
         }
@@ -111,10 +112,10 @@ public class RedisSessionCache implements SessionCache {
 
     @Override
     public boolean create(UUID userId, String simpSessionId) {
-        ActiveUser activeUser = users.opsForValue().get(userId);
+        ActiveUser activeUser = getCachedUser(userId);
         var newSession = new ActiveUser.Session(new HashMap<>(), simpSessionId, getCurrentInstant());
         if (activeUser == null) {
-            users.opsForValue().set(userId, new ActiveUser(userId, new ArrayList<>(List.of(newSession))));
+            setCachedUser(userId, new ActiveUser(userId, new ArrayList<>(List.of(newSession))));
         } else {
             for (ActiveUser.Session session : activeUser.getSessions()) {
                 if (session.getSimpSessionId().equals(simpSessionId)) {
@@ -122,7 +123,7 @@ public class RedisSessionCache implements SessionCache {
                 }
             }
             activeUser.getSessions().add(newSession);
-            users.opsForValue().set(userId, activeUser);
+            setCachedUser(userId, activeUser);
         }
         sessions.opsForValue().set(simpSessionId, userId);
         return true;
@@ -134,7 +135,7 @@ public class RedisSessionCache implements SessionCache {
         if (userId == null) {
             return null;
         }
-        ActiveUser activeUser = users.opsForValue().get(userId);
+        ActiveUser activeUser = getCachedUser(userId);
         if (activeUser == null) {
             return null;
         } else {
@@ -147,7 +148,7 @@ public class RedisSessionCache implements SessionCache {
 
     @Override
     public boolean remove(UUID userId, String simpSessionId, @NonNull StompSubscription subscription) {
-        ActiveUser activeUser = users.opsForValue().get(userId);
+        ActiveUser activeUser = getCachedUser(userId);
         if (activeUser != null) {
             for (ActiveUser.Session session : activeUser.getSessions()) {
                 if (session.getSimpSessionId().equals(simpSessionId)) {
@@ -170,7 +171,7 @@ public class RedisSessionCache implements SessionCache {
                     break;
                 }
             }
-            users.opsForValue().set(userId, activeUser);
+            setCachedUser(userId, activeUser);
             return true;
         }
         return false;
@@ -182,7 +183,7 @@ public class RedisSessionCache implements SessionCache {
     @Override
     public void purge() {
         users.delete(getAllKeys(users, ACTIVE_USER_PREFIX + "*"));
-        sessions.delete(getAllKeys(sessions, ACTIVE_USER_PREFIX + "*"));
+        sessions.delete(getAllKeys(sessions, SESSION_USER_PREFIX + "*"));
     }
 
     private <T> Set<T> getAllKeys(RedisTemplate<T, ?> cache, String pattern) {
@@ -199,5 +200,13 @@ public class RedisSessionCache implements SessionCache {
             return null;
         });
         return allKeys;
+    }
+
+    private ActiveUser getCachedUser(UUID userId) {
+        return users.opsForValue().get(userId);
+    }
+
+    private void setCachedUser(UUID userId, ActiveUser activeUser) {
+        users.opsForValue().set(userId, activeUser);
     }
 }
