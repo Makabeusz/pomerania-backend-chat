@@ -5,6 +5,9 @@ import com.sojka.pomeranian.chat.dto.ChatMessagePersisted;
 import com.sojka.pomeranian.chat.dto.UserId;
 import com.sojka.pomeranian.chat.model.Message;
 
+import java.util.Optional;
+
+import static com.sojka.pomeranian.lib.util.CommonUtils.getRecipientIdFromRoomId;
 import static com.sojka.pomeranian.lib.util.DateTimeUtils.toDateString;
 
 public final class MessageMapper {
@@ -17,7 +20,8 @@ public final class MessageMapper {
                 .roomId(message.getRoomId())
                 .createdAt(toDateString(message.getCreatedAt()))
                 .sender(new UserId(message.getProfileId()))
-                .recipient(new UserId(message.getRecipientProfileId()))
+                .recipient(new UserId(Optional.ofNullable(message.getRecipientProfileId())
+                        .orElse(getRecipientIdFromRoomId(message.getRoomId(), message.getProfileId()))))
                 .content(message.getContent())
                 .resourceId(message.getResourceId())
                 .resourceType(message.getResourceType())
