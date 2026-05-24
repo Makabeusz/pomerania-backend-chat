@@ -5,8 +5,8 @@
 ### Env
 
 ```sh
-CHAT_IMAGE_VERSION="0.2.4"
-CHAT_IMAGE_REGISTRY="europe-west1-docker.pkg.dev/kwink3r/pomerania-backend-chat/20260503"
+CHAT_IMAGE_VERSION="0.3.0"
+CHAT_IMAGE_REGISTRY="europe-west1-docker.pkg.dev/kwink3r/pomerania-backend-chat/20260524"
 ```
 
 ### Build (with MacOs caffeinate during the build)
