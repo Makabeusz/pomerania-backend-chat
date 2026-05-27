@@ -1,11 +1,10 @@
 package com.sojka.pomeranian.chat.controller;
 
-import com.sojka.pomeranian.lib.BaseExceptionHandler;
+import com.sojka.pomeranian.security.controller.BaseExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -29,9 +28,8 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
         return super.handleValidationException(e);
     }
 
-    @Override
-    @ExceptionHandler(exception = {AuthorizationDeniedException.class, AccessDeniedException.class})
-    protected ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException e) {
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAuthorizationDenied(AuthorizationDeniedException e) {
         return super.handleAccessDeniedException(e);
     }
 

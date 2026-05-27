@@ -45,12 +45,12 @@ public class RedisCacheConfig {
                 .entryTtl(Duration.ofMinutes(20))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
-                .prefixCacheNameWith("pomeranian:")
+                .prefixCacheNameWith("chat:")
                 .disableCachingNullValues();
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
-                .withCacheConfiguration(USERS_CACHE_VALUE, defaultConfig.entryTtl(Duration.ofMinutes(15)))
+                .withCacheConfiguration(USERS_CACHE_VALUE, defaultConfig.prefixCacheNameWith("pomeranian:").entryTtl(Duration.ofMinutes(15)))
                 .build();
     }
 }

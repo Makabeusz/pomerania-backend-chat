@@ -27,7 +27,7 @@ public class NotificationApiController {
     private final NotificationService notificationService;
 
     @GetMapping("/unread")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<ResultsPage<Notification<Object>>> getUnreadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState,
@@ -38,7 +38,7 @@ public class NotificationApiController {
     }
 
     @GetMapping("/read")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<ResultsPage<Notification<Object>>> getReadNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState,
@@ -49,13 +49,13 @@ public class NotificationApiController {
     }
 
     @GetMapping("/count")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Long> count(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(notificationService.countUnreadNotifications(user.getId()));
     }
 
     @DeleteMapping("/read")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Boolean> deleteReadNotification(
             @AuthenticationPrincipal User user,
             @RequestParam Instant createdAt,
@@ -66,7 +66,7 @@ public class NotificationApiController {
     }
 
     @DeleteMapping("/unread")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Boolean> deleteUnreadNotification(
             @AuthenticationPrincipal User user,
             @RequestParam Instant createdAt,

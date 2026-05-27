@@ -25,13 +25,13 @@ public class ChatNotificationController {
     private final ChatService chatService;
 
     @GetMapping("/count")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Long> count(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatService.countNotifications(user.getId()));
     }
 
     @GetMapping("/roomCount")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Long> roomCount(
             @AuthenticationPrincipal User user,
             @RequestParam String roomId
@@ -40,7 +40,7 @@ public class ChatNotificationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<ResultsPage<Notification<Object>>> getNotifications(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false) String nextPageState,

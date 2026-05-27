@@ -31,7 +31,7 @@ public class MessageController {
     private final ChatService chatService;
 
     @GetMapping
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<ResultsPage<ChatMessagePersisted>> getConversation(
             @RequestParam UUID recipientId,
             @RequestParam(required = false) String nextPageState,
@@ -42,7 +42,7 @@ public class MessageController {
     }
 
     @GetMapping("/headers")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<List<ConversationDto>> getConversations(
             @AuthenticationPrincipal User user,
             @RequestParam int pageNumber,
@@ -55,7 +55,7 @@ public class MessageController {
 
     // TODO: rename those "headers" to conversations everywhere
     @PostMapping("/headers")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Boolean> updateConversationFlag(
             @AuthenticationPrincipal User user,
             @RequestParam UUID recipientId,
@@ -66,7 +66,7 @@ public class MessageController {
     }
 
     @GetMapping("/headers/count")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Long> getConversationCount(
             @AuthenticationPrincipal User user,
             @RequestParam ConversationFlag flag
@@ -76,7 +76,7 @@ public class MessageController {
     }
 
     @DeleteMapping("/resource")
-    @PreAuthorize("hasRole('SOFT_BAN')")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public ResponseEntity<Boolean> deleteResource(
             @AuthenticationPrincipal User user,
             @RequestParam String roomId,
