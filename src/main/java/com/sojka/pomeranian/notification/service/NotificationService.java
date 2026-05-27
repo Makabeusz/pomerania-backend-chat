@@ -12,7 +12,7 @@ import com.sojka.pomeranian.notification.util.NotificationMapper;
 import com.sojka.pomeranian.notification.util.ReadNotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +30,7 @@ public class NotificationService {
 
     private final NotificationRepository<NotificationModel> notificationRepository;
     private final NotificationRepository<ReadNotification> readNotificationRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final SimpMessageSendingOperations messagingTemplate;
     private final SessionCache cache;
 
     /**

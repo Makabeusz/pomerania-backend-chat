@@ -2,6 +2,8 @@ package com.sojka.pomeranian.chat.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sojka.pomeranian.chat.config.RedisPubSubConfig;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+@Slf4j
 @Service
 @Primary
 @ConditionalOnProperty(
@@ -25,11 +28,15 @@ public class RedisWebSocketService implements SimpMessageSendingOperations {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper mapper;
 
-    public RedisWebSocketService(StringRedisTemplate redisTemplate, ObjectMapper mapper) {
+    public RedisWebSocketService(
+            StringRedisTemplate redisTemplate,
+            @Qualifier("webSocketBridgeObjectMapper")
+            ObjectMapper mapper) {
         this.redisTemplate = redisTemplate;
         this.mapper = mapper;
     }
 
+    @Override
     public void convertAndSendToUser(String user, String destination, Object payload) {
         String userDestination = "/user/" + user + destination;
         convertAndSend(userDestination, payload);
@@ -42,10 +49,15 @@ public class RedisWebSocketService implements SimpMessageSendingOperations {
             String json = mapper.writeValueAsString(message);
             redisTemplate.convertAndSend(RedisPubSubConfig.CHANNEL_NAME, json);
         } catch (Exception e) {
-            // TODO: proper logging
-            throw new RuntimeException("Failed to publish to Redis", e);
+            log.error("Failed to publish WebSocket message to Redis for cross-pod delivery. " +
+                            "destination={}, payloadType={}, cause={}",
+                    destination, payload != null ? payload.getClass().getName() : "null", e.toString(), e);
+            throw new MessagingException("Failed to publish WebSocket message via Redis", e);
         }
     }
+
+    // These overloads are intentionally left unimplemented.
+    // Throwing immediately makes it obvious if any code path is bypassing the Redis bridge.
 
     @Override
     public void convertAndSendToUser(String user, String destination, Object payload, Map<String, Object> headers) throws MessagingException {
