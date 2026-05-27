@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+// TODO: refactor most or all of it to websockets - connection is already here, HTTP is bad here.
 @Slf4j
 @RestController
 @RequestMapping("/api/messages")

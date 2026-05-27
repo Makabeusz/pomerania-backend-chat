@@ -93,25 +93,37 @@ public class ChatService {
 
         var savedMessage = MessageMapper.toDto(messageRepository.save(message));
 
-        // Update both users chat
+        // Update both users chat - intentionally sent immediately for lowest latency (see review).
+        // Conversation header updates below are best-effort only.
         messagingTemplate.convertAndSendToUser(roomId, DM_DESTINATION, new ChatResponse<>(savedMessage));
 
         log.trace("savedMessage: isRecipientOnline={}, messageContent={}", isRecipientOnline, chatMessage.getContent());
 
-        var contentType = Conversation.ContentType.getTypeByMessageData(message);
-        String contentSlice = chatMessage.getContent().length() > 96
-                ? chatMessage.getContent().substring(0, 97) + "..."
-                : chatMessage.getContent();
+        // Best-effort Postgres conversation header updates. We deliberately do NOT use @Transactional here
+        // to preserve low message delivery latency. Failures are logged at ERROR so they are observable,
+        // but the message has already been delivered to participants.
+        try {
+            var contentType = Conversation.ContentType.getTypeByMessageData(message);
+            String content = chatMessage.getContent();
+            String contentSlice = (content != null && content.length() > 96)
+                    ? content.substring(0, 97) + "..."
+                    : content;
 
-        var senderConversation = getExistingOrNewConversation(senderId, recipientId, now, contentSlice, contentType, true);
-        senderConversation.setUnreadCount(0); // for extra safety, no unread if user is actively writing in the chat
-        conversationsRepository.save(senderConversation);
-        log.trace("Updated sender conversation: {}", senderConversation);
+            var senderConversation = getExistingOrNewConversation(senderId, recipientId, now, contentSlice, contentType, true);
+            senderConversation.setUnreadCount(0); // for extra safety, no unread if user is actively writing in the chat
+            conversationsRepository.save(senderConversation);
+            log.trace("Updated sender conversation: {}", senderConversation);
 
-        var recipientConversation = getExistingOrNewConversation(recipientId, senderId, now, contentSlice, contentType, false);
-        recipientConversation.setUnreadCount(isRecipientOnline ? 0 : recipientConversation.getUnreadCount() + 1);
-        conversationsRepository.save(recipientConversation);
-        log.trace("Updated recipient conversation: {}", recipientConversation);
+            var recipientConversation = getExistingOrNewConversation(recipientId, senderId, now, contentSlice, contentType, false);
+            recipientConversation.setUnreadCount(isRecipientOnline ? 0 : recipientConversation.getUnreadCount() + 1);
+            conversationsRepository.save(recipientConversation);
+            log.trace("Updated recipient conversation: {}", recipientConversation);
+        } catch (Exception e) {
+            log.error("Failed to update Postgres conversation headers after successful WS delivery. " +
+                            "Message is visible to users but may be temporarily missing from /headers lists until next activity. " +
+                            "roomId={}, senderId={}, recipientId={}",
+                    roomId, senderId, recipientId, e);
+        }
 
         return savedMessage.getCreatedAt();
     }
@@ -242,8 +254,19 @@ public class ChatService {
                     .map(id -> generateRoomId(userId, id))
                     .toList();
 
-            removedRoomIds.addAll(deadConversations);
-            deadConversations.forEach(messageRepository::deleteRoom);
+            for (String deadRoomId : deadConversations) {
+                try {
+                    removedRoomIds.add(deadRoomId);
+                    messageRepository.deleteRoom(deadRoomId);
+                } catch (Exception e) {
+                    // Do not let one bad room abort the entire purge for this user.
+                    log.error("Failed to delete inactive room during user purge. " +
+                                    "The room may still contain messages in Astra. roomId={}, userId={}",
+                            deadRoomId, userId, e);
+                    // Remove from success set if we added it optimistically
+                    removedRoomIds.remove(deadRoomId);
+                }
+            }
             pageState = createPageState(conversations.size(), pagination);
         } while (conversations.size() == purgeBatchSize);
         log.info("Removed {} conversation rooms of userID={}", removedRoomIds.size(), userId);
@@ -272,22 +295,34 @@ public class ChatService {
         if (message.getResourceId() == null) {
             throw noSuchElementException("ResourceId", new MessageRepository.IdState(roomId, createdAt, userId).toString()).get();
         }
-        deletePublisher.publish(new R2BucketDeleteRequest(message.getResourceId(), userId));
-
-        var now = getCurrentInstantString();
         UUID deletedResourceId = message.getResourceId();
-        message.setEditedAt(now);
-        message.setResourceId(null);
-        message.setResourceType(null);
-        message.getMetadata().put("resource-deleted", now);
+        deletePublisher.publish(new R2BucketDeleteRequest(deletedResourceId, userId));
 
-        var saved = MessageMapper.toDto(messageRepository.update(message));
+        // Best-effort update of the message record + WS notification after publishing the R2 delete request.
+        // We log at ERROR on failure so that orphaned resources in the bucket can be identified and cleaned manually.
+        try {
+            var now = getCurrentInstantString();
+            message.setEditedAt(now);
+            message.setResourceId(null);
+            message.setResourceType(null);
+            if (message.getMetadata() == null) {
+                message.setMetadata(new java.util.HashMap<>());
+            }
+            message.getMetadata().put("resource-deleted", now);
 
-        // Update both users chat
-        messagingTemplate.convertAndSendToUser(
-                saved.getRoomId(), DM_DESTINATION, new ChatResponse<>(saved, MessageType.UPDATE)
-        );
-        log.info("User deleted chat-resource: userId={}, roomId={}, deletedResourceId={}", userId, roomId, deletedResourceId);
+            var saved = MessageMapper.toDto(messageRepository.update(message));
+
+            // Update both users chat
+            messagingTemplate.convertAndSendToUser(
+                    saved.getRoomId(), DM_DESTINATION, new ChatResponse<>(saved, MessageType.UPDATE)
+            );
+            log.info("User deleted chat-resource: userId={}, roomId={}, deletedResourceId={}", userId, roomId, deletedResourceId);
+        } catch (Exception e) {
+            log.error("Failed to update message / notify clients after publishing R2 delete request. " +
+                            "The resource blob may be orphaned in storage and require manual cleanup. " +
+                            "roomId={}, createdAt={}, userId={}, resourceId={}",
+                    roomId, createdAt, userId, deletedResourceId, e);
+        }
         return true;
     }
 
