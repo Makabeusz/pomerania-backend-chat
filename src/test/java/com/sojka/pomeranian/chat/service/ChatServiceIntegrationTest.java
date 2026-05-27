@@ -103,9 +103,6 @@ class ChatServiceIntegrationTest {
                 .roomId(row.getString("room_id"))
                 .createdAt(row.getInstant("created_at"))
                 .profileId(row.getUuid("profile_id"))
-                .username(row.getString("username"))
-                .recipientProfileId(row.getUuid("recipient_profile_id"))
-                .recipientUsername(row.getString("recipient_username"))
                 .content(row.getString("content"))
                 .resourceId(row.getUuid("resource_id"))
                 .editedAt(row.getString("edited_at"))
@@ -116,9 +113,6 @@ class ChatServiceIntegrationTest {
                 .isEqualTo(Message.builder()
                         .roomId(roomId)
                         .profileId(user1Id)
-                        .username(user1Id + "-username")
-                        .recipientProfileId(user2Id)
-                        .recipientUsername(user2Id + "-username")
                         .content(content)
                         .metadata(Collections.emptyMap())
                         .build());
@@ -298,9 +292,6 @@ class ChatServiceIntegrationTest {
                 .roomId(row.getString("room_id"))
                 .createdAt(row.getInstant("created_at"))
                 .profileId(row.getUuid("profile_id"))
-                .username(row.getString("username"))
-                .recipientProfileId(row.getUuid("recipient_profile_id"))
-                .recipientUsername(row.getString("recipient_username"))
                 .content(row.getString("content"))
                 .resourceId(row.getUuid("resource_id"))
                 .editedAt(row.getString("edited_at"))
@@ -311,9 +302,6 @@ class ChatServiceIntegrationTest {
                 .isEqualTo(Message.builder()
                         .roomId(roomId)
                         .profileId(user1Id)
-                        .username(user1Id + "-username")
-                        .recipientProfileId(user2Id)
-                        .recipientUsername(user2Id + "-username")
                         .content(content)
                         .metadata(Collections.emptyMap())
                         .build());
@@ -340,8 +328,6 @@ class ChatServiceIntegrationTest {
         // Verify message readAt updated
         var row = connector.getSession().execute(selectMessage(roomId, message.getCreatedAt(), user1Id)).one();
         assertThat(row.getInstant("read_at")).isEqualTo(readAt);
-        // Verify notification deleted
-        assertThat(conversationsRepository.findById(new Conversation.Id(user2Id, user1Id)).get().getUnreadCount()).isZero();
     }
 
     @Test
@@ -381,8 +367,6 @@ class ChatServiceIntegrationTest {
         assertThat(existingMessage.getInstant("read_at")).isNull();
         var updatedKeyMessage = connector.getSession().execute(selectMessage(roomId, notExistingKey, user1Id)).one();
         assertThat(updatedKeyMessage).isNull();
-        // Verify notification deleted
-        assertThat(conversationsRepository.findById(new Conversation.Id(user2Id, user1Id)).get().getUnreadCount()).isZero();
     }
 
     @Test

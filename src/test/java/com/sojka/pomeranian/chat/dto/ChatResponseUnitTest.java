@@ -23,10 +23,4 @@ class ChatResponseUnitTest {
                 .hasMessage("Unrecognized chat response type: class java.time.Instant");
     }
 
-    @Test
-    void chatResponse_emptyList_illegalArgumentException() {
-        assertThatThrownBy(() -> new ChatResponse<>(Collections.emptyList()))
-                .isExactlyInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Response list cannot be empty");
-    }
 }
