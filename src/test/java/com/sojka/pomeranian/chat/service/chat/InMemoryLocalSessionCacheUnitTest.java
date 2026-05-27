@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InMemoryLocalSessionCacheUnitTest {
@@ -222,14 +223,20 @@ class InMemoryLocalSessionCacheUnitTest {
     }
 
     @Test
-    void remove_oneSession_removesWholeUser() {
+    void remove_oneSession_keepsUserWithRemainingSessions() {
         String sessionId1 = "session1";
         cache.create(userId, sessionId1);
 
         String sessionId2 = "session2";
         cache.create(userId, sessionId2);
 
-        assertNotNull(cache.remove(sessionId1));
+        // Removing one session should NOT remove the whole user
+        assertNull(cache.remove(sessionId1));
+        assertTrue(db.containsKey(userId));
+        assertEquals(1, db.get(userId).getSessions().size());
+
+        // Removing the last session should fully remove the user
+        assertNotNull(cache.remove(sessionId2));
         assertFalse(db.containsKey(userId));
     }
 }

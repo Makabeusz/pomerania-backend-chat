@@ -22,7 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -211,7 +213,7 @@ class RedisSessionCacheUnitTest {
     }
 
     @Test
-    void remove_existingSession_returnsUserId() {
+    void remove_existingSession_keepsUserIfOtherSessionsRemain() {
         String simpSessionId1 = "session1";
         String simpSessionId2 = "session2";
         ActiveUser.Session session1 = new ActiveUser.Session(new HashMap<>(), simpSessionId1, Instant.now());
@@ -221,11 +223,12 @@ class RedisSessionCacheUnitTest {
         doReturn(userId).when(sessionsOps).get(simpSessionId1);
         doReturn(activeUser).when(usersOps).get(userId);
 
+        // Removing one session should return null (user still has other sessions)
         UUID result = cache.remove(simpSessionId1);
 
-        assertEquals(userId, result);
-        verify(sessions).delete(List.of(simpSessionId1, simpSessionId2));
-        verify(users).delete(userId);
+        assertNull(result);
+        verify(sessions).delete(simpSessionId1);
+        verify(users, never()).delete((UUID) any());   // user should remain in cache
     }
 
     @Test

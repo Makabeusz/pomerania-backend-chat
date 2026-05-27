@@ -11,16 +11,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.support.GenericMessage;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -28,7 +26,6 @@ import java.util.Map;
 public class SessionTracker {
 
     private final SessionCache cache;
-    private final StompRequestAuthenticator requestAuthenticator;
     private final StompRequestAuthenticator authenticator;
     private final UserRepository userRepository;
 
@@ -37,7 +34,7 @@ public class SessionTracker {
         log.trace("SessionConnectedEvent: {}", event);
         try {
             String simpSessionId = (String) event.getMessage().getHeaders().get("simpSessionId");
-            User user = requestAuthenticator.getUser(event);
+            User user = authenticator.getUser(event);
             boolean isCreated = cache.create(user.getId(), simpSessionId);
             if (isCreated) {
                 userRepository.updateLastLoginAtAndIsOnline(user.getId(), DateTimeUtils.getCurrentInstant(), true);
@@ -47,6 +44,8 @@ public class SessionTracker {
             }
         } catch (SecurityException e) {
             log.debug("Connect attempt without auth", e);
+        } catch (Exception e) {
+            log.error("Unexpected error handling SessionConnectedEvent", e);
         }
     }
 
@@ -59,10 +58,12 @@ public class SessionTracker {
                 userRepository.updateLastLoginAtAndIsOnline(userId, DateTimeUtils.getCurrentInstant(), false);
                 log.debug("Offline: userId={}", userId);
             } else {
-                log.debug("SessionId={} already online", event.getSessionId());
+                log.debug("SessionId={} already removed or never tracked (user may still have other sessions)", event.getSessionId());
             }
         } catch (SecurityException e) {
             log.debug("Unknown session", e);
+        } catch (Exception e) {
+            log.error("Unexpected error handling SessionDisconnectEvent", e);
         }
     }
 
@@ -73,13 +74,20 @@ public class SessionTracker {
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
             User user = authenticator.getUser(event, headerAccessor);
             StompSubscription subscription = getSubscriptionFromHeaders(headerAccessor);
-            cache.remove(user.getId(), headerAccessor.getSessionId(), subscription);
-            log.debug(
-                    "Unsubscribed: user={}, simpSessionId={}, subscription={}",
-                    user.getUsername(), headerAccessor.getSessionId(), subscription
-            );
+            if (subscription != null) {
+                cache.remove(user.getId(), headerAccessor.getSessionId(), subscription);
+                log.debug(
+                        "Unsubscribed: user={}, simpSessionId={}, subscription={}",
+                        user.getUsername(), headerAccessor.getSessionId(), subscription
+                );
+            } else {
+                log.debug("Unsubscribe without subType header: user={}, simpSessionId={}",
+                        user.getUsername(), headerAccessor.getSessionId());
+            }
         } catch (SecurityException e) {
             log.debug("Unknown session", e);
+        } catch (Exception e) {
+            log.error("Unexpected error handling SessionUnsubscribeEvent", e);
         }
     }
 
@@ -91,7 +99,10 @@ public class SessionTracker {
             User user = authenticator.getUser(event, headerAccessor);
             StompSubscription subscription = getSubscriptionFromHeaders(headerAccessor);
 
-            if (user.getRole() != Role.PomeranianRole.DEACTIVATED) {
+            if (subscription == null) {
+                log.debug("Subscribe without subType header: user={}, simpSessionId={}",
+                        user.getUsername(), headerAccessor.getSessionId());
+            } else if (user.getRole() != Role.PomeranianRole.DEACTIVATED) {
                 cache.add(user.getId(), headerAccessor.getSessionId(), subscription);
                 log.debug("Subscribed: user_id={}, simpSessionId={}, subscription={}",
                         user.getId(), headerAccessor.getSessionId(), subscription);
@@ -100,6 +111,8 @@ public class SessionTracker {
             }
         } catch (SecurityException e) {
             log.debug("Unknown session", e);
+        } catch (Exception e) {
+            log.error("Unexpected error handling SessionSubscribeEvent", e);
         }
     }
 
@@ -124,18 +137,6 @@ public class SessionTracker {
 
     String getHeaderValue(List<String> headers) {
         return getHeaderValue(headers, null);
-    }
-
-    // TODO: reuse in StompRequestAuthenticator#getAuthJwt
-    private Map<String, List<String>> getNativeHeaders(StompHeaderAccessor accessor) {
-        Object simpConnectMessage = accessor.getMessageHeaders().get("simpConnectMessage");
-        if (simpConnectMessage instanceof GenericMessage simpConnectMessageHeader) {
-            var nativeHeaders = simpConnectMessageHeader.getHeaders().get("nativeHeaders");
-            if (nativeHeaders instanceof Map nativeHeadersMap) {
-                return nativeHeadersMap;
-            }
-        }
-        return Collections.emptyMap();
     }
 
 }

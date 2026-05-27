@@ -34,7 +34,9 @@ public class ActiveUser {
     }
     public boolean isOnline(StompSubscription.Type type) {
         for (ActiveUser.Session session : this.getSessions()) {
-            return session.getSubscriptions().containsKey(type.name());
+            if (session.getSubscriptions().containsKey(type.name())) {
+                return true;
+            }
         }
         return false;
     }

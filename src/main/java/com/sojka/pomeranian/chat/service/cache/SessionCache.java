@@ -61,12 +61,14 @@ public interface SessionCache {
     boolean create(UUID userId, String simpSessionId);
 
     /**
-     * Removes a user from the active users cache, marking them as offline.
+     * Removes the given session for the user.
+     * If this was the user's last remaining session, the user is fully removed from the cache
+     * (meaning they are now offline).
      *
-     * @return {@code userId} if successfully removed, {@code null} if user already not online.
-     * @throws NullPointerException if user don't exists
+     * @return the userId if the user became fully offline after this removal (last session gone),
+     *         or {@code null} if the session was removed but the user still has other active sessions.
      */
-    UUID remove(String simpSessionId) throws NullPointerException;
+    UUID remove(String simpSessionId);
 
     boolean remove(UUID userId, String simpSessionId, StompSubscription subscription);
 

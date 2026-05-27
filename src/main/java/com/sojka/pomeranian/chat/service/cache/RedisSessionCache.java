@@ -138,11 +138,20 @@ public class RedisSessionCache implements SessionCache {
         ActiveUser activeUser = getCachedUser(userId);
         if (activeUser == null) {
             return null;
-        } else {
-            List<String> allSessionIds = activeUser.getSessions().stream().map(ActiveUser.Session::getSimpSessionId).toList();
-            sessions.delete(allSessionIds);
+        }
+
+        // Remove only this specific session
+        boolean removed = activeUser.getSessions().removeIf(s -> simpSessionId.equals(s.getSimpSessionId()));
+        sessions.delete(simpSessionId);
+
+        if (activeUser.getSessions().isEmpty()) {
+            // User has no more sessions -> fully offline
             users.delete(userId);
             return userId;
+        } else {
+            // User still has other sessions -> keep in cache (updated), do not mark offline in DB
+            setCachedUser(userId, activeUser);
+            return null;
         }
     }
 

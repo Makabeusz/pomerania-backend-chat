@@ -151,12 +151,20 @@ public class InMemoryLocalSessionCache implements SessionCache {
         ActiveUser activeUser = users.get(userId);
         if (activeUser == null) {
             return null;
-        } else {
-            activeUser.getSessions().stream()
-                    .map(ActiveUser.Session::getSimpSessionId)
-                    .forEach(sessions::remove);
+        }
+
+        // Remove only this specific session
+        boolean removed = activeUser.getSessions().removeIf(s -> simpSessionId.equals(s.getSimpSessionId()));
+        sessions.remove(simpSessionId);
+
+        if (activeUser.getSessions().isEmpty()) {
+            // User has no more sessions -> fully offline
             users.remove(userId);
             return userId;
+        } else {
+            // User still has other sessions -> keep in cache, do not mark offline in DB
+            users.put(userId, activeUser);
+            return null;
         }
     }
 
