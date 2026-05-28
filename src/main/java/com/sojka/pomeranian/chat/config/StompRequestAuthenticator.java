@@ -18,9 +18,6 @@ import org.springframework.web.socket.messaging.AbstractSubProtocolEvent;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
-@Component
-@RequiredArgsConstructor
 /**
  * Handles JWT-based authentication for STOMP/WebSocket connections.
  *
@@ -35,12 +32,13 @@ import java.util.Map;
  *       {@code @PreAuthorize("@authx.isLoggedIn(authentication))"} to work on @MessageMapping methods.</li>
  * </ul>
  */
+@Slf4j
+@Component
+@RequiredArgsConstructor
 public class StompRequestAuthenticator {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
-    // TODO: allow auth if roles are ok
-//    private final Set<Role.PomeranianRole> allowedRoles = Set.of(ADMIN, USER, SOFT_BAN);
 
     private String getAuthJwt(StompHeaderAccessor accessor) {
         var list = accessor.getNativeHeader("auth_jwt");
@@ -165,8 +163,7 @@ public class StompRequestAuthenticator {
         }
 
         // Create Authentication with the real User as principal.
-        // We set the Authentication object itself via setUser() — this is the
-        // standard pattern for STOMP + Spring Security.
+        // We set the Authentication object itself via setUser().
         // SecurityContextChannelInterceptor will then make an Authentication
         // whose .getPrincipal() is the real User available in the SecurityContext
         // for @MessageMapping methods. This makes @AuthenticationPrincipal User user
