@@ -1,6 +1,5 @@
 package com.sojka.pomeranian.chat.controller;
 
-import com.sojka.pomeranian.chat.config.StompRequestAuthenticator;
 import com.sojka.pomeranian.chat.dto.ChatMessage;
 import com.sojka.pomeranian.chat.dto.ChatRead;
 import com.sojka.pomeranian.chat.dto.ChatResetRead;
@@ -21,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 import java.util.UUID;
@@ -40,13 +41,14 @@ public class ChatController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final ChatService chatService;
     private final SessionCache cache;
-    private final StompRequestAuthenticator authenticator;
 
     // TODO: if there is an error here then publish some feedback back to the client
     // TODO: it sends back the message even before it finish updating conversations or notifications, so it might still break with properly saved message as well
     @MessageMapping("/chat.send")
-    public void sendMessage(@Payload ChatMessage chatMessage, StompHeaderAccessor headerAccessor) {
-        User user = authenticator.getUser(headerAccessor);
+    @PreAuthorize("@authx.hasAtLeastUserRole(authentication)")
+    public void sendMessage(@Payload ChatMessage chatMessage,
+                            @AuthenticationPrincipal UsernamePasswordAuthenticationToken principal) {
+        User user = (User) principal.getPrincipal();
         chatMessage.setSender(new UserId(user.getId()));
         String roomId = generateRoomId(user.getId(), chatMessage.getRecipient().getId());
 
@@ -66,11 +68,12 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.read")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public void readMessage(
             @Payload ReadMessageDto dto,
-            StompHeaderAccessor headerAccessor
+            @AuthenticationPrincipal UsernamePasswordAuthenticationToken principal
     ) {
-        User user = authenticator.getUser(headerAccessor);
+        User user = (User) principal.getPrincipal();
         var recipientId = getRecipientIdFromRoomId(dto.roomId(), user.getId());
 
         var readAt = chatService.markRead(
@@ -84,12 +87,13 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.resetUnread")
+    @PreAuthorize("@authx.isLoggedIn(authentication)")
     public void resetConversationUnread(
             @Payload UserId dto,
-            StompHeaderAccessor headerAccessor
+            @AuthenticationPrincipal UsernamePasswordAuthenticationToken principal
     ) {
+        User user = (User) principal.getPrincipal();
         UUID recipientId = dto.getId();
-        User user = authenticator.getUser(headerAccessor);
         Long roomCount = chatService.resetConversationUnreadCount(user.getId(), recipientId);
 
         messagingTemplate.convertAndSendToUser(generateRoomId(recipientId, user.getId()), DM_DESTINATION,
