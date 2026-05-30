@@ -72,11 +72,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         }
     }
 
-    /**
-     * Ensures the authenticated user (set during CONNECT) is available in the
-     * SecurityContextHolder for the duration of each STOMP message processing.
-     *
-     * This is required for @PreAuthorize expressions (e.g. "@authx.isLoggedIn(authentication)")
-     * and @AuthenticationPrincipal to work on @MessageMapping methods.
-     */
 }

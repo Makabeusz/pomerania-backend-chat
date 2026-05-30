@@ -43,8 +43,10 @@ public class RedisPubSubConfig {
     }
 
     @Bean
-    public RedisPubSubReceiver redisPubSubReceiver(SimpMessagingTemplate template,
-                                                   @Qualifier("webSocketBridgeObjectMapper") ObjectMapper webSocketBridgeObjectMapper) {
+    public RedisPubSubReceiver redisPubSubReceiver(
+            SimpMessagingTemplate template,
+            @Qualifier("webSocketBridgeObjectMapper") ObjectMapper webSocketBridgeObjectMapper
+    ) {
         return new RedisPubSubReceiver(template, webSocketBridgeObjectMapper);
     }
 
@@ -54,8 +56,10 @@ public class RedisPubSubConfig {
     }
 
     @Bean
-    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory,
-                                                                       MessageListenerAdapter listenerAdapter) {
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory connectionFactory,
+            MessageListenerAdapter listenerAdapter
+    ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(listenerAdapter, new ChannelTopic(CHANNEL_NAME));
